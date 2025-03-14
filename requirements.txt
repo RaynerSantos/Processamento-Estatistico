@@ -1,0 +1,6 @@
+streamlit
+pandas
+numpy
+os
+collections
+io

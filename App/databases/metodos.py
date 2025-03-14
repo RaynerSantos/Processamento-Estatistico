@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from statsmodels.stats.proportion import proportions_ztest
+# from statsmodels.stats.proportion import proportions_ztest
 from collections import Counter
 
 # pip install pandas

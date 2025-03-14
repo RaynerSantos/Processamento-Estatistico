@@ -28,7 +28,7 @@ st.markdown(
 
     /* Cor do título */
     h1 {
-        color: #FFFFFF; /* Laranja avermelhado */
+        color: #20541B; /* Branco */
         text-align: center;
     }
 
@@ -45,7 +45,7 @@ st.markdown(
     /* Cor dos botões */
     button {
         background-color: #20541B !important;
-        color: white !important;
+        color: #20541B !important;
     }
     </style>
     """,

@@ -45,7 +45,7 @@ st.markdown(
     /* Cor dos botões */
     button {
         background-color: #20541B !important;
-        color: #20541B !important;
+        color: white !important;
     }
     </style>
     """,
@@ -103,7 +103,8 @@ def salvar_excel_com_formatacao(todas_tabelas_gerais, bd_processamento):
 # st.set_page_config(layout="centered")  # "wide"
 
 #=== Título ===#
-st.title("Processamento")
+st.title("Processamento do Estatístico")
+st.write("")
 st.write("Faça o upload do banco de dados na versão Labels e da planilha de sintaxe ambas em Excel para realizar o Processamento.")
 
 # Upload das planilhas

@@ -7,6 +7,51 @@ from io import BytesIO
 from databases.metodos import processamento
 import streamlit as st
 
+# CSS personalizado
+st.markdown(
+    """
+    <style>
+    /* Cor de fundo da página */
+    [data-testid="stAppViewContainer"] {
+        background-color: #000000;
+    }
+    
+    /* Cor de fundo do cabeçalho */
+    [data-testid="stHeader"] {
+        background-color: #000000;
+    }
+
+    /* Cor de fundo da barra lateral */
+    [data-testid="stSidebar"] {
+        background-color: #333333;
+    }
+
+    /* Cor do título */
+    h1 {
+        color: #FFFFFF; /* Laranja avermelhado */
+        text-align: center;
+    }
+
+    /* Cor do subtítulo */
+    h2 {
+        color: #FFD700; /* Dourado */
+    }
+
+    /* Cor do texto normal */
+    p, span {
+        color: #FFFFFF; /* Branco */
+    }
+
+    /* Cor dos botões */
+    button {
+        background-color: #20541B !important;
+        color: white !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # Função para salvar as tabelas em um único Excel com várias abas e formatação
 def salvar_excel_com_formatacao(todas_tabelas_gerais, bd_processamento):
     output = BytesIO()

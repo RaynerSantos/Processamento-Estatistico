@@ -1,6 +1,4 @@
 streamlit
 pandas
-numpy
-collections
+numpy==1.21.0
 openpyxl
-os-sys

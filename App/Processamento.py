@@ -99,8 +99,8 @@ def salvar_excel_com_formatacao(todas_tabelas_gerais, bd_processamento):
 
     return output.getvalue()
 
-# Configurações da página
-st.set_page_config(layout="centered")  # "wide"
+# # Configurações da página
+# st.set_page_config(layout="centered")  # "wide"
 
 #=== Título ===#
 st.title("Processamento")

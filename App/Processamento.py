@@ -117,21 +117,23 @@ st.title("Processamento do Estatístico")
 st.write("")
 st.write("")
 # st.write("Faça o upload do banco de dados na ***versão Labels*** e da planilha de sintaxe ambas em Excel para realizar o Processamento.")
+st.markdown("Faça o upload do banco de dados na <u>***versão Labels***</u> e da planilha de sintaxe ambas em Excel para realizar o Processamento.", 
+            unsafe_allow_html=True)
+
 st.markdown(
     """
-    Faça o upload do banco de dados na ***versão Labels*** e da planilha de sintaxe ambas em Excel para realizar o Processamento.
-    📄 [Documentação do App em PDF](https://github.com/RaynerSantos/Processamento-Estatistico/blob/main/Documentacao_Processamento.pdf){target="_blank"}
+    📄 [Documentação do App em PDF](https://github.com/RaynerSantos/Processamento-Estatistico/blob/main/Documentacao_Processamento.pdf)
     """,
     unsafe_allow_html=True
 )
+
+st.write("")
 
 # Upload das planilhas
 with st.form(key='sheet_name_data'):
     nome_sheet_DATA = st.text_input(label="📝 Insira o nome da sheet (aba) no qual contém o banco de dados com os LABELS")
     input_buttom_submit_DATA = st.form_submit_button("Enviar")
 st.session_state.nome_sheet_DATA = nome_sheet_DATA
-
-st.write("")
 
 data = st.file_uploader("📂 Selecione o banco de dados", type=["xlsx"])
 bd_processamento = st.file_uploader("📂 Selecione a planilha com a Sintaxe para a criação das tabelas", type=["xlsx"])

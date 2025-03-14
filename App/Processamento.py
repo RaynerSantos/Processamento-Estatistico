@@ -117,7 +117,7 @@ st.title("Processamento do Estatístico")
 st.write("")
 st.write("")
 # st.write("Faça o upload do banco de dados na ***versão Labels*** e da planilha de sintaxe ambas em Excel para realizar o Processamento.")
-st.markdown("Faça o upload do banco de dados na <u>***versão Labels***</u> e da planilha de sintaxe ambas em Excel para realizar o Processamento.", 
+st.markdown("Faça o upload do banco de dados na <u>***versão Labels***</u> e da planilha de sintaxe, ambas em Excel para realizar o Processamento.", 
             unsafe_allow_html=True)
 
 st.markdown(

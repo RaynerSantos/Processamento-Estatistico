@@ -47,6 +47,16 @@ st.markdown(
         background-color: #20541B !important;
         color: white !important;
     }
+
+    /* Muda a cor do texto no menu de configurações */
+    div[data-testid="stDropdownMenu"] * {
+        color: black !important;
+    }
+
+    /* Opcional: ajusta a cor do fundo para contraste */
+    div[data-testid="stDropdownMenu"] {
+        background-color: white !important;
+    }
     </style>
     """,
     unsafe_allow_html=True
@@ -105,7 +115,8 @@ def salvar_excel_com_formatacao(todas_tabelas_gerais, bd_processamento):
 #=== Título ===#
 st.title("Processamento do Estatístico")
 st.write("")
-st.write("Faça o upload do banco de dados na versão Labels e da planilha de sintaxe ambas em Excel para realizar o Processamento.")
+st.write("")
+st.write("Faça o upload do banco de dados na **versão Labels** e da planilha de sintaxe ambas em Excel para realizar o Processamento.")
 
 # Upload das planilhas
 with st.form(key='sheet_name_data'):
@@ -113,7 +124,6 @@ with st.form(key='sheet_name_data'):
     input_buttom_submit_DATA = st.form_submit_button("Enviar")
 st.session_state.nome_sheet_DATA = nome_sheet_DATA
 
-st.write("")
 st.write("")
 
 data = st.file_uploader("Selecione o banco de dados", type=["xlsx"])

@@ -1,6 +1,6 @@
 streamlit
 pandas
 numpy
-os
 collections
-io
+openpyxl
+os-sys

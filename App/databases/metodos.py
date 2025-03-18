@@ -296,7 +296,6 @@ def processamento(data, bd_processamento):
 
             i = 0    
             for col in Colunas:
-
                 # Gerar Tabelas Ponderadas de Frequência Absoluta com o banco empilhado
                 tabela = pd.pivot_table(bd_motivo, values=Var_Pond, index=Var_linha, columns=col, aggfunc='sum')
                 if Fecha_100 == 'SIM':
@@ -407,21 +406,19 @@ def processamento(data, bd_processamento):
                 print(f'Variável em branco\n{df[Var_linha]}\n')
                 
             for col in Colunas:
+                # Gerar Tabelas Ponderadas de frequência absoluta
+                tabela = pd.crosstab(index=df[Var_linha], columns=df[col], values=df[Var_Pond], aggfunc='sum')
+                tabelas_pond_freq_abs.append(tabela)
+
                 # Gerar Tabelas Ponderadas de frequência relativa
-                tabela = pd.pivot_table(df, values=Var_Pond, index=Var_linha, columns=col, aggfunc='sum')
                 tabela = tabela.div(tabela.sum())
                 tabela = tabela.fillna(0)
                 tabelas_pond.append(tabela)
                 print(f'{tabela}\n')
 
-                # Gerar Tabelas Ponderadas de frequência absoluta
-                tabela = pd.pivot_table(df, values=Var_Pond, index=Var_linha, columns=col, aggfunc='sum')
-                tabelas_pond_freq_abs.append(tabela)
+                
 
                 # Gerar Tabelas Sem Ponderação
-                # df_sem_na = df[[Var_linha, col]].copy()
-                # print(f'{df_sem_na}\n')
-                # df_sem_na = df_sem_na.fillna(0)
                 tabela = pd.crosstab(df[Var_linha], df[col], dropna=False)
                 tabela = tabela.fillna(0)
                 if len(tabela) == 0:
@@ -431,7 +428,7 @@ def processamento(data, bd_processamento):
 
                 # Gerar Tabelas para valores agrupados
                 if 'var_agrupada' in df.columns:
-                    tabela = pd.pivot_table(df, values=Var_Pond, index='var_agrupada', columns=col, aggfunc='sum')
+                    tabela = pd.crosstab(index=df['var_agrupada'], columns=df[col], values=df[Var_Pond], aggfunc='sum')
                     tabela = tabela.div(tabela.sum())
                     aux_tabelas_pond.append(tabela)
 
@@ -445,7 +442,6 @@ def processamento(data, bd_processamento):
 
             # Trazendo a coluna de valores gerais
             valores_gerais_pond = pd.pivot_table(df, values=Var_Pond, index=Var_linha, aggfunc='sum')
-            # valores_gerais = df[Var_linha].value_counts().sort_index()
             percentual_geral = valores_gerais_pond.div(valores_gerais_pond.sum()).sort_index()
 
             if 'var_agrupada' in df.columns:
@@ -453,7 +449,6 @@ def processamento(data, bd_processamento):
                 aux_tabelas_sem_pond = pd.concat(aux_tabelas_sem_pond, axis=1)
 
                 # Percentual para os valores gerais da variável agrupada
-                # valores_gerais_aux = df['var_agrupada'].value_counts().sort_index()
                 valores_gerais_aux = pd.pivot_table(df, values=Var_Pond, index='var_agrupada', aggfunc='sum')
                 percentual_geral_aux = valores_gerais_aux.div(valores_gerais_aux.sum()).sort_index()
                 tabela_geral = pd.concat([tabela_geral, aux_tabelas_pond], axis=0)

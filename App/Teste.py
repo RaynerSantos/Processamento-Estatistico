@@ -50,20 +50,20 @@ def funcao_agrupamento(variavel, BTB, TTB):
     return nova_var
 
 TipoTabela = 'SIMPLES'
-Colunas = 'ONDA, VSEG_BU, VSEG_1, PF_PJ, VREG'
+Colunas = 'ONDA, EMP_G, VAR_G, GC_G, ME_G, ESP_G, PJ_G, PF_G'
 Var_ID = 'ID_EMP'
-Possui_Onda = 'NAO'
-Cabecalho = 'Onda, Segmento BU, Segmento, Pessoa, Regional'
-Var_linha = 'VSEG_BU'
+Possui_Onda = 'SIM'
+Cabecalho = ''
+Var_linha = 'PF_PJ'
 NS_NR = 'NAO'
 valores_BTB = ''
 valores_TTB = ''
 Valores_Agrup = ''
 Fecha_100 = ''
 Var_Pond = 'POND'
-Titulo = 'Segmento BU'
+Titulo = 'Publico'
 
-df = pd.read_excel('BASES PARA PROCESSAMENTO\Cielo NPS 2025\Jan25\BD_Cielo_NPS_Jan_onda1_v06.xlsx', sheet_name='Sheet1')
+df = pd.read_excel('BASES PARA PROCESSAMENTO\Base Cielo Satisfacao para teste\BD_CIELO_Satisfacao.xlsx', sheet_name='BD_LABELS')
 
 # Variáveis para as colunas da tabela (bandeiras)
 Colunas = Colunas.split(sep=', ')

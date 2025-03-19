@@ -407,7 +407,10 @@ def processamento(data, bd_processamento):
                 
             for col in Colunas:
                 # Gerar Tabelas Ponderadas de frequência absoluta
-                tabela = pd.crosstab(index=df[Var_linha], columns=df[col], values=df[Var_Pond], aggfunc='sum')
+                if col == Var_linha:
+                    tabela = pd.crosstab(index=df[Var_linha], columns=df[col], values=df[Var_Pond], aggfunc='sum')
+                else:
+                    tabela = pd.pivot_table(df, values=Var_Pond, index=Var_linha, columns=col, aggfunc='sum')
                 tabelas_pond_freq_abs.append(tabela)
 
                 # Gerar Tabelas Ponderadas de frequência relativa
@@ -417,7 +420,6 @@ def processamento(data, bd_processamento):
                 print(f'{tabela}\n')
 
                 
-
                 # Gerar Tabelas Sem Ponderação
                 tabela = pd.crosstab(df[Var_linha], df[col], dropna=False)
                 tabela = tabela.fillna(0)
@@ -428,7 +430,10 @@ def processamento(data, bd_processamento):
 
                 # Gerar Tabelas para valores agrupados
                 if 'var_agrupada' in df.columns:
-                    tabela = pd.crosstab(index=df['var_agrupada'], columns=df[col], values=df[Var_Pond], aggfunc='sum')
+                    if col == Var_linha:
+                        tabela = pd.crosstab(index=df['var_agrupada'], columns=df[col], values=df[Var_Pond], aggfunc='sum')
+                    else:
+                        tabela = pd.pivot_table(df, values=Var_Pond, index='var_agrupada', columns=col, aggfunc='sum')
                     tabela = tabela.div(tabela.sum())
                     aux_tabelas_pond.append(tabela)
 

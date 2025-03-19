@@ -1,5 +1,5 @@
 streamlit
-pandas==2.2.3
+pandas
 numpy==1.21.0
 openpyxl
 xlsxwriter

@@ -486,3 +486,6 @@ else:
     print(f'\n\n TABELA GERAL FINAL:\n{tabela_geral}\n')
 
 
+import sys
+print(f"Versão do Python: {sys.version}")
+print(f"Versão do Pandas: {pd.__version__}")

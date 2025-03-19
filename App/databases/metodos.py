@@ -521,9 +521,6 @@ def processamento(data, bd_processamento):
 
             tabela_geral.rename(columns={tabela_geral.columns[0]: 'Geral'}, inplace=True)
             print(f'TABELA GERAL:\n{tabela_geral.iloc[:, 0:10]}\n')
-            import sys
-            print(f"Versão do Python: {sys.version}")
-            print(f"Versão do Pandas: {pd.__version__}")
 
         #===== Adicionar cabeçalho a tabela =====#
         if Possui_Onda == 'SIM':

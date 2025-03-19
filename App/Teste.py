@@ -487,5 +487,7 @@ else:
 
 
 import sys
+import streamlit as st
 print(f"Versão do Python: {sys.version}")
 print(f"Versão do Pandas: {pd.__version__}")
+print(f"Versão do Streamlit: {st.__version__}")

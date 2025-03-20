@@ -553,7 +553,7 @@ def processamento(data, bd_processamento):
         tabela_geral
         print(f'\n{tabela_geral}\n')
 
-    todas_tabelas_gerais.append(tabela_geral)
+        todas_tabelas_gerais.append(tabela_geral)
 
     return todas_tabelas_gerais
 

@@ -49,19 +49,19 @@ def funcao_agrupamento(variavel, BTB, TTB):
             nova_var.append('Neutro')
     return nova_var
 
-TipoTabela = 'SIMPLES'
+TipoTabela = 'MULTIPLA'
 Colunas = 'ONDA, EMP_G, VAR_G, GC_G, ME_G, ESP_G, PJ_G, PF_G'
 Var_ID = 'ID_EMP'
-Possui_Onda = 'SIM'
-Cabecalho = ''
-Var_linha = 'PF_PJ'
+Possui_Onda = 'NAO'
+Cabecalho = 'ONDA, Empreendedores, Varejo, GC, ME, Especiais, Pessoa Jurídica, Pessoa Física'
+Var_linha = 'REC'
 NS_NR = 'NAO'
 valores_BTB = ''
 valores_TTB = ''
-Valores_Agrup = ''
-Fecha_100 = ''
+Valores_Agrup = 'REC_1, REC_2, REC_3'
+Fecha_100 = 'NAO'
 Var_Pond = 'POND'
-Titulo = 'Publico'
+Titulo = 'Q5. Por quais motivos você recomendaria a Cielo; o que você vê de melhor nela?'
 
 df = pd.read_excel('BASES PARA PROCESSAMENTO\Base Cielo Satisfacao para teste\BD_CIELO_Satisfacao.xlsx', sheet_name='BD_LABELS')
 
@@ -445,6 +445,8 @@ if Possui_Onda == 'SIM':
     for valor in valores:
         for col_name in df[Colunas[0]][pd.notna(df[Colunas[0]])].unique():
             header.append((Titulo, valor, col_name))
+    header = [(str(Titulo), str(valor), str(col_name)) for (Titulo, valor, col_name) in header]
+    print(f'Verificar o Header antes do MultiIndex:\n{header}')
 
     header = pd.MultiIndex.from_tuples(header)
     print(f'HEADER:\n{header}\n')
@@ -486,8 +488,3 @@ else:
     print(f'\n\n TABELA GERAL FINAL:\n{tabela_geral}\n')
 
 
-import sys
-import streamlit as st
-print(f"Versão do Python: {sys.version}")
-print(f"Versão do Pandas: {pd.__version__}")
-print(f"Versão do Streamlit: {st.__version__}")

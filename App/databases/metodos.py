@@ -542,10 +542,12 @@ def processamento(data, bd_processamento):
             valores.insert(0, 'Onda')
             print(f'\n{valores}\n')
 
-            header = [(str(Titulo), '', 'GERAL')]
+            header = [(Titulo, '', 'GERAL')]
             for valor in valores:
                 for col_name in df[Colunas[0]][pd.notna(df[Colunas[0]])].unique():
-                    header.append((str(Titulo), str(valor), str(col_name)))
+                    header.append((Titulo, valor, col_name))
+            header = [(str(Titulo), str(valor), str(col_name)) for (Titulo, valor, col_name) in header]
+            print(f'Verificar o Header antes do MultiIndex:\n{header}')
 
             header = pd.MultiIndex.from_tuples(header)
             print(f'HEADER:\n{header}\n')
@@ -571,9 +573,9 @@ def processamento(data, bd_processamento):
             for i, valor in enumerate(Cabecalho):
                 col_names = df[Colunas[i]][pd.notna(df[Colunas[i]])].unique()
                 for col in col_names:
-                    col_series.append((str(Titulo), str(valor), str(col)))
+                    col_series.append((Titulo, valor, col))
 
-            header = [(str(Titulo), '', 'GERAL')]
+            header = [(Titulo, '', 'GERAL')]
             print(f'\ncol_series:\n{col_series}')
             header = header + col_series
             print(f'\nheader:\n{header}')

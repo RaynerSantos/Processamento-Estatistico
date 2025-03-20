@@ -133,16 +133,10 @@ def processamento(data, bd_processamento):
         i+=1
         Colunas = bd_processamento.iloc[line, i]
         i+=1
-        Var_ID = bd_processamento.iloc[line, i]
-        i+=1
-        Possui_Onda = bd_processamento.iloc[line, i]
-        i+=1
         Cabecalho = bd_processamento.iloc[line, i]
         i+=1
         Var_linha = bd_processamento.iloc[line, i]
         i+=1
-        # Tipo_var_linha = bd_processamento.iloc[line, i]
-        # i+=1
         NS_NR = bd_processamento.iloc[line, i]
         i+=1
         valores_BTB = bd_processamento.iloc[line, i]
@@ -152,6 +146,8 @@ def processamento(data, bd_processamento):
         Valores_Agrup = bd_processamento.iloc[line, i]
         i+=1
         Fecha_100 = bd_processamento.iloc[line, i]
+        i+=1
+        Var_ID = bd_processamento.iloc[line, i]
         i+=1
         Var_Pond = bd_processamento.iloc[line, i]
         i+=1
@@ -528,67 +524,36 @@ def processamento(data, bd_processamento):
             print(f'TABELA GERAL:\n{tabela_geral.iloc[:, 0:10]}\n')
 
         #===== Adicionar cabeçalho a tabela =====#
-        if Possui_Onda == 'SIM':
-            header_above = []
-            for col in tabela_geral.columns:
-                valor = col.split(sep=' - ')[0]
-                header_above.append(valor)
-            print(f'\n{header_above}\n')
-            tamanho = len(df[Colunas[0]][pd.notna(df[Colunas[0]])].unique())
+        Cabecalho = Cabecalho.split(sep=', ')
+        print(f'Cabeçalho:\n{Cabecalho}')
+        header_above = []
+        print(f'\ntabela_geral.columns:\n{tabela_geral.columns}')
+        for col in tabela_geral.columns:
+            valor = col.split(sep=' - ')[0]
+            print(f'\nvalor: {valor}')
+            header_above.append(valor)
+        print(f'\nheader_above:\n{header_above}')
 
-            valores = []
-            for i in range((tamanho+1), len(header_above) , tamanho):
-                valores.append(header_above[i])
-            valores.insert(0, 'Onda')
-            print(f'\n{valores}\n')
+        col_series = []
+        for i, valor in enumerate(Cabecalho):
+            col_names = df[Colunas[i]][pd.notna(df[Colunas[i]])].unique()
+            for col in col_names:
+                col_series.append((Titulo, valor, col))
 
-            header = [(Titulo, '', 'GERAL')]
-            for valor in valores:
-                for col_name in df[Colunas[0]][pd.notna(df[Colunas[0]])].unique():
-                    header.append((Titulo, valor, col_name))
-            header = [(str(Titulo), str(valor), str(col_name)) for (Titulo, valor, col_name) in header]
-            print(f'Verificar o Header antes do MultiIndex:\n{header}')
+        header = [(Titulo, '', 'GERAL')]
+        print(f'\ncol_series:\n{col_series}')
+        header = header + col_series
+        print(f'\nheader:\n{header}')
+        print(f'\ntamanho header:\t{len(header)}')
+            
+        header = pd.MultiIndex.from_tuples(header)
+        print(f'\ntabela_geral.columns:\n{tabela_geral.columns}')
+        print(f'\ntamanho tabela_geral.columns:\t{len(tabela_geral.columns)}')
+        tabela_geral.columns = header
+        tabela_geral
+        print(f'\n{tabela_geral}\n')
 
-            header = pd.MultiIndex.from_tuples(header)
-            print(f'HEADER:\n{header}\n')
-            print(f'TAMANHO DE HEADER:\n{len(header)}\n')
-            print(f'COLUNAS:\n{tabela_geral.columns}\n')
-            print(f'TAMANHO DAS COLUNAS:\n{len(tabela_geral.columns)}\n')
-            tabela_geral.columns = header
-            tabela_geral
-            print(f'{tabela_geral}\n')
-
-        else:
-            Cabecalho = Cabecalho.split(sep=', ')
-            print(f'Cabeçalho:\n{Cabecalho}')
-            header_above = []
-            print(f'\ntabela_geral.columns:\n{tabela_geral.columns}')
-            for col in tabela_geral.columns:
-                valor = col.split(sep=' - ')[0]
-                print(f'\nvalor: {valor}')
-                header_above.append(valor)
-            print(f'\nheader_above:\n{header_above}')
-
-            col_series = []
-            for i, valor in enumerate(Cabecalho):
-                col_names = df[Colunas[i]][pd.notna(df[Colunas[i]])].unique()
-                for col in col_names:
-                    col_series.append((Titulo, valor, col))
-
-            header = [(Titulo, '', 'GERAL')]
-            print(f'\ncol_series:\n{col_series}')
-            header = header + col_series
-            print(f'\nheader:\n{header}')
-            print(f'\ntamanho header:\t{len(header)}')
-                
-            header = pd.MultiIndex.from_tuples(header)
-            print(f'\ntabela_geral.columns:\n{tabela_geral.columns}')
-            print(f'\ntamanho tabela_geral.columns:\t{len(tabela_geral.columns)}')
-            tabela_geral.columns = header
-            tabela_geral
-            print(f'\n{tabela_geral}\n')
-
-        todas_tabelas_gerais.append(tabela_geral)
+    todas_tabelas_gerais.append(tabela_geral)
 
     return todas_tabelas_gerais
 

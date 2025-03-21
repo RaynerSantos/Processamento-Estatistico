@@ -6,6 +6,8 @@ import io
 from io import BytesIO
 from databases.metodos import processamento
 import streamlit as st
+from openpyxl import Workbook
+from openpyxl.utils.dataframe import dataframe_to_rows
 
 # CSS personalizado
 st.markdown(
@@ -61,6 +63,58 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
+# Função para salvar as tabelas em um único Excel com única aba
+def salvar_excel_aba_unica(todas_tabelas_gerais, bd_processamento):
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        workbook = writer.book
+        worksheet = workbook.add_worksheet("Processamento_Estatistico")
+        writer.sheets["Processamento_Estatistico"] = worksheet
+
+        linha_atual = 0  # Controle da linha onde cada tabela será escrita
+        percent_format = workbook.add_format({'num_format': '0.0%'})
+        int_format = workbook.add_format({'num_format': '0'})
+        float_format = workbook.add_format({'num_format': '0.0'})
+
+        for i, tabela in enumerate(todas_tabelas_gerais):
+            # Escreve o nome da tabela antes dela
+            worksheet.write(linha_atual, 0, f'Tabela{i} - {bd_processamento["Var_Linha"][i]}')
+            linha_atual += 1
+
+            # Salva a tabela na linha atual
+            tabela.to_excel(writer, sheet_name="Processamento_Estatistico", startrow=linha_atual, startcol=0)
+
+            # Formatação personalizada (igual à função original, mas ajustando para a aba única)
+            tipo = bd_processamento['TipoTabela'][i]
+            tamanho = len(tabela)
+
+            if tipo in ['NPS', 'IPA_10']:
+                for row in range(linha_atual + 4, linha_atual + tamanho + 3): 
+                    worksheet.set_row(row, None, percent_format)
+                for row in range(linha_atual + len(tabela[:-2]) + 3, linha_atual + tamanho + 2):  
+                    worksheet.set_row(row, None, float_format) 
+                for row in range(linha_atual + len(tabela[:-2]) + 4, linha_atual + tamanho + 4): 
+                    worksheet.set_row(row, None, int_format)
+
+            elif tipo == 'MULTIPLA':
+                for row in range(linha_atual + 4, linha_atual + tamanho + 4):
+                    worksheet.set_row(row, None, percent_format)
+                for row in range(linha_atual + len(tabela[:-2]) + 3, linha_atual + tamanho + 6): ###
+                    worksheet.set_row(row, None, int_format) ###
+                worksheet.set_row(linha_atual + tamanho + 3, None, float_format)
+
+            else:
+                for row in range(linha_atual + 3, linha_atual + tamanho + 4):
+                    worksheet.set_row(row, None, percent_format)
+                for row in range(linha_atual + len(tabela[:-2]) + 4, linha_atual + tamanho + 4):
+                    worksheet.set_row(row, None, int_format)
+
+            linha_atual += tamanho + 3 + 4  # Adiciona +4 para considerar o cabeçalho e +3 de espaçamento
+
+    return output.getvalue()
+
+
 
 # Função para salvar as tabelas em um único Excel com várias abas e formatação
 def salvar_excel_com_formatacao(todas_tabelas_gerais, bd_processamento):
@@ -143,19 +197,30 @@ if data and bd_processamento:
     nome_sheet_DATA = st.session_state.nome_sheet_DATA
     data = pd.read_excel(data, sheet_name=nome_sheet_DATA)
     bd_processamento = pd.read_excel(bd_processamento)
+
+# Formato do output (uma única aba ou para cada tabela processada gerar uma nova aba)
+with st.form(key='output_excel'):
+    tipo_output = st.selectbox(label='Informe a opção do formato para o output desejado', options=['Única aba', 'Várias abas'])
+    # input_buttom_submit_output = st.form_submit_button("Enviar")
+    processar_dados = st.form_submit_button("Processar Dados")
+    st.session_state.tipo_output = tipo_output
+
+# Botão para processar os dados
+if processar_dados:
+    # Processar os dados e obter as tabelas
+    todas_tabelas_gerais = processamento(data, bd_processamento)
     
-    # Botão para processar os dados
-    if st.button("Processar Dados"):
-        # Processar os dados e obter as tabelas
-        todas_tabelas_gerais = processamento(data, bd_processamento)
-        
+    if tipo_output == 'Várias abas':
         # Salvar em Excel com formatação
         excel_data = salvar_excel_com_formatacao(todas_tabelas_gerais, bd_processamento=bd_processamento)
-        
-        # Link para download
-        st.download_button(
-            label="Baixar Excel Processado",
-            data=excel_data,
-            file_name="Processamento.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+    elif tipo_output == 'Única aba':
+        # Salvar em Excel com formatação
+        excel_data = salvar_excel_aba_unica(todas_tabelas_gerais, bd_processamento=bd_processamento)
+    
+    # Link para download
+    st.download_button(
+        label="Baixar Excel Processado",
+        data=excel_data,
+        file_name="Processamento.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )

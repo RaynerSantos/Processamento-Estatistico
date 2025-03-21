@@ -50,20 +50,19 @@ def funcao_agrupamento(variavel, BTB, TTB):
     return nova_var
 
 TipoTabela = 'MULTIPLA'
-Colunas = 'ONDA, EMP_G, VAR_G, GC_G, ME_G, ESP_G, PJ_G, PF_G'
-Var_ID = 'ID_EMP'
-Possui_Onda = 'NAO'
-Cabecalho = 'ONDA, Empreendedores, Varejo, GC, ME, Especiais, Pessoa Jurídica, Pessoa Física'
-Var_linha = 'REC'
+Colunas = 'TOTX, ONDA_G, AT_O, ATGREN, ATEXP, ATCAN, AT_EMP, AT_VAR, AT_POS, NAT_O, NAGREN, NAEXP, NACAN, NA_EMP, NA_VAR, NA_POS, EARLY_G, EARLY_SEG, EARLY_17, EARLY_CLI, EARLY_SCL, EARLY_C17, EARLY_NCL, EARLY_SNCL, EARLY_NC17'
+Cabecalho = 'Geral Ativo+Não Ativo, GERAL NÃO ATIVO + ATIVO POR ONDA, ATIVO por onda, ATIVO - Greenfield, ATIVO - Experiente, ATIVO - Canais, ATIVO - Empreendedores, ATIVO - Varejo, ATIVO - POS, NÃO ATIVO por onda, NÃO ATIVO - Greenfield, NÃO ATIVO - Experiente, NÃO ATIVO - Canais, NÃO ATIVO - Empreendedores, NÃO ATIVO - Varejo, NÃO ATIVO - POS, Early Churn (GERAL) :: 1T24, Early Churn (Segmento) :: 1T24, Early Churn (Green vs Exp) :: 1T24, Early Churn - Cliente - (GERAL) :: 1T24, Early Churn - Cliente - (Segmento) :: 1T24, Early Churn - Cliente - (Green vs Exp) :: 1T24, Early Churn - Não Cliente - (GERAL) :: 1T24, Early Churn - Não Cliente - (Segmento) :: 1T24, Early Churn - Não Cliente - (Green vs Exp) :: 1T24'
+Var_linha = 'MSITE'
 NS_NR = 'NAO'
 valores_BTB = ''
 valores_TTB = ''
-Valores_Agrup = 'REC_1, REC_2, REC_3'
-Fecha_100 = 'NAO'
+Valores_Agrup = 'MSITE_1, MSITE_2, MSITE_3'
+Fecha_100 = 'SIM'
+Var_ID = 'ID_EMP'
 Var_Pond = 'POND'
-Titulo = 'Q5. Por quais motivos você recomendaria a Cielo; o que você vê de melhor nela?'
+Titulo = 'Q6. De quais informações sentiu falta? Mais alguma?'
 
-df = pd.read_excel('BASES PARA PROCESSAMENTO\Base Cielo Satisfacao para teste\BD_CIELO_Satisfacao.xlsx', sheet_name='BD_LABELS')
+df = pd.read_excel('BASES PARA PROCESSAMENTO\Cielo Afiliação_3T24\EMP_Cielo Afiliação_3T24_v02_Rayner.xlsx', sheet_name='BD_LABELS')
 
 # Variáveis para as colunas da tabela (bandeiras)
 Colunas = Colunas.split(sep=', ')
@@ -426,65 +425,34 @@ else:
     tabela_geral.rename(columns={tabela_geral.columns[0]: 'Geral'}, inplace=True)
     print(f'TABELA GERAL:\n{tabela_geral.iloc[:, 0:10]}\n')
 
-#===== Adicionar cabeçalho a tabela =====#
-if Possui_Onda == 'SIM':
-    header_above = []
-    for col in tabela_geral.columns:
-        valor = col.split(sep=' - ')[0]
-        header_above.append(valor)
-    print(f'\n{header_above}\n')
-    tamanho = len(df[Colunas[0]][pd.notna(df[Colunas[0]])].unique())
 
-    valores = []
-    for i in range((tamanho+1), len(header_above) , tamanho):
-        valores.append(header_above[i])
-    valores.insert(0, 'Onda')
-    print(f'\n{valores}\n')
+Cabecalho = Cabecalho.split(sep=', ')
+print(f'Cabeçalho:\n{Cabecalho}')
+header_above = []
+print(f'\ntabela_geral.columns:\n{tabela_geral.columns}')
+for col in tabela_geral.columns:
+    valor = col.split(sep=' - ')[0]
+    print(f'\nvalor: {valor}')
+    header_above.append(valor)
+print(f'\nheader_above:\n{header_above}')
 
-    header = [(Titulo, '', 'GERAL')]
-    for valor in valores:
-        for col_name in df[Colunas[0]][pd.notna(df[Colunas[0]])].unique():
-            header.append((Titulo, valor, col_name))
-    header = [(str(Titulo), str(valor), str(col_name)) for (Titulo, valor, col_name) in header]
-    print(f'Verificar o Header antes do MultiIndex:\n{header}')
+col_series = []
+for i, valor in enumerate(Cabecalho):
+    col_names = df[Colunas[i]][pd.notna(df[Colunas[i]])].unique()
+    for col in col_names:
+        col_series.append((Titulo, valor, col))
 
-    header = pd.MultiIndex.from_tuples(header)
-    print(f'HEADER:\n{header}\n')
-    print(f'TAMANHO DE HEADER:\n{len(header)}\n')
-    print(f'COLUNAS:\n{tabela_geral.columns}\n')
-    print(f'TAMANHO DAS COLUNAS:\n{len(tabela_geral.columns)}\n')
-    tabela_geral.columns = header
-    tabela_geral
-    print(f'{tabela_geral}\n')
-
-else:
-    Cabecalho = Cabecalho.split(sep=', ')
-    print(f'Cabeçalho:\n{Cabecalho}')
-    header_above = []
-    print(f'\ntabela_geral.columns:\n{tabela_geral.columns}')
-    for col in tabela_geral.columns:
-        valor = col.split(sep=' - ')[0]
-        print(f'\nvalor: {valor}')
-        header_above.append(valor)
-    print(f'\nheader_above:\n{header_above}')
-
-    col_series = []
-    for i, valor in enumerate(Cabecalho):
-        col_names = df[Colunas[i]][pd.notna(df[Colunas[i]])].unique()
-        for col in col_names:
-            col_series.append((Titulo, valor, col))
-
-    header = [(Titulo, '', 'GERAL')]
-    print(f'\ncol_series:\n{col_series}')
-    header = header + col_series
-    print(f'\nheader:\n{header}')
-    print(f'\ntamanho header:\t{len(header)}')
-        
-    header = pd.MultiIndex.from_tuples(header)
-    print(f'\ntabela_geral.columns:\n{tabela_geral.columns}')
-    print(f'\ntamanho tabela_geral.columns:\t{len(tabela_geral.columns)}')
-    tabela_geral.columns = header
-    tabela_geral
-    print(f'\n\n TABELA GERAL FINAL:\n{tabela_geral}\n')
+header = [(Titulo, '', 'GERAL')]
+print(f'\ncol_series:\n{col_series}')
+header = header + col_series
+print(f'\nheader:\n{header}')
+print(f'\ntamanho header:\t{len(header)}')
+    
+header = pd.MultiIndex.from_tuples(header)
+print(f'\ntabela_geral.columns:\n{tabela_geral.columns}')
+print(f'\ntamanho tabela_geral.columns:\t{len(tabela_geral.columns)}')
+tabela_geral.columns = header
+tabela_geral
+print(f'\n\n TABELA GERAL FINAL:\n{tabela_geral}\n')
 
 

@@ -174,8 +174,15 @@ st.write("")
 st.markdown("Faça o upload do banco de dados na <u>***versão Labels***</u> e da planilha de sintaxe, ambas em Excel para realizar o Processamento.", 
             unsafe_allow_html=True)
 
+st.markdown("---")
+st.markdown("### 📥 Clique na imagem abaixo para baixar um exemplo de planilha")
+
 st.markdown(
     """
+    <a href="https://github.com/SEU_USUARIO/SEU_REPOSITORIO/raw/main/exemplo.xlsx" download>
+        <img src="https://i.imgur.com/7kQEsHU.png" alt="Download Excel" width="200">
+    </a>
+    
     📄 [Documentação do App em PDF](https://github.com/RaynerSantos/Processamento-Estatistico/blob/main/Documenta%C3%A7%C3%A3o%20-%20Processamento%20do%20Estat%C3%ADstico.pdf)
     """,
     unsafe_allow_html=True

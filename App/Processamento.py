@@ -30,7 +30,7 @@ st.markdown(
 
     /* Cor do título */
     h1 {
-        color: #20541B; /* Branco */
+        color: #20541B; /* white */
         text-align: center;
     }
 
@@ -170,18 +170,21 @@ def salvar_excel_com_formatacao(todas_tabelas_gerais, bd_processamento):
 st.title("Processamento do Estatístico")
 st.write("")
 st.write("")
-# st.write("Faça o upload do banco de dados na ***versão Labels*** e da planilha de sintaxe ambas em Excel para realizar o Processamento.")
-st.markdown("Faça o upload do banco de dados na <u>***versão Labels***</u> e da planilha de sintaxe, ambas em Excel para realizar o Processamento.", 
-            unsafe_allow_html=True)
+st.markdown(
+    """
+    <h5 style="color: white; text-align: center;">
+        Faça o upload do banco de dados na versão LABELS e da planilha de sintaxe, <u><span style="font-weight: 900;">ambas em Excel</span></u> para realizar o Processamento.
+    </h5>
+    """,
+    unsafe_allow_html=True
+)
 
-st.markdown("---")
-st.markdown("### 📥 Clique na imagem abaixo para baixar um exemplo de planilha")
+st.write("")
+st.write("")
 
 st.markdown(
     """
-    <a href="https://github.com/SEU_USUARIO/SEU_REPOSITORIO/raw/main/exemplo.xlsx" download>
-        <img src="https://i.imgur.com/7kQEsHU.png" alt="Download Excel" width="200">
-    </a>
+    📥 [Exemplo da Sintaxe](https://view.officeapps.live.com/op/view.aspx?src=https%3A%2F%2Fraw.githubusercontent.com%2FRaynerSantos%2FProcessamento-Estatistico%2Frefs%2Fheads%2Fupdate-solicitado-sintaxe%2FSintaxe_Exemplo.xlsx&wdOrigin=BROWSELINK)
     
     📄 [Documentação do App em PDF](https://github.com/RaynerSantos/Processamento-Estatistico/blob/main/Documenta%C3%A7%C3%A3o%20-%20Processamento%20do%20Estat%C3%ADstico.pdf)
     """,
@@ -189,6 +192,8 @@ st.markdown(
 )
 
 st.write("")
+st.write("")
+
 
 # Upload das planilhas
 with st.form(key='sheet_name_data'):
@@ -204,6 +209,9 @@ if data and bd_processamento:
     nome_sheet_DATA = st.session_state.nome_sheet_DATA
     data = pd.read_excel(data, sheet_name=nome_sheet_DATA)
     bd_processamento = pd.read_excel(bd_processamento)
+
+st.write("")
+st.write("")
 
 # Formato do output (uma única aba ou para cada tabela processada gerar uma nova aba)
 with st.form(key='output_excel'):

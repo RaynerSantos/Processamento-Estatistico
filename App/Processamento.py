@@ -201,9 +201,10 @@ if data and bd_processamento:
 # Formato do output (uma única aba ou para cada tabela processada gerar uma nova aba)
 with st.form(key='output_excel'):
     tipo_output = st.selectbox(label='Informe a opção do formato para o output desejado', options=['Única aba', 'Várias abas'])
-    # input_buttom_submit_output = st.form_submit_button("Enviar")
+    excel_name = st.text_input(label='Informe o nome desejado para a planilha com o output do Processamento  Estatístico')
     processar_dados = st.form_submit_button("Processar Dados")
     st.session_state.tipo_output = tipo_output
+    st.session_state.excel_name = excel_name
 
 # Botão para processar os dados
 if processar_dados:
@@ -221,6 +222,6 @@ if processar_dados:
     st.download_button(
         label="Baixar Excel Processado",
         data=excel_data,
-        file_name="Processamento.xlsx",
+        file_name=st.session_state.excel_name + ".xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )

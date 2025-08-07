@@ -200,9 +200,11 @@ with st.form(key='sheet_name_data'):
     nome_sheet_DATA = st.text_input(label="📝 Insira o nome da sheet (aba) no qual contém o banco de dados com os LABELS")
     input_buttom_submit_DATA = st.form_submit_button("Enviar")
 st.session_state.nome_sheet_DATA = nome_sheet_DATA
+if input_buttom_submit_DATA:
+    st.write("Nome da sheet (aba) da planilha enviado com sucesso ✅")
 
-data = st.file_uploader("📂 Selecione o banco de dados", type=["xlsx"])
-bd_processamento = st.file_uploader("📂 Selecione a planilha com a Sintaxe para a criação das tabelas", type=["xlsx"])
+data = st.file_uploader("📂 Selecione o banco de dados (em xlsx)", type=["xlsx"])
+bd_processamento = st.file_uploader("📂 Selecione a planilha com a Sintaxe para a criação das tabelas (em xlsx)", type=["xlsx"])
 
 if data and bd_processamento:
     st.write("✅ Planilhas carregadas com sucesso!")

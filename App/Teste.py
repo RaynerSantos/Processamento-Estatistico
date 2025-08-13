@@ -50,19 +50,19 @@ def funcao_agrupamento(variavel, BTB, TTB):
     return nova_var
 
 TipoTabela = 'MULTIPLA'
-Colunas = 'TOTX, ONDA_G, AT_O, ATGREN, ATEXP, ATCAN, AT_EMP, AT_VAR, AT_POS, NAT_O, NAGREN, NAEXP, NACAN, NA_EMP, NA_VAR, NA_POS, EARLY_G, EARLY_SEG, EARLY_17, EARLY_CLI, EARLY_SCL, EARLY_C17, EARLY_NCL, EARLY_SNCL, EARLY_NC17'
-Cabecalho = 'Geral Ativo+Não Ativo, GERAL NÃO ATIVO + ATIVO POR ONDA, ATIVO por onda, ATIVO - Greenfield, ATIVO - Experiente, ATIVO - Canais, ATIVO - Empreendedores, ATIVO - Varejo, ATIVO - POS, NÃO ATIVO por onda, NÃO ATIVO - Greenfield, NÃO ATIVO - Experiente, NÃO ATIVO - Canais, NÃO ATIVO - Empreendedores, NÃO ATIVO - Varejo, NÃO ATIVO - POS, Early Churn (GERAL) :: 1T24, Early Churn (Segmento) :: 1T24, Early Churn (Green vs Exp) :: 1T24, Early Churn - Cliente - (GERAL) :: 1T24, Early Churn - Cliente - (Segmento) :: 1T24, Early Churn - Cliente - (Green vs Exp) :: 1T24, Early Churn - Não Cliente - (GERAL) :: 1T24, Early Churn - Não Cliente - (Segmento) :: 1T24, Early Churn - Não Cliente - (Green vs Exp) :: 1T24'
-Var_linha = 'MSITE'
+Colunas = 'TOTX, ONDA_G, EMP_G, VAR_G, GC_G, PJ_G, PF_G, GER_COL, TIPO_CIELO, COL_EMPX, COL_EMP, COL_VARX, COL_VAR'
+Cabecalho = 'GERAL, Ondas, Empreendedores (PF+PJ), Varejo (PF+PJ), Grandes Contas (PF+PJ), Pessoa Jurídica, Pessoa Física, Geral - Cielo (Cati +  Campo) - JUL25, Cielo CATI e CAMPO - JUL25, EMP - Cielo (Cati +  Campo) - JUL25, EMP - Cielo CATI e CAMPO - JUL25, VAREJO - Cielo (Cati +  Campo) - JUL25, VAREJO - Cielo CATI e CAMPO - JUL'
+Var_linha = 'NER'
 NS_NR = 'NAO'
 valores_BTB = ''
 valores_TTB = ''
-Valores_Agrup = 'MSITE_1, MSITE_2, MSITE_3'
-Fecha_100 = 'SIM'
+Valores_Agrup = 'NER_1, NER_2, NER_3'
+Fecha_100 = 'NAO'
 Var_ID = 'ID_EMP'
 Var_Pond = 'POND'
-Titulo = 'Q6. De quais informações sentiu falta? Mais alguma?'
+Titulo = 'NER_1. Por que a ________ não ganhou uma nota maior, como 9 ou 10? Rede'
 
-df = pd.read_excel('BASES PARA PROCESSAMENTO\Cielo Afiliação_3T24\EMP_Cielo Afiliação_3T24_v02_Rayner.xlsx', sheet_name='BD_LABELS')
+df = pd.read_excel(r'C:\PROJETOS\Processamento-Estatistico\BASES PARA PROCESSAMENTO\Cielo NPS 2025\Jul25\EMP_Cielo Satisfacao_2onda_JUL25_v02.xlsx', sheet_name='bdlabels')
 
 # Variáveis para as colunas da tabela (bandeiras)
 Colunas = Colunas.split(sep=', ')
@@ -132,14 +132,22 @@ elif TipoTabela == 'MULTIPLA':
         df_NS_NR = df.copy()
         
         Valores_Agrup = Valores_Agrup.split(sep=', ')
+        # Converte as colunas de motivos para string, preservando NaN
+        for c in Valores_Agrup:
+            df[c] = df[c].astype("object").where(df[c].isna(), df[c].astype(str))
+            df_NS_NR[c] = df_NS_NR[c].astype("object").where(df_NS_NR[c].isna(), df_NS_NR[c].astype(str))
+
         bd_motivo = pd.melt(df, 
                     id_vars=Colunas + [Var_Pond] + [Var_ID],
                     value_vars=Valores_Agrup, 
                     var_name='Valores', 
                     value_name=Var_linha)
         bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('NS/NR', np.nan)
+        print(bd_motivo[Var_linha].head(20))
+        print(bd_motivo[Var_linha].isna().sum())
         bd_motivo[Var_linha] = pd.Categorical(bd_motivo[Var_linha], categories=ordenar_valores(bd_motivo[Var_linha]), ordered=True)  
-        
+        print(bd_motivo[Var_linha])
+
         df_limpo = bd_motivo.dropna(subset=[Var_linha])
         df_unico = df_limpo.drop_duplicates(subset=Var_ID, keep='first')
                 

@@ -184,9 +184,9 @@ st.write("")
 
 st.markdown(
     """
-    📥 [Exemplo da Sintaxe](https://view.officeapps.live.com/op/view.aspx?src=https%3A%2F%2Fraw.githubusercontent.com%2FRaynerSantos%2FProcessamento-Estatistico%2Frefs%2Fheads%2Fupdate-solicitado-sintaxe%2FSintaxe_Exemplo.xlsx&wdOrigin=BROWSELINK)
-    
     📄 [Documentação do App em PDF](https://github.com/RaynerSantos/Processamento-Estatistico/blob/main/Documenta%C3%A7%C3%A3o%20-%20Processamento%20do%20Estat%C3%ADstico.pdf)
+    
+    📥 [Exemplo da Sintaxe](https://view.officeapps.live.com/op/view.aspx?src=https%3A%2F%2Fraw.githubusercontent.com%2FRaynerSantos%2FProcessamento-Estatistico%2Frefs%2Fheads%2Fupdate-solicitado-sintaxe%2FSintaxe_Exemplo.xlsx&wdOrigin=BROWSELINK)
     """,
     unsafe_allow_html=True
 )

@@ -224,6 +224,12 @@ def processamento(data, bd_processamento):
                 df_NS_NR = df.copy()
                 
                 Valores_Agrup = Valores_Agrup.split(sep=', ')
+
+                # Converte as colunas de motivos para string, preservando NaN
+                for c in Valores_Agrup:
+                    df[c] = df[c].astype("object").where(df[c].isna(), df[c].astype(str))
+                    df_NS_NR[c] = df_NS_NR[c].astype("object").where(df_NS_NR[c].isna(), df_NS_NR[c].astype(str))
+
                 bd_motivo = pd.melt(df, 
                             id_vars=Colunas + [Var_Pond] + [Var_ID],
                             value_vars=Valores_Agrup, 

@@ -50,9 +50,10 @@ def funcao_agrupamento(variavel, BTB, TTB):
     return nova_var
 
 TipoTabela = 'SIMPLES'
-Colunas = 'TOTX, ONDA_G, EMP_G, VAR_G, GC_G, PJ_G, PF_G, GER_COL, TIPO_CIELO, COL_EMPX, COL_EMP, COL_VARX, COL_VAR'
-Cabecalho = 'GERAL, Ondas, Empreendedores (PF+PJ), Varejo (PF+PJ), Grandes Contas (PF+PJ), Pessoa Jurídica, Pessoa Física, Geral - Cielo (Cati +  Campo) - JUL25, Cielo CATI e CAMPO - JUL25, EMP - Cielo (Cati +  Campo) - JUL25, EMP - Cielo CATI e CAMPO - JUL25, VAREJO - Cielo (Cati +  Campo) - JUL25, VAREJO - Cielo CATI e CAMPO - JUL'
-Var_linha = 'NEU_IT'
+Colunas = 'ONDA, VSEG_BU, VSEG_1, PF_PJ, VREG'
+Ordem_ONDA = 'ONDA_G, Jul24, Nov24, Mar25, Jul25'
+Cabecalho = 'Onda, Segmento BU, Segmento, Pessoa, Regional'
+Var_linha = 'ADER_AG2'
 NS_NR = 'NAO'
 valores_BTB = ''
 valores_TTB = ''
@@ -60,14 +61,26 @@ Valores_Agrup = ''
 Fecha_100 = ''
 Var_ID = 'ID_EMP'
 Var_Pond = 'POND'
-Titulo = 'NEU_IT. Sua nota siginifica que indicaria a:  Itau'
+Titulo = 'Aderencia Mono e Multi'
 
-df = pd.read_excel(r'C:\PROJETOS\Processamento-Estatistico\BASES PARA PROCESSAMENTO\Cielo NPS 2025\Jul25\EMP_Cielo Satisfacao_2onda_JUL25_v02.xlsx', sheet_name='bdlabels')
+df = pd.read_excel(r'C:\PROJETOS\Processamento-Estatistico\BASES PARA PROCESSAMENTO\Cielo NPS 2025\OB\BD_Cielo_NPS_Fev25_2025.03.14_completo.xlsx', sheet_name='BD_CODIGOS')
 
 # Variáveis para as colunas da tabela (bandeiras)
 Colunas = Colunas.split(sep=', ')
+Ordem_ONDA = Ordem_ONDA.split(sep=', ')
+# Ordenar usando a ordem definida em Ordem_ONDA
+pos = {valor: i for i, valor in enumerate(Ordem_ONDA[1:])}
+
 for col in Colunas:
-    df[col] = pd.Categorical(df[col], categories=df[col][pd.notna(df[col])].unique(), ordered=True)
+    if Ordem_ONDA[0] in col:
+        ONDA = df[col][pd.notna(df[col])].unique()
+        print(f'ONDA: {ONDA}')
+        ONDA_G_ordenada = sorted(list(ONDA), key=lambda x: pos.get(x, float('inf')))
+        df[col] = pd.Categorical(df[col], categories=ONDA_G_ordenada, ordered=True)
+        print(df[col].unique(), '\n')
+    else:
+        df[col] = pd.Categorical(df[col], categories=df[col][pd.notna(df[col])].unique(), ordered=True)
+        print(df[col].unique(), '\n')
    
 # Transformação na variável para a linha da tabela
 if TipoTabela == 'SIMPLES':

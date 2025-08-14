@@ -207,10 +207,10 @@ data = st.file_uploader("📂 Selecione o banco de dados (em xlsx)", type=["xlsx
 bd_processamento = st.file_uploader("📂 Selecione a planilha com a Sintaxe para a criação das tabelas (em xlsx)", type=["xlsx"])
 
 if data and bd_processamento:
-    st.write("✅ Planilhas carregadas com sucesso!")
     nome_sheet_DATA = st.session_state.nome_sheet_DATA
     data = pd.read_excel(data, sheet_name=nome_sheet_DATA)
     bd_processamento = pd.read_excel(bd_processamento)
+    st.write("✅ Planilhas carregadas com sucesso!")
 
 st.write("")
 st.write("")

@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 # from statsmodels.stats.proportion import proportions_ztest
 from collections import Counter
+import io
+from io import BytesIO
 
 # pip install pandas
 # pip install numpy
@@ -155,7 +157,7 @@ def processamento(data, bd_processamento):
 
         df = data.copy()
 
-
+        print(f'\n#===== VAR_LINHA =====#\n{Var_linha}\n')
         # Variáveis para as colunas da tabela (bandeiras)
         Colunas = Colunas.split(sep=', ')
         for col in Colunas:
@@ -556,8 +558,8 @@ def processamento(data, bd_processamento):
         print(f'\ntabela_geral.columns:\n{tabela_geral.columns}')
         print(f'\ntamanho tabela_geral.columns:\t{len(tabela_geral.columns)}')
         tabela_geral.columns = header
-        tabela_geral
-        print(f'\n{tabela_geral}\n')
+        print(f'\n\n #===== TABELA GERAL FINAL =====#\n{tabela_geral}\n')
+        print(f'#========================================================================#\n')
 
         todas_tabelas_gerais.append(tabela_geral)
 
@@ -571,3 +573,103 @@ def processamento(data, bd_processamento):
 
 # print(todas_tabelas_gerais[0])
 # print(todos_resultados_teste[0])
+
+
+# Função para salvar as tabelas em um único Excel com única aba
+def salvar_excel_aba_unica(todas_tabelas_gerais, bd_processamento):
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        workbook = writer.book
+        worksheet = workbook.add_worksheet("Processamento_Estatistico")
+        writer.sheets["Processamento_Estatistico"] = worksheet
+
+        linha_atual = 0  # Controle da linha onde cada tabela será escrita
+        percent_format = workbook.add_format({'num_format': '0.0%'})
+        int_format = workbook.add_format({'num_format': '0'})
+        float_format = workbook.add_format({'num_format': '0.0'})
+
+        for i, tabela in enumerate(todas_tabelas_gerais):
+            # Escreve o nome da tabela antes dela
+            worksheet.write(linha_atual, 0, f'Tabela{i} - {bd_processamento["Var_Linha"][i]}')
+            linha_atual += 1
+
+            # Salva a tabela na linha atual
+            tabela.to_excel(writer, sheet_name="Processamento_Estatistico", startrow=linha_atual, startcol=0)
+
+            # Formatação personalizada (igual à função original, mas ajustando para a aba única)
+            tipo = bd_processamento['TipoTabela'][i]
+            tamanho = len(tabela)
+
+            if tipo in ['NPS', 'IPA_10']:
+                for row in range(linha_atual + 4, linha_atual + tamanho + 3): 
+                    worksheet.set_row(row, None, percent_format)
+                for row in range(linha_atual + len(tabela[:-2]) + 3, linha_atual + tamanho + 2):  
+                    worksheet.set_row(row, None, float_format) 
+                for row in range(linha_atual + len(tabela[:-2]) + 4, linha_atual + tamanho + 4): 
+                    worksheet.set_row(row, None, int_format)
+
+            elif tipo == 'MULTIPLA':
+                for row in range(linha_atual + 4, linha_atual + tamanho + 4):
+                    worksheet.set_row(row, None, percent_format)
+                for row in range(linha_atual + len(tabela[:-2]) + 3, linha_atual + tamanho + 6): ###
+                    worksheet.set_row(row, None, int_format) ###
+                worksheet.set_row(linha_atual + tamanho + 3, None, float_format)
+
+            else:
+                for row in range(linha_atual + 3, linha_atual + tamanho + 4):
+                    worksheet.set_row(row, None, percent_format)
+                for row in range(linha_atual + len(tabela[:-2]) + 4, linha_atual + tamanho + 4):
+                    worksheet.set_row(row, None, int_format)
+
+            linha_atual += tamanho + 3 + 4  # Adiciona +4 para considerar o cabeçalho e +3 de espaçamento
+
+    return output.getvalue()
+
+
+
+# Função para salvar as tabelas em um único Excel com várias abas e formatação
+def salvar_excel_com_formatacao(todas_tabelas_gerais, bd_processamento):
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        for i, tabela in enumerate(bd_processamento['Var_Linha']):
+            nome_aba = f'Tabela{i} {tabela}'
+            todas_tabelas_gerais[i].to_excel(writer, sheet_name=nome_aba, index=True)
+            workbook = writer.book
+            worksheet = writer.sheets[nome_aba]
+
+            # Formatar as linhas que deverão estar com formatação de percentual
+            percent_format = workbook.add_format({'num_format': '0.0%'})
+            if (bd_processamento['TipoTabela'][i] == 'NPS') | (bd_processamento['TipoTabela'][i] == 'IPA_10'):
+                tamanho = len(todas_tabelas_gerais[i])
+                for row in range(4, tamanho+1):
+                    worksheet.set_row(row, None, percent_format)
+                # Formatar as linhas que não terão casas decimais
+                num_format = workbook.add_format({'num_format': '0'})
+                for row in range((len(todas_tabelas_gerais[i][:-2])+4), (len(todas_tabelas_gerais[i])+4)):
+                    worksheet.set_row(row, None, num_format)
+
+            elif (bd_processamento['TipoTabela'][i] == 'MULTIPLA'):
+                tamanho = len(todas_tabelas_gerais[i])
+                # Formatar as linhas que deverão estar com formatação de percentual
+                for row in range(4, tamanho+1):
+                    worksheet.set_row(row, None, percent_format)
+                # Formatar as linhas que não terão casas decimais
+                num_format = workbook.add_format({'num_format': '0'})
+                for row in range((len(todas_tabelas_gerais[i])+1), (len(todas_tabelas_gerais[i])+2)):
+                    worksheet.set_row(row, None, num_format)
+                # Formatar o Índice de Multiplicidade que terá somente 1 casa decimal
+                num_format = workbook.add_format({'num_format': '0.0'})
+                for row in range((len(todas_tabelas_gerais[i])+3), (len(todas_tabelas_gerais[i])+4)):
+                    worksheet.set_row(row, None, num_format)
+
+            else:
+                tamanho = len(todas_tabelas_gerais[i]) + 4
+                # Formatar as linhas que deverão estar com formatação de percentual
+                for row in range(3, tamanho+1):
+                    worksheet.set_row(row, None, percent_format)
+                # Formatar as linhas que não terão casas decimais
+                num_format = workbook.add_format({'num_format': '0'})
+                for row in range((len(todas_tabelas_gerais[i][:-2])+4), (len(todas_tabelas_gerais[i])+4)):
+                    worksheet.set_row(row, None, num_format)
+
+    return output.getvalue()

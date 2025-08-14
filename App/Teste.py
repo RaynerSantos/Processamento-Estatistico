@@ -49,18 +49,18 @@ def funcao_agrupamento(variavel, BTB, TTB):
             nova_var.append('Neutro')
     return nova_var
 
-TipoTabela = 'MULTIPLA'
+TipoTabela = 'SIMPLES'
 Colunas = 'TOTX, ONDA_G, EMP_G, VAR_G, GC_G, PJ_G, PF_G, GER_COL, TIPO_CIELO, COL_EMPX, COL_EMP, COL_VARX, COL_VAR'
 Cabecalho = 'GERAL, Ondas, Empreendedores (PF+PJ), Varejo (PF+PJ), Grandes Contas (PF+PJ), Pessoa Jurídica, Pessoa Física, Geral - Cielo (Cati +  Campo) - JUL25, Cielo CATI e CAMPO - JUL25, EMP - Cielo (Cati +  Campo) - JUL25, EMP - Cielo CATI e CAMPO - JUL25, VAREJO - Cielo (Cati +  Campo) - JUL25, VAREJO - Cielo CATI e CAMPO - JUL'
-Var_linha = 'NER'
+Var_linha = 'NEU_IT'
 NS_NR = 'NAO'
 valores_BTB = ''
 valores_TTB = ''
-Valores_Agrup = 'NER_1, NER_2, NER_3'
-Fecha_100 = 'NAO'
+Valores_Agrup = ''
+Fecha_100 = ''
 Var_ID = 'ID_EMP'
 Var_Pond = 'POND'
-Titulo = 'NER_1. Por que a ________ não ganhou uma nota maior, como 9 ou 10? Rede'
+Titulo = 'NEU_IT. Sua nota siginifica que indicaria a:  Itau'
 
 df = pd.read_excel(r'C:\PROJETOS\Processamento-Estatistico\BASES PARA PROCESSAMENTO\Cielo NPS 2025\Jul25\EMP_Cielo Satisfacao_2onda_JUL25_v02.xlsx', sheet_name='bdlabels')
 
@@ -143,10 +143,7 @@ elif TipoTabela == 'MULTIPLA':
                     var_name='Valores', 
                     value_name=Var_linha)
         bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('NS/NR', np.nan)
-        print(bd_motivo[Var_linha].head(20))
-        print(bd_motivo[Var_linha].isna().sum())
         bd_motivo[Var_linha] = pd.Categorical(bd_motivo[Var_linha], categories=ordenar_valores(bd_motivo[Var_linha]), ordered=True)  
-        print(bd_motivo[Var_linha])
 
         df_limpo = bd_motivo.dropna(subset=[Var_linha])
         df_unico = df_limpo.drop_duplicates(subset=Var_ID, keep='first')
@@ -461,6 +458,7 @@ print(f'\ntabela_geral.columns:\n{tabela_geral.columns}')
 print(f'\ntamanho tabela_geral.columns:\t{len(tabela_geral.columns)}')
 tabela_geral.columns = header
 tabela_geral
-print(f'\n\n TABELA GERAL FINAL:\n{tabela_geral}\n')
+print(f'\n\n #===== TABELA GERAL FINAL =====#\n{tabela_geral}\n')
+print(f'#===================================================================================#\n')
 
 

@@ -13,11 +13,11 @@ from databases.metodos import processamento, salvar_excel_aba_unica, salvar_exce
 
 # todas_tabelas_gerais = processamento(df, sintaxe)
 
-TipoTabela = 'SIMPLES'
+TipoTabela = 'MULTIPLA'
 Colunas = 'ONDA, VSEG_BU, VSEG_1, PF_PJ, VREG'
 Ordem_ONDA = 'ONDA_G, Jul24, Nov24, Mar25, Jul25'
 Cabecalho = 'Onda, Segmento BU, Segmento, Pessoa, Regional'
-Var_linha = 'VSEG_BU' # ADER_AG2 | NPS_C
+Var_linha = 'MOTNEU' # ADER_AG2 | NPS_C
 NS_NR = 'NAO'
 valores_BTB = ''
 valores_TTB = ''
@@ -162,23 +162,28 @@ lista_labels = pd.read_excel(r'C:\PROJETOS\Processamento-Estatistico\BASES PARA 
 
 # --- carregar base principal ---
 df = pd.read_excel(r'C:\PROJETOS\Processamento-Estatistico\BASES PARA PROCESSAMENTO\Cielo NPS 2025\OB\BD_Cielo_NPS_Fev25_2025.03.14_completo.xlsx', sheet_name='BD_CODIGOS')
-# bd_motivo = pd.melt(df, 
-#                     id_vars=Colunas + [Var_Pond] + [Var_ID],
-#                     value_vars=Valores_Agrup, 
-#                     var_name='Valores', 
-#                     value_name=Var_linha)
+bd_motivo = pd.melt(df, 
+                    id_vars=Colunas + [Var_Pond] + [Var_ID],
+                    value_vars=Valores_Agrup, 
+                    var_name='Valores', 
+                    value_name=Var_linha)
 # bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('90', np.nan)
 # bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('99', np.nan)
 # bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('999', np.nan)
 # bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('9999', np.nan)
-# bd_motivo = bd_motivo.dropna(subset=[Var_linha])
-# print(f'bd_motivo em formato de código:\n{bd_motivo}')
-# bd_motivo = ordenar_labels_multipla(bd_motivo, lista_labels, Var_linha)
-# bd_motivo = bd_motivo.dropna(subset=[Var_linha])
-# print(f'bd_motivo finalizado:\n{bd_motivo}')
+bd_motivo = bd_motivo.dropna(subset=[Var_linha])
+print(f'bd_motivo em formato de código:\n{bd_motivo}')
 
-df[Var_linha], ord_labels = ordenar_labels(df=df, lista_labels=lista_labels, Variavel=Var_linha)
-print("\nValores únicos finais (ordenados):\n", df[Var_linha])
+
+# Var_linha_labels = ordenar_labels(df, lista_labels, Var_linha)
+# print("\nValores únicos finais (ordenados):\n", Var_linha_labels.head(5))  
+bd_motivo = ordenar_labels_multipla(bd_motivo, lista_labels, Var_linha)
+# print("\nValores únicos finais (ordenados):\n", Var_linha_labels.tail(5))  
+
+# bd_motivo[Var_linha] = ordenar_labels_multipla(bd_motivo, lista_labels, Var_linha)
+# bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('NS/NR', np.nan)
+bd_motivo = bd_motivo.dropna(subset=[Var_linha])
+print(f'bd_motivo finalizado:\n{bd_motivo}')
 
 # for col in Colunas:
 #     if col not in df.columns:

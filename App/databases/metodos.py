@@ -4,6 +4,7 @@ import numpy as np
 from collections import Counter
 import io
 from io import BytesIO
+# from utils import ordenar_labels
 
 # pip install pandas
 # pip install numpy
@@ -65,6 +66,122 @@ TABELAS = [
 
 bd_processamento = pd.DataFrame(TABELAS)
 
+def ordenar_labels(df, lista_labels, Variavel):
+    print(f"\n#== VARIÁVEL SENDO PROCESSADA: {Variavel} ==#")
+    lista_labels = lista_labels.iloc[1:, :].copy()
+    lista_labels.columns = ['Coluna', 'Codigo', 'Label']
+    lista_labels["Coluna"] = lista_labels["Coluna"].ffill().str.strip()
+
+    # Normalizar "Codigo" para numérico (trocando vírgula por ponto)
+    lista_labels["Codigo"] = (lista_labels["Codigo"].astype(str).str.strip().str.replace(',', '.', regex=False))
+    lista_labels["Codigo"] = pd.to_numeric(lista_labels["Codigo"], errors="coerce")
+    # print(lista_labels.head(6))
+
+    # Filtrar apenas os labels da coluna alvo
+    labels_sub = lista_labels.loc[lista_labels["Coluna"] == Variavel, ["Codigo", "Label"]].dropna(subset=["Codigo"])
+    labels_sub["Codigo"] = (
+        labels_sub["Codigo"]
+            .astype(str).str.strip().str.replace(",", ".", regex=False)
+    )
+    labels_sub["Codigo"] = pd.to_numeric(labels_sub["Codigo"], errors="coerce")
+    labels_sub["Codigo"] = labels_sub["Codigo"].round().astype("Int64")
+    print("\nLabels filtrados para a coluna alvo:\n", labels_sub)
+
+    # df[Variavel] = df[Variavel].replace('NS/NR', np.nan)
+    df[Variavel] = pd.to_numeric(df[Variavel], errors='coerce')  # converter para numérico, tratando erros como NaN
+    df[Variavel] = df[Variavel].round().astype("Int64")
+
+    # --- Descobrir a ordem numérica presente nos dados ---
+    print(f"\ndf[Variavel] (antes de ordenar):\n{df[Variavel].head(5)}")
+    codigos_ordenados = (
+        pd.Series(df[Variavel].dropna().unique(), dtype="Int64")
+        .sort_values()
+        .to_frame(name="Codigo")
+    )
+
+    print("\nOrdem numérica encontrada:", codigos_ordenados["Codigo"].tolist())
+
+    # --- Mapear códigos -> labels via merge (evita problemas de tipo) ---
+    ordem_mapeada = codigos_ordenados.merge(labels_sub, on="Codigo", how="left")
+    print("\nOrdem mapeada com labels:\n", ordem_mapeada)
+
+    # Categorias finais na ordem desejada
+    ord_labels = ordem_mapeada["Label"].tolist()
+    ord_labels = [label for label in ord_labels if pd.notna(label)]
+    print("\nOrdem final com labels:", ord_labels)
+
+    # Merge na base para criar uma coluna label
+    Variavel_labels = df.merge(ordem_mapeada.rename(columns={"Label": f"{Variavel}_LABEL"}),
+                left_on=Variavel, right_on="Codigo", how="left")[f"{Variavel}_LABEL"]
+    # print(f"Coluna de labels adicionada ao DataFrame:\n{df.head(10)}")
+
+    # Define categórica ordenada com as categorias encontradas
+    Variavel_labels = pd.Categorical(Variavel_labels,
+                                            categories=ord_labels,
+                                            ordered=True)
+
+    return Variavel_labels, ord_labels
+
+def ordenar_labels_multipla(df, lista_labels, Variavel):
+    lista_labels = lista_labels.iloc[1:, :]
+    lista_labels.columns = ['Coluna', 'Codigo', 'Label']
+    lista_labels["Coluna"] = lista_labels["Coluna"].fillna(method="ffill").str.strip()
+
+    # Normalizar "Codigo" para numérico (trocando vírgula por ponto)
+    lista_labels["Codigo"] = (lista_labels["Codigo"].astype(str).str.strip().str.replace(',', '.', regex=False))
+    lista_labels['Codigo'] = pd.to_numeric(lista_labels["Codigo"], errors='ignore')
+    # print(lista_labels.head(6))
+
+    # Filtrar apenas os labels da coluna alvo
+    labels_sub = lista_labels.loc[lista_labels["Coluna"] == f'{Variavel}_1', ["Codigo", "Label"]].dropna(subset=["Codigo"])
+    labels_sub["Codigo"] = (
+        labels_sub["Codigo"]
+            .astype(str).str.strip().str.replace(",", ".", regex=False)
+    )
+    labels_sub["Codigo"] = pd.to_numeric(labels_sub["Codigo"], errors="coerce")
+    labels_sub["Codigo"] = labels_sub["Codigo"].round().astype("Int64")
+    print("Labels filtrados para a coluna alvo:\n", labels_sub)
+
+    # df[Variavel] = df[Variavel].replace('NS/NR', np.nan)
+    df[Variavel] = pd.to_numeric(df[Variavel], errors='coerce')  # converter para numérico, tratando erros como NaN
+    df[Variavel] = df[Variavel].round().astype("Int64")
+
+    # --- Descobrir a ordem numérica presente nos dados ---
+    codigos_ordenados = (
+        pd.Series(df[Variavel].dropna().unique(), dtype="Int64")
+        .sort_values()
+        .to_frame(name="Codigo")
+    )
+    print("Ordem numérica encontrada:", codigos_ordenados["Codigo"].tolist())
+   
+
+    # --- Mapear códigos -> labels via merge (evita problemas de tipo) ---
+    ordem_mapeada = codigos_ordenados.merge(labels_sub, on="Codigo", how="left")
+    print("Ordem mapeada com labels:\n", ordem_mapeada)
+
+    # Categorias finais na ordem desejada
+    ord_labels = ordem_mapeada["Label"].tolist()
+    print("Ordem final com labels:", ord_labels)
+
+    # (2) Faça o merge na base para criar uma coluna label
+    df = df.merge(ordem_mapeada.rename(columns={"Label": f"{Variavel}_LABEL"}),
+                left_on=Variavel, right_on="Codigo", how="left")
+    print(f"Coluna de labels adicionada ao DataFrame:\n{df}")
+
+    # (3) Defina categórica ordenada com as categorias encontradas
+    df[f"{Variavel}_LABEL"] = pd.Categorical(df[f"{Variavel}_LABEL"],
+                                            categories=ord_labels,
+                                            ordered=True)
+
+    # (4) Se quiser, substitua a coluna original pela label
+    # Variavel_labels = df[f"{Variavel}_LABEL"]
+    df[Variavel] = df[f"{Variavel}_LABEL"]
+    # print("\nValores únicos finais (ordenados):", df[f"{Variavel}"].head(10))
+    df.drop(columns=["Codigo", f"{Variavel}_LABEL"], inplace=True)  # ajuste conforme preferir
+
+    # print("\nValores únicos finais (ordenados):", df[f"{Var_linha}"].unique())
+    return df
+
 # print(bd_processamento)
 
 
@@ -72,7 +189,7 @@ bd_processamento = pd.DataFrame(TABELAS)
 #======= Tratamento das tabelas =======#
 ########################################
 
-def processamento(data, bd_processamento):
+def processamento(data, bd_processamento, lista_labels):
     # Função para aplicar a classificação do nps
     def classificar_nps(valor):
         if np.isnan(valor):
@@ -160,16 +277,24 @@ def processamento(data, bd_processamento):
         print(f'\n#===== VAR_LINHA =====#\n{Var_linha}\n')
         # Variáveis para as colunas da tabela (bandeiras)
         Colunas = Colunas.split(sep=', ')
+        dict_ord_labels = {}
         for col in Colunas:
-            df[col] = pd.Categorical(df[col], categories=df[col][pd.notna(df[col])].unique(), ordered=True)
+            if col not in df.columns:
+                raise ValueError(f"Coluna '{col}' não encontrada no DataFrame.")        
+            else:
+                df[col], ord_labels = ordenar_labels(df=data, lista_labels=lista_labels, Variavel=col)
+                dict_ord_labels[col] = ord_labels
+                print(f"Coluna ordenada: {df[col].unique()}")
 
         # Transformação na variável para a linha da tabela
         if TipoTabela == 'SIMPLES':
             if NS_NR == 'NAO':
                 df[Var_linha] = df[Var_linha].replace('NS/NR', np.nan)
-                df[Var_linha] = pd.Categorical(df[Var_linha], categories=df[Var_linha][pd.notna(df[Var_linha])].unique(), ordered=True)
+                df[Var_linha], ord_labels = ordenar_labels(df=data, lista_labels=lista_labels, Variavel=Var_linha)
+                # df[Var_linha] = pd.Categorical(df[Var_linha], categories=df[Var_linha][pd.notna(df[Var_linha])].unique(), ordered=True)
             else:
-                df[Var_linha] = pd.Categorical(df[Var_linha], categories=df[Var_linha][pd.notna(df[Var_linha])].unique(), ordered=True)
+                df[Var_linha], ord_labels = ordenar_labels(df=data, lista_labels=lista_labels, Variavel=Var_linha)
+                # df[Var_linha] = pd.Categorical(df[Var_linha], categories=df[Var_linha][pd.notna(df[Var_linha])].unique(), ordered=True)
             
         elif (TipoTabela == 'NPS') | (TipoTabela == 'IPA_10'):
             if NS_NR == 'NAO':
@@ -213,13 +338,15 @@ def processamento(data, bd_processamento):
                 df['var_agrupada'] = df[Var_linha].replace(Valores_Agrup[-5], 'BTB').replace(Valores_Agrup[-4], 'BTB').replace(Valores_Agrup[-3], 'Neutro')\
                                                         .replace(Valores_Agrup[-2], 'TTB').replace(Valores_Agrup[-1], 'TTB')
                 df['var_agrupada'] = pd.Categorical(df['var_agrupada'], categories=['BTB', 'Neutro', 'TTB'], ordered=True)
-                df[Var_linha] = pd.Categorical(df[Var_linha], categories=Valores_Agrup, ordered=True)
+                df[Var_linha], ord_labels = ordenar_labels(df=data, lista_labels=lista_labels, Variavel=Var_linha)
+                # df[Var_linha] = pd.Categorical(df[Var_linha], categories=Valores_Agrup, ordered=True)
             else:
                 Valores_Agrup = Valores_Agrup.split(sep=', ')
                 df['var_agrupada'] = df[Var_linha].replace(Valores_Agrup[-5], 'BTB').replace(Valores_Agrup[-4], 'BTB').replace(Valores_Agrup[-3], 'Neutro')\
                                                     .replace(Valores_Agrup[-2], 'TTB').replace(Valores_Agrup[-1], 'TTB')
                 df['var_agrupada'] = pd.Categorical(df['var_agrupada'], categories=['BTB', 'Neutro', 'TTB'], ordered=True)
-                df[Var_linha] = pd.Categorical(df[Var_linha], categories=Valores_Agrup, ordered=True)
+                df[Var_linha], ord_labels = ordenar_labels(df=data, lista_labels=lista_labels, Variavel=Var_linha)
+                # df[Var_linha] = pd.Categorical(df[Var_linha], categories=Valores_Agrup, ordered=True)
 
         elif TipoTabela == 'MULTIPLA':
             if NS_NR == 'NAO':
@@ -228,18 +355,25 @@ def processamento(data, bd_processamento):
                 Valores_Agrup = Valores_Agrup.split(sep=', ')
 
                 # Converte as colunas de motivos para string, preservando NaN
-                for c in Valores_Agrup:
-                    df[c] = df[c].astype("object").where(df[c].isna(), df[c].astype(str))
-                    df_NS_NR[c] = df_NS_NR[c].astype("object").where(df_NS_NR[c].isna(), df_NS_NR[c].astype(str))
+                # for c in Valores_Agrup:
+                #     df[c] = df[c].astype("object").where(df[c].isna(), df[c].astype(str))
+                #     df_NS_NR[c] = df_NS_NR[c].astype("object").where(df_NS_NR[c].isna(), df_NS_NR[c].astype(str))
 
                 bd_motivo = pd.melt(df, 
                             id_vars=Colunas + [Var_Pond] + [Var_ID],
                             value_vars=Valores_Agrup, 
                             var_name='Valores', 
                             value_name=Var_linha)
+                bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('90', np.nan)
+                bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('99', np.nan)
+                bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('999', np.nan)
+                bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('9999', np.nan)
+                bd_motivo = bd_motivo.dropna(subset=[Var_linha])
+                bd_motivo = ordenar_labels_multipla(df=bd_motivo, lista_labels=lista_labels, Variavel=Var_linha)
                 bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('NS/NR', np.nan)
-                bd_motivo[Var_linha] = pd.Categorical(bd_motivo[Var_linha], 
-                                                    categories=ordenar_valores(bd_motivo[Var_linha]), ordered=True)  
+                bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('ns/nr', np.nan)
+                # bd_motivo[Var_linha] = pd.Categorical(bd_motivo[Var_linha], 
+                #                                     categories=ordenar_valores(bd_motivo[Var_linha]), ordered=True)  
                 
                 df_limpo = bd_motivo.dropna(subset=[Var_linha])
                 df_unico = df_limpo.drop_duplicates(subset=Var_ID, keep='first')
@@ -250,8 +384,10 @@ def processamento(data, bd_processamento):
                             value_vars=Valores_Agrup, 
                             var_name='Valores', 
                             value_name=Var_linha)
-                bd_motivo_NS_NR[Var_linha] = pd.Categorical(bd_motivo_NS_NR[Var_linha], 
-                                                    categories=ordenar_valores(bd_motivo_NS_NR[Var_linha]), ordered=True)
+                bd_motivo_NS_NR = bd_motivo_NS_NR.dropna(subset=[Var_linha])
+                bd_motivo_NS_NR = ordenar_labels_multipla(df=bd_motivo_NS_NR, lista_labels=lista_labels, Variavel=Var_linha)
+                # bd_motivo_NS_NR[Var_linha] = pd.Categorical(bd_motivo_NS_NR[Var_linha], 
+                #                                     categories=ordenar_valores(bd_motivo_NS_NR[Var_linha]), ordered=True)
                 
                 df_NS_NR_limpo = bd_motivo_NS_NR.dropna(subset=[Var_linha])
                 df_NS_NR_unico = df_NS_NR_limpo.drop_duplicates(subset=Var_ID, keep='first')    
@@ -263,8 +399,10 @@ def processamento(data, bd_processamento):
                             value_vars=Valores_Agrup, 
                             var_name='Valores', 
                             value_name=Var_linha)
-                bd_motivo[Var_linha] = pd.Categorical(bd_motivo[Var_linha], 
-                                                    categories=ordenar_valores(bd_motivo[Var_linha]), ordered=True)
+                bd_motivo = bd_motivo.dropna(subset=[Var_linha])
+                bd_motivo = ordenar_labels_multipla(df=bd_motivo, lista_labels=lista_labels, Variavel=Var_linha)
+                # bd_motivo[Var_linha] = pd.Categorical(bd_motivo[Var_linha], 
+                #                                     categories=ordenar_valores(bd_motivo[Var_linha]), ordered=True)
                 
                 df_limpo = bd_motivo.dropna(subset=[Var_linha])
                 df_unico = df_limpo.drop_duplicates(subset=Var_ID, keep='first')
@@ -544,7 +682,8 @@ def processamento(data, bd_processamento):
 
         col_series = []
         for i, valor in enumerate(Cabecalho):
-            col_names = df[Colunas[i]][pd.notna(df[Colunas[i]])].unique()
+            # col_names = df[Colunas[i]][pd.notna(df[Colunas[i]])].unique()
+            col_names = dict_ord_labels[Colunas[i]]
             for col in col_names:
                 col_series.append((Titulo, valor, col))
 

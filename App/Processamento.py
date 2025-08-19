@@ -203,13 +203,15 @@ st.session_state.nome_sheet_DATA = nome_sheet_DATA
 if input_buttom_submit_DATA:
     st.write("Nome da sheet (aba) da planilha enviado com sucesso ✅")
 
-data = st.file_uploader("📂 Selecione o banco de dados (em xlsx)", type=["xlsx"])
-bd_processamento = st.file_uploader("📂 Selecione a planilha com a Sintaxe para a criação das tabelas (em xlsx)", type=["xlsx"])
+data_file = st.file_uploader("📂 Selecione o banco de dados (em xlsx)", type=["xlsx"])
+sintaxe_file = st.file_uploader("📂 Selecione a planilha com a Sintaxe para a criação das tabelas (em xlsx)", type=["xlsx"])
 
-if data and bd_processamento:
+if data_file and sintaxe_file:
+    # Guarde os "UploadedFile" em variáveis distintas
     nome_sheet_DATA = st.session_state.nome_sheet_DATA
-    data = pd.read_excel(data, sheet_name=nome_sheet_DATA)
-    bd_processamento = pd.read_excel(bd_processamento)
+    data = pd.read_excel(data_file, sheet_name=nome_sheet_DATA)
+    bd_processamento = pd.read_excel(sintaxe_file)
+    lista_labels = pd.read_excel(data_file, sheet_name='Lista de Labels')
     st.write("✅ Planilhas carregadas com sucesso!")
 
 st.write("")
@@ -226,7 +228,7 @@ with st.form(key='output_excel'):
 # Botão para processar os dados
 if processar_dados:
     # Processar os dados e obter as tabelas
-    todas_tabelas_gerais = processamento(data, bd_processamento)
+    todas_tabelas_gerais = processamento(data=data, bd_processamento=bd_processamento, lista_labels=lista_labels)
     
     if tipo_output == 'Várias abas':
         # Salvar em Excel com formatação

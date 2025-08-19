@@ -1,35 +1,5 @@
 import pandas as pd
 import numpy as np
-import io
-from io import BytesIO
-# from statsmodels.stats.proportion import proportions_ztest
-from collections import Counter
-from databases.metodos import processamento, salvar_excel_aba_unica, salvar_excel_com_formatacao
-
-
-# df = pd.read_excel(r'C:\PROJETOS\Processamento-Estatistico\BASES PARA PROCESSAMENTO\Cielo NPS 2025\Jul25\EMP_Cielo Satisfacao_2onda_JUL25_v02.xlsx', sheet_name='bdlabels')
-
-# sintaxe = pd.read_excel(r'C:\PROJETOS\Processamento-Estatistico\BASES PARA PROCESSAMENTO\Cielo NPS 2025\Jul25\Sintaxe_Cielo_Satisfacao_Jul25_v03.xlsx')
-
-# todas_tabelas_gerais = processamento(df, sintaxe)
-
-TipoTabela = 'SIMPLES'
-Colunas = 'ONDA, VSEG_BU, VSEG_1, PF_PJ, VREG'
-Ordem_ONDA = 'ONDA_G, Jul24, Nov24, Mar25, Jul25'
-Cabecalho = 'Onda, Segmento BU, Segmento, Pessoa, Regional'
-Var_linha = 'VSEG_BU' # ADER_AG2 | NPS_C
-NS_NR = 'NAO'
-valores_BTB = ''
-valores_TTB = ''
-Valores_Agrup = 'MOTNEU_1, MOTNEU_2, MOTNEU_3'
-Fecha_100 = 'NAO'
-Var_ID = 'ID_EMP'
-Var_Pond = 'POND'
-Titulo = 'Aderencia Mono e Multi'
-
-# Variáveis para as colunas da tabela (bandeiras)
-Colunas = Colunas.split(sep=', ')
-Valores_Agrup = Valores_Agrup.split(sep=', ')
 
 def ordenar_labels(df, lista_labels, Variavel):
     print(f"\n#== VARIÁVEL SENDO PROCESSADA: {Variavel} ==#")
@@ -124,8 +94,8 @@ def ordenar_labels_multipla(df, lista_labels, Variavel):
         .sort_values()
         .to_frame(name="Codigo")
     )
-
     print("Ordem numérica encontrada:", codigos_ordenados["Codigo"].tolist())
+   
 
     # --- Mapear códigos -> labels via merge (evita problemas de tipo) ---
     ordem_mapeada = codigos_ordenados.merge(labels_sub, on="Codigo", how="left")
@@ -139,7 +109,7 @@ def ordenar_labels_multipla(df, lista_labels, Variavel):
     # (2) Faça o merge na base para criar uma coluna label
     df = df.merge(ordem_mapeada.rename(columns={"Label": f"{Variavel}_LABEL"}),
                 left_on=Variavel, right_on="Codigo", how="left")
-    print(f"Coluna de labels adicionada ao DataFrame:\n{df.head(10)}")
+    print(f"Coluna de labels adicionada ao DataFrame:\n{df}")
 
     # (3) Defina categórica ordenada com as categorias encontradas
     df[f"{Variavel}_LABEL"] = pd.Categorical(df[f"{Variavel}_LABEL"],
@@ -153,37 +123,64 @@ def ordenar_labels_multipla(df, lista_labels, Variavel):
     df.drop(columns=["Codigo", f"{Variavel}_LABEL"], inplace=True)  # ajuste conforme preferir
 
     # print("\nValores únicos finais (ordenados):", df[f"{Var_linha}"].unique())
-
     return df
 
+# Função para aplicar a classificação do nps
+def classificar_nps(valor):
+    if np.isnan(valor):
+        return np.nan
+    elif valor >= 9:
+        return 'Promotor'
+    elif valor >= 7:
+        return 'Neutro'
+    else:
+        return 'Detrator'
+    
+# Função para aplicar a classificação para a variável satisfação
+def classificar_satis(valor):
+    if np.isnan(valor):
+        return np.nan
+    elif valor >= 8:
+        return 'Satisfeito'
+    elif valor >= 6:
+        return 'Neutro'
+    else:
+        return 'Insatisfeito'
+        
+# Função para criar os índices corretos e ordenados das tabelas (esse novo índice entrará na função stat_test())
+def ordenar_valores(variavel):
+    valores_unicos = variavel.unique()
+    valores_ordenados = pd.Series(valores_unicos).sort_values()
 
-lista_labels = pd.read_excel(r'C:\PROJETOS\Processamento-Estatistico\BASES PARA PROCESSAMENTO\Cielo NPS 2025\OB\BD_Cielo_NPS_Fev25_2025.03.14_completo.xlsx', sheet_name='Lista de Labels')
+    if valores_ordenados.isna().iloc[-1]:
+        return valores_ordenados[0:-1]
+    else:
+        return valores_ordenados
+
+# Função para realizar o agrupamento
+def funcao_agrupamento(variavel, BTB, TTB):
+    nova_var = []
+    for v in variavel:
+        if np.isnan(v):  # Verifica se o valor é NaN
+            nova_var.append(np.nan)
+        elif int(v) in BTB:  # Converte v para inteiro antes da comparação, se necessário
+            nova_var.append('BTB')
+        elif int(v) in TTB:  # Converte v para inteiro antes da comparação, se necessário
+            nova_var.append('TTB')
+        else:
+            nova_var.append('Neutro')
+    return nova_var
 
 
-# --- carregar base principal ---
-df = pd.read_excel(r'C:\PROJETOS\Processamento-Estatistico\BASES PARA PROCESSAMENTO\Cielo NPS 2025\OB\BD_Cielo_NPS_Fev25_2025.03.14_completo.xlsx', sheet_name='BD_CODIGOS')
-# bd_motivo = pd.melt(df, 
-#                     id_vars=Colunas + [Var_Pond] + [Var_ID],
-#                     value_vars=Valores_Agrup, 
-#                     var_name='Valores', 
-#                     value_name=Var_linha)
-# bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('90', np.nan)
-# bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('99', np.nan)
-# bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('999', np.nan)
-# bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('9999', np.nan)
-# bd_motivo = bd_motivo.dropna(subset=[Var_linha])
-# print(f'bd_motivo em formato de código:\n{bd_motivo}')
-# bd_motivo = ordenar_labels_multipla(bd_motivo, lista_labels, Var_linha)
-# bd_motivo = bd_motivo.dropna(subset=[Var_linha])
-# print(f'bd_motivo finalizado:\n{bd_motivo}')
+# ord_labels = [np.nan, np.nan, np.nan, 'NS/NR']
+# # Removendo os valores NaN da lista
+# ord_labels = [label for label in ord_labels if pd.notna(label)]
+# print("Ordem de labels:", ord_labels)
 
-df[Var_linha], ord_labels = ordenar_labels(df=df, lista_labels=lista_labels, Variavel=Var_linha)
-print("\nValores únicos finais (ordenados):\n", df[Var_linha])
+dict_ord_labels = {}
+ord_labels = ['Empreendedores', 'Varejo', 'Alto Varejo Cielo', 'Alto Varejo Bancos', 'GC']
+Colunas = 'ONDA, VSEG_BU, VSEG_1, PF_PJ, VREG'
+Colunas = Colunas.split(sep=', ')
 
-# for col in Colunas:
-#     if col not in df.columns:
-#         raise ValueError(f"Coluna '{col}' não encontrada no DataFrame.")        
-#     else:
-#         df[col] = ordenar_labels(df=df, lista_labels=lista_labels, Variavel=col)
-#         print(f"Coluna ordenada: {df[col].unique()}")
-#         # df[col] = pd.Categorical(df[col], categories=df[col][pd.notna(df[col])].unique(), ordered=True)
+dict_ord_labels[Colunas[1]] = ord_labels
+print("Dicionário de labels:", dict_ord_labels[Colunas[1]])

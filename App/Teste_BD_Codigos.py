@@ -5,28 +5,29 @@ from collections import Counter
 from databases.utils import ordenar_labels, ordenar_labels_multipla, ordenar_valores, classificar_nps, funcao_agrupamento, classificar_satis
 
 
-TipoTabela = 'SIMPLES'
-Colunas = 'ONDA, VSEG_BU, VSEG_1, PF_PJ, VREG'
+TipoTabela = 'IPA_5'
+Colunas = 'ONDA, EMP_G,VAR_G,GC_G,PJ_G,PF_G,CATI_G,CAMPO_G'
 Ordem_ONDA = 'ONDA_G, Jul24, Nov24, Mar25, Jul25'
-Cabecalho = 'Onda, Segmento BU, Segmento, Pessoa, Regional'
-Var_linha = 'VSEG_BU' # ADER_AG2 | NPS_C
+Cabecalho = 'Ondas,Empreendedores (PF+PJ),Varejo (PF+PJ),Grandes Contas (PF+PJ),Pessoa Jurídica,Pessoa Física,Cati,Campo'
+Var_linha = 'VCH_C' # ADER_AG2 | NPS_C | NEC
 NS_NR = 'NAO'
-valores_BTB = ''
-valores_TTB = ''
-Valores_Agrup = 'MOTNEU_1, MOTNEU_2, MOTNEU_3'
+valores_BTB = '1,2'
+valores_TTB = '4,5'
+Valores_Agrup = 'Com certeza deixaria de trabalhar,Provavelmente deixaria de trabalhar,Não sei se vou continuar ou não,Provavelmente continuaria trabalhando,Com certeza continuaria trabalhando'
 Fecha_100 = 'NAO'
 Var_ID = 'ID_EMP'
 Var_Pond = 'POND'
-Titulo = 'Aderencia Mono e Multi'
+Titulo = 'VCH_C. Nos próximos 6 meses você pretende continuar a trabalhar com a CIELO ou pretende deixar de trabalhar com a CIELO?'
 
-data = pd.read_excel(r'C:\PROJETOS\Processamento-Estatistico\BASES PARA PROCESSAMENTO\Cielo NPS 2025\OB\BD_Cielo_NPS_Fev25_2025.03.14_completo.xlsx', sheet_name='BD_CODIGOS')
+caminho_bd = r'C:\PROJETOS\Processamento-Estatistico\BASES PARA PROCESSAMENTO\Cielo NPS 2025\Jul25\EMP_Cielo Satisfacao_JUL25_2025.08.18.xlsx'
+data = pd.read_excel(caminho_bd, sheet_name='BD_CODIGOS')
 df = data.copy()
 
-lista_labels = pd.read_excel(r'C:\PROJETOS\Processamento-Estatistico\BASES PARA PROCESSAMENTO\Cielo NPS 2025\OB\BD_Cielo_NPS_Fev25_2025.03.14_completo.xlsx', sheet_name='Lista de Labels')
+lista_labels = pd.read_excel(caminho_bd, sheet_name='Lista de Labels')
 
 # Variáveis para as colunas da tabela (bandeiras)
-Colunas = Colunas.split(sep=', ')
-Ordem_ONDA = Ordem_ONDA.split(sep=', ')
+Colunas = Colunas.split(sep=',')
+Ordem_ONDA = Ordem_ONDA.split(sep=',')
 dict_ord_labels = {}
 
 for col in Colunas:
@@ -55,6 +56,10 @@ elif (TipoTabela == 'NPS') | (TipoTabela == 'IPA_10'):
         df[Var_linha] = df[Var_linha].replace('99', np.nan)
         df[Var_linha] = df[Var_linha].replace('999', np.nan)
         df[Var_linha] = df[Var_linha].replace('9999', np.nan)
+        df[Var_linha] = df[Var_linha].replace(90, np.nan)
+        df[Var_linha] = df[Var_linha].replace(99, np.nan)
+        df[Var_linha] = df[Var_linha].replace(999, np.nan)
+        df[Var_linha] = df[Var_linha].replace(9999, np.nan)
         df[Var_linha] = pd.to_numeric(df[Var_linha], errors='coerce', downcast='integer')
         # df[Var_linha], ord_labels = ordenar_labels(df=df, lista_labels=lista_labels, Variavel=Var_linha)
         df[Var_linha] = pd.Categorical(df[Var_linha], categories=ordenar_valores(df[Var_linha]), ordered=True)
@@ -63,39 +68,45 @@ elif (TipoTabela == 'NPS') | (TipoTabela == 'IPA_10'):
             df['var_agrupada'] = df[Var_linha].apply(classificar_nps)
 
         elif TipoTabela == 'IPA_10':
-            valores_BTB = [int(v) for v in valores_BTB.split(sep=', ')]
-            valores_TTB = [int(v) for v in valores_TTB.split(sep=', ')]
+            valores_BTB = [int(v) for v in valores_BTB.split(sep=',')]
+            valores_TTB = [int(v) for v in valores_TTB.split(sep=',')]
             df['var_agrupada'] = funcao_agrupamento(df[Var_linha], valores_BTB, valores_TTB)
 
     else:
-        df[Var_linha] = df[Var_linha].replace('90', np.nan)
-        df[Var_linha] = df[Var_linha].replace('99', np.nan)
-        df[Var_linha] = df[Var_linha].replace('999', np.nan)
-        df[Var_linha] = df[Var_linha].replace('9999', np.nan)
-        df[Var_linha], ord_labels = ordenar_labels(df=data, lista_labels=lista_labels, Variavel=Var_linha)
-        # df[Var_linha] = pd.Categorical(df[Var_linha], categories=ordenar_valores(df[Var_linha]), ordered=True)
+        # df[Var_linha] = df[Var_linha].replace('90', np.nan)
+        # df[Var_linha] = df[Var_linha].replace('99', np.nan)
+        # df[Var_linha] = df[Var_linha].replace('999', np.nan)
+        # df[Var_linha] = df[Var_linha].replace('9999', np.nan)
+        # df[Var_linha], ord_labels = ordenar_labels(df=data, lista_labels=lista_labels, Variavel=Var_linha)
+        df[Var_linha] = pd.Categorical(df[Var_linha], categories=ordenar_valores(df[Var_linha]), ordered=True)
 
         if TipoTabela == 'NPS':
             df['var_agrupada'] = df[Var_linha].apply(classificar_nps)
 
         elif TipoTabela == 'IPA_10':
-            valores_BTB = [int(v) for v in valores_BTB.split(sep=', ')]
-            valores_TTB = [int(v) for v in valores_TTB.split(sep=', ')]
+            valores_BTB = [int(v) for v in valores_BTB.split(sep=',')]
+            valores_TTB = [int(v) for v in valores_TTB.split(sep=',')]
             df['var_agrupada'] = funcao_agrupamento(df[Var_linha], valores_BTB, valores_TTB)
 
 elif TipoTabela == 'IPA_5':
     if NS_NR == 'NAO':
         df[Var_linha] = df[Var_linha].replace('NS/NR', np.nan)
-        Valores_Agrup = Valores_Agrup.split(sep=', ')
-        df['var_agrupada'] = df[Var_linha].replace(Valores_Agrup[-5], 'BTB').replace(Valores_Agrup[-4], 'BTB').replace(Valores_Agrup[-3], 'Neutro')\
-                                                .replace(Valores_Agrup[-2], 'TTB').replace(Valores_Agrup[-1], 'TTB')
+        df[Var_linha] = df[Var_linha].replace('90', np.nan)
+        df[Var_linha] = df[Var_linha].replace('99', np.nan)
+        df[Var_linha] = df[Var_linha].replace('999', np.nan)
+        df[Var_linha] = df[Var_linha].replace(90, np.nan)
+        df[Var_linha] = df[Var_linha].replace(99, np.nan)
+        df[Var_linha] = df[Var_linha].replace(999, np.nan)
+        valores_BTB = [int(v) for v in valores_BTB.split(sep=',')]
+        valores_TTB = [int(v) for v in valores_TTB.split(sep=',')]
+        df['var_agrupada'] = funcao_agrupamento(df[Var_linha], valores_BTB, valores_TTB)
         df['var_agrupada'] = pd.Categorical(df['var_agrupada'], categories=['BTB', 'Neutro', 'TTB'], ordered=True)
         df[Var_linha], ord_labels = ordenar_labels(df=data, lista_labels=lista_labels, Variavel=Var_linha)
         # df[Var_linha] = pd.Categorical(df[Var_linha], categories=Valores_Agrup, ordered=True)
     else:
-        Valores_Agrup = Valores_Agrup.split(sep=', ')
-        df['var_agrupada'] = df[Var_linha].replace(Valores_Agrup[-5], 'BTB').replace(Valores_Agrup[-4], 'BTB').replace(Valores_Agrup[-3], 'Neutro')\
-                                            .replace(Valores_Agrup[-2], 'TTB').replace(Valores_Agrup[-1], 'TTB')
+        valores_BTB = [int(v) for v in valores_BTB.split(sep=',')]
+        valores_TTB = [int(v) for v in valores_TTB.split(sep=',')]
+        df['var_agrupada'] = funcao_agrupamento(df[Var_linha], valores_BTB, valores_TTB)
         df['var_agrupada'] = pd.Categorical(df['var_agrupada'], categories=['BTB', 'Neutro', 'TTB'], ordered=True)
         df[Var_linha], ord_labels = ordenar_labels(df=data, lista_labels=lista_labels, Variavel=Var_linha)
         # df[Var_linha] = pd.Categorical(df[Var_linha], categories=Valores_Agrup, ordered=True)
@@ -104,7 +115,7 @@ elif TipoTabela == 'MULTIPLA':
     if NS_NR == 'NAO':
         df_NS_NR = df.copy()
         
-        Valores_Agrup = Valores_Agrup.split(sep=', ')
+        Valores_Agrup = Valores_Agrup.split(sep=',')
         # Converte as colunas de motivos para string, preservando NaN
         # for c in Valores_Agrup:
         #     df[c] = df[c].astype("object").where(df[c].isna(), df[c].astype(str))
@@ -119,9 +130,13 @@ elif TipoTabela == 'MULTIPLA':
         bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('99', np.nan)
         bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('999', np.nan)
         bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('9999', np.nan)
+        bd_motivo[Var_linha] = bd_motivo[Var_linha].replace(90, np.nan)
+        bd_motivo[Var_linha] = bd_motivo[Var_linha].replace(99, np.nan)
+        bd_motivo[Var_linha] = bd_motivo[Var_linha].replace(999, np.nan)
+        bd_motivo[Var_linha] = bd_motivo[Var_linha].replace(9999, np.nan)
         bd_motivo = bd_motivo.dropna(subset=[Var_linha])
-        print(f'\n\n{Var_linha}_1\n')
-        bd_motivo = ordenar_labels_multipla(df=bd_motivo, lista_labels=lista_labels, Variavel=Var_linha)
+        print(f'\nbd_motivo em formato de código:\n{bd_motivo}')
+        bd_motivo = ordenar_labels_multipla(df=bd_motivo, lista_labels=lista_labels, Variavel=Var_linha, Var_Valores_Agrup=Valores_Agrup[0])
         bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('NS/NR', np.nan)
         # bd_motivo[Var_linha] = pd.Categorical(bd_motivo[Var_linha], categories=ordenar_valores(bd_motivo[Var_linha]), ordered=True)  
 
@@ -136,7 +151,8 @@ elif TipoTabela == 'MULTIPLA':
                     var_name='Valores', 
                     value_name=Var_linha)
         bd_motivo_NS_NR = bd_motivo_NS_NR.dropna(subset=[Var_linha])
-        bd_motivo_NS_NR = ordenar_labels_multipla(df=bd_motivo_NS_NR, lista_labels=lista_labels, Variavel=Var_linha)
+        bd_motivo_NS_NR = ordenar_labels_multipla(df=bd_motivo_NS_NR, lista_labels=lista_labels, Variavel=Var_linha, 
+                                                  Var_Valores_Agrup=Valores_Agrup[0])
         # bd_motivo_NS_NR[Var_linha] = pd.Categorical(bd_motivo_NS_NR[Var_linha], 
         #                                     categories=ordenar_valores(bd_motivo_NS_NR[Var_linha]), ordered=True)
         
@@ -145,14 +161,14 @@ elif TipoTabela == 'MULTIPLA':
         df_NS_NR_unico = df_NS_NR_limpo.drop_duplicates(subset=Var_ID, keep='first')    
         
     else:
-        Valores_Agrup = Valores_Agrup.split(sep=', ')
+        Valores_Agrup = Valores_Agrup.split(sep=',')
         bd_motivo = pd.melt(df, 
                     id_vars=Colunas + [Var_Pond] + [Var_ID],
                     value_vars=Valores_Agrup, 
                     var_name='Valores', 
                     value_name=Var_linha)
         bd_motivo = bd_motivo.dropna(subset=[Var_linha])
-        bd_motivo = ordenar_labels_multipla(df=bd_motivo, lista_labels=lista_labels, Variavel=Var_linha)
+        bd_motivo = ordenar_labels_multipla(df=bd_motivo, lista_labels=lista_labels, Variavel=Var_linha, Var_Valores_Agrup=Valores_Agrup[0])
         # bd_motivo[Var_linha] = pd.Categorical(bd_motivo[Var_linha], 
         #                                     categories=ordenar_valores(bd_motivo[Var_linha]), ordered=True)
         
@@ -417,7 +433,7 @@ else:
     print(f'TABELA GERAL:\n{tabela_geral.iloc[:, 0:10]}\n')
 
 
-Cabecalho = Cabecalho.split(sep=', ')
+Cabecalho = Cabecalho.split(sep=',')
 print(f'Cabeçalho:\n{Cabecalho}')
 header_above = []
 print(f'\ntabela_geral.columns:\n{tabela_geral.columns}')

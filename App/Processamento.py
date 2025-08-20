@@ -173,7 +173,7 @@ st.write("")
 st.markdown(
     """
     <h5 style="color: white; text-align: center;">
-        Faça o upload do banco de dados na versão CODIGOS e da planilha de sintaxe, <u><span style="font-weight: 900;">ambas em Excel</span></u> para realizar o Processamento.
+        Faça o upload do banco de dados na versão CODIGOS e com a Lista de Labels e da planilha de sintaxe, <u><span style="font-weight: 900;">ambas em Excel</span></u> para realizar o Processamento.
     </h5>
     """,
     unsafe_allow_html=True
@@ -198,8 +198,10 @@ st.write("")
 # Upload das planilhas
 with st.form(key='sheet_name_data'):
     nome_sheet_DATA = st.text_input(label="📝 Insira o nome da sheet (aba) no qual contém o banco de dados com os CODIGOS", value="BD_CODIGOS")
+    nome_sheet_lista_labels = st.text_input(label="📝 Insira o nome da sheet (aba) no qual contém a Lista de Labels", value="Lista de Labels")
     input_buttom_submit_DATA = st.form_submit_button("Enviar")
 st.session_state.nome_sheet_DATA = nome_sheet_DATA
+st.session_state.nome_sheet_lista_labels = nome_sheet_lista_labels
 if input_buttom_submit_DATA:
     st.write("Nome da sheet (aba) da planilha enviado com sucesso ✅")
 
@@ -209,9 +211,10 @@ sintaxe_file = st.file_uploader("📂 Selecione a planilha com a Sintaxe para a 
 if data_file and sintaxe_file:
     # Guarde os "UploadedFile" em variáveis distintas
     nome_sheet_DATA = st.session_state.nome_sheet_DATA
+    nome_sheet_lista_labels = st.session_state.nome_sheet_lista_labels
     data = pd.read_excel(data_file, sheet_name=nome_sheet_DATA)
     bd_processamento = pd.read_excel(sintaxe_file)
-    lista_labels = pd.read_excel(data_file, sheet_name='Lista de Labels')
+    lista_labels = pd.read_excel(data_file, sheet_name=nome_sheet_lista_labels)
     st.write("✅ Planilhas carregadas com sucesso!")
 
 st.write("")

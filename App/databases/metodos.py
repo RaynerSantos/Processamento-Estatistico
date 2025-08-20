@@ -108,6 +108,7 @@ def ordenar_labels(df, lista_labels, Variavel):
     # Categorias finais na ordem desejada
     ord_labels = ordem_mapeada["Label"].tolist()
     ord_labels = [label for label in ord_labels if pd.notna(label)]
+    ord_labels = list(dict.fromkeys(ord_labels))  # Remove duplicates while preserving order
     print("\nOrdem final com labels:", ord_labels)
 
     # Merge na base para criar uma coluna label
@@ -122,18 +123,20 @@ def ordenar_labels(df, lista_labels, Variavel):
 
     return Variavel_labels, ord_labels
 
-def ordenar_labels_multipla(df, lista_labels, Variavel):
-    lista_labels = lista_labels.iloc[1:, :]
+
+def ordenar_labels_multipla(df, lista_labels, Variavel, Var_Valores_Agrup):
+    print(f"\n#== VARIÁVEL SENDO PROCESSADA: {Variavel} ==#")
+    lista_labels = lista_labels.iloc[1:, :].copy()
     lista_labels.columns = ['Coluna', 'Codigo', 'Label']
-    lista_labels["Coluna"] = lista_labels["Coluna"].fillna(method="ffill").str.strip()
+    lista_labels["Coluna"] = lista_labels["Coluna"].ffill().str.strip()
 
     # Normalizar "Codigo" para numérico (trocando vírgula por ponto)
     lista_labels["Codigo"] = (lista_labels["Codigo"].astype(str).str.strip().str.replace(',', '.', regex=False))
-    lista_labels['Codigo'] = pd.to_numeric(lista_labels["Codigo"], errors='ignore')
+    lista_labels['Codigo'] = pd.to_numeric(lista_labels["Codigo"], errors='coerce')
     # print(lista_labels.head(6))
 
     # Filtrar apenas os labels da coluna alvo
-    labels_sub = lista_labels.loc[lista_labels["Coluna"] == f'{Variavel}_1', ["Codigo", "Label"]].dropna(subset=["Codigo"])
+    labels_sub = lista_labels.loc[lista_labels["Coluna"] == f'{Var_Valores_Agrup}', ["Codigo", "Label"]].dropna(subset=["Codigo"])
     labels_sub["Codigo"] = (
         labels_sub["Codigo"]
             .astype(str).str.strip().str.replace(",", ".", regex=False)
@@ -161,6 +164,8 @@ def ordenar_labels_multipla(df, lista_labels, Variavel):
 
     # Categorias finais na ordem desejada
     ord_labels = ordem_mapeada["Label"].tolist()
+    ord_labels = [label for label in ord_labels if pd.notna(label)]
+    ord_labels = list(dict.fromkeys(ord_labels))  # Remove duplicates while preserving order
     print("Ordem final com labels:", ord_labels)
 
     # (2) Faça o merge na base para criar uma coluna label
@@ -304,6 +309,10 @@ def processamento(data, bd_processamento, lista_labels):
                 df[Var_linha] = df[Var_linha].replace('99', np.nan)
                 df[Var_linha] = df[Var_linha].replace('999', np.nan)
                 df[Var_linha] = df[Var_linha].replace('9999', np.nan)
+                df[Var_linha] = df[Var_linha].replace(90, np.nan)
+                df[Var_linha] = df[Var_linha].replace(99, np.nan)
+                df[Var_linha] = df[Var_linha].replace(999, np.nan)
+                df[Var_linha] = df[Var_linha].replace(9999, np.nan)
                 df[Var_linha] = pd.to_numeric(df[Var_linha], errors='coerce', downcast='integer')
                 df[Var_linha] = pd.Categorical(df[Var_linha], categories=ordenar_valores(df[Var_linha]), ordered=True)
 
@@ -316,10 +325,10 @@ def processamento(data, bd_processamento, lista_labels):
                     df['var_agrupada'] = funcao_agrupamento(df[Var_linha], valores_BTB, valores_TTB)
 
             else:
-                df[Var_linha] = df[Var_linha].replace('90', np.nan)
-                df[Var_linha] = df[Var_linha].replace('99', np.nan)
-                df[Var_linha] = df[Var_linha].replace('999', np.nan)
-                df[Var_linha] = df[Var_linha].replace('9999', np.nan)
+                # df[Var_linha] = df[Var_linha].replace('90', np.nan)
+                # df[Var_linha] = df[Var_linha].replace('99', np.nan)
+                # df[Var_linha] = df[Var_linha].replace('999', np.nan)
+                # df[Var_linha] = df[Var_linha].replace('9999', np.nan)
                 df[Var_linha] = pd.to_numeric(df[Var_linha], errors='coerce', downcast='integer')
                 df[Var_linha] = pd.Categorical(df[Var_linha], categories=ordenar_valores(df[Var_linha]), ordered=True)
 
@@ -334,16 +343,25 @@ def processamento(data, bd_processamento, lista_labels):
         elif TipoTabela == 'IPA_5':
             if NS_NR == 'NAO':
                 df[Var_linha] = df[Var_linha].replace('NS/NR', np.nan)
-                Valores_Agrup = Valores_Agrup.split(sep=', ')
-                df['var_agrupada'] = df[Var_linha].replace(Valores_Agrup[-5], 'BTB').replace(Valores_Agrup[-4], 'BTB').replace(Valores_Agrup[-3], 'Neutro')\
-                                                        .replace(Valores_Agrup[-2], 'TTB').replace(Valores_Agrup[-1], 'TTB')
+                df[Var_linha] = df[Var_linha].replace('ns/nr', np.nan)
+                df[Var_linha] = df[Var_linha].replace('90', np.nan)
+                df[Var_linha] = df[Var_linha].replace('99', np.nan)
+                df[Var_linha] = df[Var_linha].replace('999', np.nan)
+                df[Var_linha] = df[Var_linha].replace('9999', np.nan)
+                df[Var_linha] = df[Var_linha].replace(90, np.nan)
+                df[Var_linha] = df[Var_linha].replace(99, np.nan)
+                df[Var_linha] = df[Var_linha].replace(999, np.nan)
+                df[Var_linha] = df[Var_linha].replace(9999, np.nan)
+                valores_BTB = [int(v) for v in valores_BTB.split(sep=', ')]
+                valores_TTB = [int(v) for v in valores_TTB.split(sep=', ')]
+                df['var_agrupada'] = funcao_agrupamento(df[Var_linha], valores_BTB, valores_TTB)
                 df['var_agrupada'] = pd.Categorical(df['var_agrupada'], categories=['BTB', 'Neutro', 'TTB'], ordered=True)
                 df[Var_linha], ord_labels = ordenar_labels(df=data, lista_labels=lista_labels, Variavel=Var_linha)
                 # df[Var_linha] = pd.Categorical(df[Var_linha], categories=Valores_Agrup, ordered=True)
             else:
-                Valores_Agrup = Valores_Agrup.split(sep=', ')
-                df['var_agrupada'] = df[Var_linha].replace(Valores_Agrup[-5], 'BTB').replace(Valores_Agrup[-4], 'BTB').replace(Valores_Agrup[-3], 'Neutro')\
-                                                    .replace(Valores_Agrup[-2], 'TTB').replace(Valores_Agrup[-1], 'TTB')
+                valores_BTB = [int(v) for v in valores_BTB.split(sep=', ')]
+                valores_TTB = [int(v) for v in valores_TTB.split(sep=', ')]
+                df['var_agrupada'] = funcao_agrupamento(df[Var_linha], valores_BTB, valores_TTB)
                 df['var_agrupada'] = pd.Categorical(df['var_agrupada'], categories=['BTB', 'Neutro', 'TTB'], ordered=True)
                 df[Var_linha], ord_labels = ordenar_labels(df=data, lista_labels=lista_labels, Variavel=Var_linha)
                 # df[Var_linha] = pd.Categorical(df[Var_linha], categories=Valores_Agrup, ordered=True)
@@ -368,8 +386,13 @@ def processamento(data, bd_processamento, lista_labels):
                 bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('99', np.nan)
                 bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('999', np.nan)
                 bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('9999', np.nan)
+                bd_motivo[Var_linha] = bd_motivo[Var_linha].replace(90, np.nan)
+                bd_motivo[Var_linha] = bd_motivo[Var_linha].replace(99, np.nan)
+                bd_motivo[Var_linha] = bd_motivo[Var_linha].replace(999, np.nan)
+                bd_motivo[Var_linha] = bd_motivo[Var_linha].replace(9999, np.nan)
                 bd_motivo = bd_motivo.dropna(subset=[Var_linha])
-                bd_motivo = ordenar_labels_multipla(df=bd_motivo, lista_labels=lista_labels, Variavel=Var_linha)
+                bd_motivo = ordenar_labels_multipla(df=bd_motivo, lista_labels=lista_labels, Variavel=Var_linha, 
+                                                    Var_Valores_Agrup=Valores_Agrup[0])
                 bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('NS/NR', np.nan)
                 bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('ns/nr', np.nan)
                 # bd_motivo[Var_linha] = pd.Categorical(bd_motivo[Var_linha], 
@@ -385,7 +408,8 @@ def processamento(data, bd_processamento, lista_labels):
                             var_name='Valores', 
                             value_name=Var_linha)
                 bd_motivo_NS_NR = bd_motivo_NS_NR.dropna(subset=[Var_linha])
-                bd_motivo_NS_NR = ordenar_labels_multipla(df=bd_motivo_NS_NR, lista_labels=lista_labels, Variavel=Var_linha)
+                bd_motivo_NS_NR = ordenar_labels_multipla(df=bd_motivo_NS_NR, lista_labels=lista_labels, Variavel=Var_linha, 
+                                                          Var_Valores_Agrup=Valores_Agrup[0])
                 # bd_motivo_NS_NR[Var_linha] = pd.Categorical(bd_motivo_NS_NR[Var_linha], 
                 #                                     categories=ordenar_valores(bd_motivo_NS_NR[Var_linha]), ordered=True)
                 
@@ -400,7 +424,8 @@ def processamento(data, bd_processamento, lista_labels):
                             var_name='Valores', 
                             value_name=Var_linha)
                 bd_motivo = bd_motivo.dropna(subset=[Var_linha])
-                bd_motivo = ordenar_labels_multipla(df=bd_motivo, lista_labels=lista_labels, Variavel=Var_linha)
+                bd_motivo = ordenar_labels_multipla(df=bd_motivo, lista_labels=lista_labels, Variavel=Var_linha, 
+                                                    Var_Valores_Agrup=Valores_Agrup[0])
                 # bd_motivo[Var_linha] = pd.Categorical(bd_motivo[Var_linha], 
                 #                                     categories=ordenar_valores(bd_motivo[Var_linha]), ordered=True)
                 
@@ -670,7 +695,7 @@ def processamento(data, bd_processamento, lista_labels):
             print(f'TABELA GERAL:\n{tabela_geral.iloc[:, 0:10]}\n')
 
         #===== Adicionar cabeçalho a tabela =====#
-        Cabecalho = Cabecalho.split(sep=', ')
+        Cabecalho = Cabecalho.split(sep=',')
         print(f'Cabeçalho:\n{Cabecalho}')
         header_above = []
         print(f'\ntabela_geral.columns:\n{tabela_geral.columns}')

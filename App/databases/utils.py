@@ -46,6 +46,7 @@ def ordenar_labels(df, lista_labels, Variavel):
     # Categorias finais na ordem desejada
     ord_labels = ordem_mapeada["Label"].tolist()
     ord_labels = [label for label in ord_labels if pd.notna(label)]
+    ord_labels = list(dict.fromkeys(ord_labels))  # Remove duplicates while preserving order
     print("\nOrdem final com labels:", ord_labels)
 
     # Merge na base para criar uma coluna label
@@ -64,18 +65,19 @@ def ordenar_labels(df, lista_labels, Variavel):
 
     return Variavel_labels, ord_labels
 
-def ordenar_labels_multipla(df, lista_labels, Variavel):
-    lista_labels = lista_labels.iloc[1:, :]
+def ordenar_labels_multipla(df, lista_labels, Variavel, Var_Valores_Agrup):
+    print(f"\n#== VARIÁVEL SENDO PROCESSADA: {Variavel} ==#")
+    lista_labels = lista_labels.iloc[1:, :].copy()
     lista_labels.columns = ['Coluna', 'Codigo', 'Label']
-    lista_labels["Coluna"] = lista_labels["Coluna"].fillna(method="ffill").str.strip()
+    lista_labels["Coluna"] = lista_labels["Coluna"].ffill().str.strip()
 
     # Normalizar "Codigo" para numérico (trocando vírgula por ponto)
     lista_labels["Codigo"] = (lista_labels["Codigo"].astype(str).str.strip().str.replace(',', '.', regex=False))
-    lista_labels['Codigo'] = pd.to_numeric(lista_labels["Codigo"], errors='ignore')
+    lista_labels['Codigo'] = pd.to_numeric(lista_labels["Codigo"], errors='coerce')
     # print(lista_labels.head(6))
 
     # Filtrar apenas os labels da coluna alvo
-    labels_sub = lista_labels.loc[lista_labels["Coluna"] == f'{Variavel}_1', ["Codigo", "Label"]].dropna(subset=["Codigo"])
+    labels_sub = lista_labels.loc[lista_labels["Coluna"] == f'{Var_Valores_Agrup}', ["Codigo", "Label"]].dropna(subset=["Codigo"])
     labels_sub["Codigo"] = (
         labels_sub["Codigo"]
             .astype(str).str.strip().str.replace(",", ".", regex=False)
@@ -104,6 +106,7 @@ def ordenar_labels_multipla(df, lista_labels, Variavel):
     # Categorias finais na ordem desejada
     ord_labels = ordem_mapeada["Label"].tolist()
     ord_labels = [label for label in ord_labels if pd.notna(label)]
+    ord_labels = list(dict.fromkeys(ord_labels))  # Remove duplicates while preserving order
     print("Ordem final com labels:", ord_labels)
 
     # (2) Faça o merge na base para criar uma coluna label
@@ -177,10 +180,11 @@ def funcao_agrupamento(variavel, BTB, TTB):
 # ord_labels = [label for label in ord_labels if pd.notna(label)]
 # print("Ordem de labels:", ord_labels)
 
-dict_ord_labels = {}
-ord_labels = ['Empreendedores', 'Varejo', 'Alto Varejo Cielo', 'Alto Varejo Bancos', 'GC']
-Colunas = 'ONDA, VSEG_BU, VSEG_1, PF_PJ, VREG'
-Colunas = Colunas.split(sep=', ')
+# dict_ord_labels = {}
+# ord_labels = ['Empreendedores', 'Varejo', 'Alto Varejo Cielo', 'Alto Varejo Bancos', 'GC']
+# Colunas = 'ONDA, VSEG_BU, VSEG_1, PF_PJ, VREG'
+# Colunas = Colunas.split(sep=', ')
 
-dict_ord_labels[Colunas[1]] = ord_labels
-print("Dicionário de labels:", dict_ord_labels[Colunas[1]])
+# dict_ord_labels[Colunas[1]] = ord_labels
+# print("Dicionário de labels:", dict_ord_labels[Colunas[1]])
+

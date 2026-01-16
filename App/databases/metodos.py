@@ -67,7 +67,7 @@ TABELAS = [
 bd_processamento = pd.DataFrame(TABELAS)
 
 def ordenar_labels(df, lista_labels, Variavel):
-    print(f"\n#== VARIÁVEL SENDO PROCESSADA: {Variavel} ==#")
+    print(f"\n\n# ===== VARIÁVEL SENDO PROCESSADA:\t{Variavel} ===== #")
     lista_labels = lista_labels.iloc[1:, :].copy()
     lista_labels.columns = ['Coluna', 'Codigo', 'Label']
     lista_labels["Coluna"] = lista_labels["Coluna"].ffill().str.strip()

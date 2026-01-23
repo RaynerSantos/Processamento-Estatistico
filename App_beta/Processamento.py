@@ -3,21 +3,15 @@ import numpy as np
 import streamlit as st
 import time
 from io import BytesIO
-from metodos import criar_bandeira
 from datetime import datetime, date
+from metodos import criar_bandeira, to_excel
+
 
 st.set_page_config(layout='wide', page_title='Processamento de dados', page_icon='📊')
 
-# Função para converter DataFrame em arquivo Excel para download
-def to_excel(df: pd.DataFrame, lista_de_labels: pd.DataFrame) -> bytes:
-    output = BytesIO()
-    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-        df.to_excel(writer, index=False, sheet_name="BD_CODIGOS")
-        lista_de_labels.to_excel(writer, index=False, sheet_name="Lista de Labels")
-    output.seek(0)  # volta pro início do buffer
-    return output.getvalue()
 
-st.title('Processamento de dados estatísticos')
+
+st.title('Processamento de Dados Estatísticos')
 
 st.sidebar.title('Navegação')
 select_box = st.sidebar.selectbox(label='Selecione a opção desejada:', options=('Criar bandeiras', 'Recode', 'Ponderação', 'Processamento'))
@@ -71,11 +65,18 @@ if select_box == 'Criar bandeiras':
             selected_columns = st.multiselect('Selecione as colunas:', colunas)
 
             if selected_columns:
-                # coluna1, coluna2 = st.columns(2)
-                for col in selected_columns:
-                    st.write(f'Labels da coluna {col}:')
-                    labels_col = lista_labels[lista_labels['Coluna'] == col][['Codigo', 'Label']]
-                    st.dataframe(labels_col, hide_index=True)
+                coluna1, coluna2 = st.columns(2)
+                for i, col in enumerate(selected_columns):
+                    if i % 2 == 0:
+                        with coluna1:
+                            st.write(f'Labels da coluna {col}:')
+                            labels_col = lista_labels[lista_labels['Coluna'] == col][['Codigo', 'Label']]
+                            st.dataframe(labels_col, hide_index=True)
+                    else:
+                        with coluna2:
+                            st.write(f'Labels da coluna {col}:')
+                            labels_col = lista_labels[lista_labels['Coluna'] == col][['Codigo', 'Label']]
+                            st.dataframe(labels_col, hide_index=True)
 
                 # with st.form('name_bandeira'):
                 nome_bandeira = st.text_input(label="📝 Insira o nome da nova bandeira", value="nome da nova bandeira")
@@ -87,7 +88,7 @@ if select_box == 'Criar bandeiras':
                 #     st.write("Nome da nova bandeira enviado com sucesso ✅")
                 #     st.write('')
 
-                # Aqui você pode adicionar a lógica para criar a nova bandeira com base nas colunas selecionadas
+                # lógica para criar a nova bandeira com base nas colunas selecionadas
                 if st.button('Criar bandeira'):
                     # Criação de uma nova coluna "Bandeira" com base nas colunas selecionadas
                     data, lista_labels = criar_bandeira(data, lista_labels, selected_columns, st.session_state.nome_bandeira)
@@ -97,8 +98,16 @@ if select_box == 'Criar bandeiras':
                     st.dataframe(lista_labels[lista_labels['Coluna'] == st.session_state.nome_bandeira], hide_index=True)
                     st.write('')
                     st.write('Frequência da nova bandeira:')
-                    st.dataframe(data[st.session_state.nome_bandeira].value_counts(), hide_index=False)
-               
+                    freq_bandeira = pd.DataFrame(st.session_state.data[st.session_state.nome_bandeira].value_counts())
+                    freq_bandeira['%'] = round(freq_bandeira['count'] / freq_bandeira['count'].sum() * 100, 2)
+                    total_line = round(pd.DataFrame(freq_bandeira.sum()).T)
+                    total_line.index = ['Total']
+                    freq_bandeira = pd.concat([freq_bandeira, total_line], ignore_index=False)
+                    freq_bandeira['Código'] = freq_bandeira.index
+                    freq_bandeira = freq_bandeira[['Código', 'count', '%']]
+                    freq_bandeira.columns = ['Código', 'Frequência', '%']
+                    st.dataframe(freq_bandeira, hide_index=True)
+
                     # st.write('')
                     # if st.button('Deseja criar outra bandeira?'):
                     #     if st.checkbox('Selecione as colunas que serão utilizadas para criar a nova bandeira'):

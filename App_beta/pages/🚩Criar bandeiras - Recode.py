@@ -6,7 +6,8 @@ from io import BytesIO
 from datetime import datetime, date
 from metodos import criar_bandeira, to_excel, recode_variavel
 
-st.set_page_config(layout='wide', page_title='Processamento de dados', page_icon='📊')
+st.set_page_config(layout='wide', page_title='Processamento de dados',
+                   page_icon='images/LOGO_Expertise_Marca_VerdeEscuro.jpg')
 
 st.logo(image="images/Expertise_Marca_OffWhite_mini.jpg", size="large")
 
@@ -27,14 +28,15 @@ if selected_column:
     nome_bandeira_recode = st.text_input(label="📝 Insira o nome da nova bandeira recodificada", placeholder="nome da nova bandeira recodificada", key="recode_nome_bandeira")
 
     if nome_bandeira_recode in st.session_state.data.columns:
-        st.error(f"A coluna '{nome_bandeira_recode}' já existe no DataFrame. Por favor, escolha outro nome.", icon="⚠️")
+        st.error(f"A coluna '{nome_bandeira_recode}' já existe no DataFrame. Por favor, escolha outro nome.", 
+                 icon="⚠️")
     else:
         dataframe_recode = st.session_state.lista_labels[st.session_state.lista_labels['Coluna'] == selected_column][['Codigo', 'Label']].copy()
         dataframe_recode = dataframe_recode.rename(columns={'Codigo': 'Codigo', 'Label': 'Label'})
-        dataframe_recode['Codigo_novo'] = None
         dataframe_recode['Label_novo'] = None
-
-        dataframe_recode_edited = st.data_editor(dataframe_recode, num_rows="dynamic", 
+        dataframe_recode['Codigo_novo'] = None
+        
+        dataframe_recode_edited = st.data_editor(dataframe_recode, num_rows="fixed", 
                                                  use_container_width=True, 
                                                  key="dataframe_recode_editor", 
                                                  hide_index=True)
@@ -60,7 +62,7 @@ if selected_column:
             st.write(f'Frequência da nova bandeira: {ultima}')
 
             freq = st.session_state.data[ultima].value_counts(dropna=False).rename("Frequência").to_frame()
-            freq["%"] = (freq["Frequência"] / freq["Frequência"].sum() * 100).round(2)
+            freq["%"] = ( freq["Frequência"] / freq["Frequência"].sum() ).round(4)
             total_line = round(pd.DataFrame(freq.sum()).T)
             total_line.index = ['Total']
             freq = pd.concat([freq, total_line], ignore_index=False)
@@ -71,8 +73,8 @@ if selected_column:
             freq["Label"] = freq["Código"].map(dict_codigo_label)
             freq.loc["Total", "Label"] = "Total"
 
-
-            st.dataframe(freq[["Código", "Label", "Frequência", "%"]], hide_index=True)
+            st.dataframe(freq[["Código", "Label", "Frequência", "%"]], hide_index=True,
+                         column_config={"%": st.column_config.NumberColumn("%", format="percent")})
 
 
 st.write('')

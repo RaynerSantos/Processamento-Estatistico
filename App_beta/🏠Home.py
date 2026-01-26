@@ -6,7 +6,8 @@ from io import BytesIO
 from datetime import datetime, date
 from metodos import criar_bandeira, to_excel, mensagem_sucesso
 
-st.set_page_config(layout='wide', page_title='Processamento de Dados', page_icon='📊')
+st.set_page_config(layout='wide', page_title='Processamento de Dados', 
+                   page_icon='images/LOGO_Expertise_Marca_VerdeEscuro.jpg')
 
 st.logo(image="images/Expertise_Marca_OffWhite_mini.jpg", size="large")
 
@@ -67,24 +68,25 @@ if data_file is not None:
 if "data" in st.session_state and "lista_labels" in st.session_state:
     st.write('')
     st.write('')
-    with st.expander("Colunas"):
-        default_cols = [c for c in st.session_state.data.columns if c != 'POND']
-        colunas = st.multiselect('Selecione as colunas que deseja visualizar:', 
-                                 st.session_state.data.columns.tolist(), 
-                                 default=default_cols,
-                                 key="home_colunas")
-    dados_filtrados = st.session_state.data[colunas]
-    st.dataframe(dados_filtrados, hide_index=True, selection_mode=["multi-row", "multi-cell"])
+    with st.spinner("Please wait..."):
+        with st.expander("Colunas"):
+            default_cols = [c for c in st.session_state.data.columns if c != 'POND']
+            colunas = st.multiselect('Selecione as colunas que deseja visualizar:', 
+                                    st.session_state.data.columns.tolist(), 
+                                    default=default_cols,
+                                    key="home_colunas")
+        dados_filtrados = st.session_state.data[colunas]
+        st.dataframe(dados_filtrados, hide_index=True, selection_mode=["multi-row", "multi-cell"])
 
-    excel_data = to_excel(st.session_state.data, st.session_state.lista_labels)
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    st.download_button(
-        label="📥 Baixar arquivo Excel",
-        data=excel_data,
-        file_name=f'Base de dados atualizada - {now}.xlsx',
-        mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        on_click=mensagem_sucesso
-    )
+        excel_data = to_excel(st.session_state.data, st.session_state.lista_labels)
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        st.download_button(
+            label="📥 Baixar arquivo Excel",
+            data=excel_data,
+            file_name=f'Base de dados atualizada - {now}.xlsx',
+            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            on_click=mensagem_sucesso
+        )
 else:
     st.info("Faça o upload do Excel na Home para começar.")
 

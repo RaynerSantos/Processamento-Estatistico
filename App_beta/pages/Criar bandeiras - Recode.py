@@ -8,6 +8,8 @@ from metodos import criar_bandeira, to_excel, recode_variavel
 
 st.set_page_config(layout='wide', page_title='Processamento de dados', page_icon='📊')
 
+st.logo(image="images/Expertise_Marca_OffWhite_mini.jpg", size="large")
+
 if "data" not in st.session_state or st.session_state.data is None:
     st.warning("Antes de tudo, carregue o banco de dados com os códigos e lista de labels na página Home.")
     st.stop()
@@ -25,7 +27,7 @@ if selected_column:
     nome_bandeira_recode = st.text_input(label="📝 Insira o nome da nova bandeira recodificada", placeholder="nome da nova bandeira recodificada", key="recode_nome_bandeira")
 
     if nome_bandeira_recode in st.session_state.data.columns:
-        st.error(f"❌ A coluna '{nome_bandeira_recode}' já existe no DataFrame. Por favor, escolha outro nome.")
+        st.error(f"A coluna '{nome_bandeira_recode}' já existe no DataFrame. Por favor, escolha outro nome.", icon="⚠️")
     else:
         dataframe_recode = st.session_state.lista_labels[st.session_state.lista_labels['Coluna'] == selected_column][['Codigo', 'Label']].copy()
         dataframe_recode = dataframe_recode.rename(columns={'Codigo': 'Codigo', 'Label': 'Label'})
@@ -63,39 +65,19 @@ if selected_column:
             total_line.index = ['Total']
             freq = pd.concat([freq, total_line], ignore_index=False)
             freq["Código"] = freq.index
-            st.dataframe(freq[["Código", "Frequência", "%"]], hide_index=True)
+
+            dict_codigo_label = st.session_state.lista_labels.loc[st.session_state.lista_labels["Coluna"]==st.session_state.ultima_bandeira].set_index("Codigo")["Label"]
+            freq["Código"] = freq.index
+            freq["Label"] = freq["Código"].map(dict_codigo_label)
+            freq.loc["Total", "Label"] = "Total"
 
 
+            st.dataframe(freq[["Código", "Label", "Frequência", "%"]], hide_index=True)
 
 
-# if selected_column:
-#     st.success("✅ Coluna selecionada com sucesso!")
+st.write('')
+st.divider()
+if st.button("Recarregar página", icon="🔄"):
+    st.rerun()
 
-#     nome_bandeira_recode = st.text_input(label="📝 Insira o nome da nova bandeira recodificada", placeholder="nome da nova bandeira recodificada", key="recode_nome_bandeira")
-
-#     if nome_bandeira_recode in st.session_state.data.columns:
-#         st.error(f"❌ A coluna '{nome_bandeira_recode}' já existe no DataFrame. Por favor, escolha outro nome.")
-#     else:
-#         uploaded_file = st.file_uploader("📂 Faça o upload do arquivo Excel contendo o mapeamento de recode", type=["xlsx"], key="recode_file_uploader")
-
-#         if uploaded_file is not None:
-#             dataframe_recode = pd.read_excel(uploaded_file)
-#             st.write("Preview do mapeamento de recode:")
-#             st.dataframe(dataframe_recode, hide_index=True)
-
-#             if st.button('Realizar recode', key="btn_recode") and nome_bandeira_recode:
-#                 data, lista_labels = recode_variavel(
-#                     st.session_state.data,
-#                     st.session_state.lista_labels,
-#                     selected_column,
-#                     nome_bandeira_recode,
-#                     dataframe_recode
-#                 )
-#                 st.session_state.data = data
-#                 st.session_state.lista_labels = lista_labels
-#                 st.session_state.ultima_bandeira = nome_bandeira_recode
-#                 st.success('✅ Recode realizado com sucesso!')
-
-#                 # Exibir a frequência da nova bandeira criada
-#                 ultima = st.session_state.ultima_bandeira
-#                 st.write(f'Frequência da nova bandeira: {ultima}')
+st.image(image="images/Expertise_Marca_VerdeEscuro_mini.jpg")

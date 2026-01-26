@@ -4,9 +4,12 @@ import streamlit as st
 import time
 from io import BytesIO
 from datetime import datetime, date
-from metodos import criar_bandeira, to_excel
+from metodos import criar_bandeira, to_excel, mensagem_sucesso
 
 st.set_page_config(layout='wide', page_title='Processamento de Dados', page_icon='📊')
+
+st.logo(image="images/Expertise_Marca_OffWhite_mini.jpg", size="large")
+
 
 st.title('Processamento de Dados Estatísticos')
 
@@ -15,12 +18,13 @@ st.divider()
 
 st.markdown(
     """
-    <h5 style="color: black; text-align: center;">
+    <h5 style="color: "#20541B"; text-align: center;">
         Faça o upload do banco de dados na versão CODIGOS e com a Lista de Labels, <u><span style="font-weight: 900;">ambas em Excel</span></u> para realizar o Processamento.
     </h5>
     """,
     unsafe_allow_html=True
 )
+
 
 st.write("")
 st.write("")
@@ -36,7 +40,7 @@ with st.form('sheet_name_data'):
 st.session_state.nome_sheet_DATA = nome_sheet_DATA
 st.session_state.nome_sheet_lista_labels = nome_sheet_lista_labels
 if input_buttom_submit_DATA:
-    st.success("✅ Nome das sheets (abas) da planilha enviado com sucesso")
+    st.success("Nome das sheets (abas) da planilha enviado com sucesso", icon="✅")
 
 st.write('')
 data_file = st.file_uploader("📂 Selecione o banco de dados (em xlsx)", 
@@ -58,7 +62,7 @@ if data_file is not None:
     # Normalizar "Codigo" para numérico (trocando vírgula por ponto)
     lista_labels["Codigo"] = (lista_labels["Codigo"].astype(str).str.strip().str.replace(',', '.', regex=False))
     lista_labels['Codigo'] = pd.to_numeric(lista_labels["Codigo"], errors='coerce')
-    st.success("✅ Planilha carregada com sucesso!")
+    st.success("Planilha carregada com sucesso!", icon="✅")
 
 if "data" in st.session_state and "lista_labels" in st.session_state:
     st.write('')
@@ -78,12 +82,15 @@ if "data" in st.session_state and "lista_labels" in st.session_state:
         label="📥 Baixar arquivo Excel",
         data=excel_data,
         file_name=f'Base de dados atualizada - {now}.xlsx',
-        mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        on_click=mensagem_sucesso
     )
 else:
     st.info("Faça o upload do Excel na Home para começar.")
 
 st.write('')
 st.divider()
-if st.button("🔄 Recarregar página"):
+if st.button("Recarregar página", icon="🔄"):
     st.rerun()
+
+st.image(image="images/Expertise_Marca_VerdeEscuro_mini.jpg")

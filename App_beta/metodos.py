@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 from io import BytesIO
+import time
+import streamlit as st
 
 # Função para converter DataFrame em arquivo Excel para download
 def to_excel(df: pd.DataFrame, lista_de_labels: pd.DataFrame) -> bytes:
@@ -10,6 +12,11 @@ def to_excel(df: pd.DataFrame, lista_de_labels: pd.DataFrame) -> bytes:
         lista_de_labels.to_excel(writer, index=False, sheet_name="Lista de Labels")
     output.seek(0)  # volta pro início do buffer
     return output.getvalue()
+
+def mensagem_sucesso():
+    sucesso = st.success("Download realizado com sucesso!", icon="✅")
+    time.sleep(5)
+    sucesso.empty()
 
 COLUNAS_SELECIONADAS = ['SEXO', 'REG_POND']
 COL_NAME = 'SEXO_REG'

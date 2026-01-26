@@ -4,9 +4,11 @@ import streamlit as st
 import time
 from io import BytesIO
 from datetime import datetime, date
-from metodos import criar_bandeira, to_excel
+from metodos import criar_bandeira, to_excel, mensagem_sucesso
 
 st.set_page_config(layout='wide', page_title='Processamento de dados', page_icon='📊')
+
+st.logo(image="images/Expertise_Marca_OffWhite_mini.jpg", size="large")
 
 if "data" not in st.session_state or st.session_state.data is None:
     st.warning("Antes de tudo, carregue o banco de dados com os códigos e lista de labels na página Home.")
@@ -25,11 +27,12 @@ selected_columns = st.multiselect('Selecione as colunas que serão utilizadas pa
 if selected_columns:
     qtd_colunas = len(selected_columns)
     if qtd_colunas > 2:
-        st.warning("❌ Você pode selecionar no máximo 2 colunas para criar a nova bandeira.")
+        st.warning("Você pode selecionar no máximo 2 colunas para criar a nova bandeira.", icon="⚠️")
     elif qtd_colunas == 1:
-        st.info("ℹ️ Por favor, selecione 2 colunas para criar uma bandeira combinada.")
+        st.info("Por favor, selecione 2 colunas para criar uma bandeira combinada.", icon="ℹ️")
+        
     else:
-        st.success("✅ Duas colunas selecionadas com sucesso!")
+        st.success("Duas colunas selecionadas com sucesso!", icon="✅")
         coluna1, coluna2 = st.columns(2)
         for i, col in enumerate(selected_columns):
             if i % 2 == 0:
@@ -43,10 +46,12 @@ if selected_columns:
                     labels_col = st.session_state.lista_labels[st.session_state.lista_labels['Coluna'] == col][['Codigo', 'Label']]
                     st.dataframe(labels_col, hide_index=True)
 
-    nome_bandeira = st.text_input(label="📝 Insira o nome da nova bandeira", placeholder="nome da nova bandeira", key="criar_nome_bandeira")
+    nome_bandeira = st.text_input(label="📝 Insira o nome da nova bandeira", 
+                                  placeholder="nome da nova bandeira", 
+                                  key="criar_nome_bandeira")
 
     if nome_bandeira in st.session_state.data.columns:
-        st.error(f"❌ A coluna '{nome_bandeira}' já existe no DataFrame. Por favor, escolha outro nome.")
+        st.error(f"A coluna '{nome_bandeira}' já existe no DataFrame. Por favor, escolha outro nome.", icon="⚠️")
     else:
         # lógica para criar a nova bandeira com base nas colunas selecionadas
         if st.button('Criar bandeira', key="btn_criar_bandeira") and selected_columns and nome_bandeira:
@@ -55,16 +60,18 @@ if selected_columns:
             st.session_state.data = data
             st.session_state.lista_labels = lista_labels
             st.session_state.ultima_bandeira = nome_bandeira
-            st.success('✅ Bandeira criada com sucesso!')
+            st.success('Bandeira criada com sucesso!', icon="✅")
 
-            # Se já existe uma última bandeira criada, reexibe sempre que voltar pra página
-            ultima = st.session_state.get("ultima_bandeira")
-            if ultima:
-                st.dataframe(
-                    st.session_state.lista_labels[st.session_state.lista_labels["Coluna"] == ultima][["Codigo", "Label"]],
-                    hide_index=True
-                )
-
+            coluna1, coluna2 = st.columns(2)
+            with coluna1:
+                # Se já existe uma última bandeira criada, reexibe sempre que voltar pra página
+                ultima = st.session_state.get("ultima_bandeira")
+                if ultima:
+                    st.dataframe(
+                        st.session_state.lista_labels[st.session_state.lista_labels["Coluna"] == ultima][["Codigo", "Label"]],
+                        hide_index=True
+                    )
+            with coluna2:
                 freq = st.session_state.data[ultima].value_counts(dropna=False).rename("Frequência").to_frame()
                 freq["%"] = (freq["Frequência"] / freq["Frequência"].sum() * 100).round(2)
                 total_line = round(pd.DataFrame(freq.sum()).T)
@@ -81,10 +88,13 @@ if selected_columns:
                 label="📥 Baixar arquivo Excel",
                 data=excel_data,
                 file_name=f'Base de dados atualizada - {now}.xlsx',
-                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                on_click=mensagem_sucesso
             )
 
 st.write('')
 st.divider()
-if st.button("🔄 Recarregar página"):
+if st.button("Recarregar página", icon="🔄"):
     st.rerun()
+
+st.image(image="images/Expertise_Marca_VerdeEscuro_mini.jpg")

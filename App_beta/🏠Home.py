@@ -7,9 +7,9 @@ from datetime import datetime, date
 from metodos import criar_bandeira, to_excel, mensagem_sucesso
 
 st.set_page_config(layout='wide', page_title='Processamento de Dados', 
-                   page_icon='images/LOGO_Expertise_Marca_VerdeEscuro.jpg')
+                   page_icon='images/Logo_Expertise.png')
 
-st.logo(image="images/Expertise_Marca_OffWhite_mini.jpg", size="large")
+st.logo(image="images/ExpertiseAI.svg", size="large") # Expertise_Marca_OffWhite_mini.jpg
 
 
 st.title('Processamento de Dados Estatísticos')
@@ -33,15 +33,25 @@ st.write("")
 coluna1, coluna2 = st.columns(2)
 with st.form('sheet_name_data'):
     with coluna1:
-        nome_sheet_DATA = st.text_input(label="📝 Insira o nome da sheet (aba) no qual contém o banco de dados com os CODIGOS", value="BD_CODIGOS")
+        nome_sheet_DATA = st.text_input(
+            label="📝 Informe o nome da aba (sheet) que contém o banco de dados com os **CÓDIGOS**.", 
+            value="BD_CODIGOS"
+            )
+        with st.status("📅 A seguir, veja uma imagem de exemplo do banco de dados:"):
+            st.image(image="images/BD_CODIGOS.png", width="content")
     with coluna2:
-        nome_sheet_lista_labels = st.text_input(label="📝 Insira o nome da sheet (aba) no qual contém a Lista de Labels", value="Lista de Labels")
+        nome_sheet_lista_labels = st.text_input(
+            label="📝 Informe o nome da aba (sheet) que contém a **Lista de Labels**.", 
+            value="Lista de Labels"
+            )
+        with st.status("📅 A seguir, veja uma imagem de exemplo com a **Lista de Labels**:"):
+            st.image(image="images/Lista de Labels.png", width="content")
     input_buttom_submit_DATA = st.form_submit_button("Enviar")
 # Guardar os "UploadedFile" em variáveis distintas
 st.session_state.nome_sheet_DATA = nome_sheet_DATA
 st.session_state.nome_sheet_lista_labels = nome_sheet_lista_labels
 if input_buttom_submit_DATA:
-    st.success("Nome das sheets (abas) da planilha enviado com sucesso", icon="✅")
+    st.success("Nome das abas (sheets) da planilha enviado com sucesso", icon="✅")
 
 st.write('')
 data_file = st.file_uploader("📂 Selecione o banco de dados (em xlsx)", 
@@ -94,5 +104,7 @@ st.write('')
 st.divider()
 if st.button("Recarregar página", icon="🔄"):
     st.rerun()
-
-st.image(image="images/Expertise_Marca_VerdeEscuro_mini.jpg")
+st.write('')
+st.write('')
+st.write('')
+st.image(image="images/Expertise_Marca_VerdeEscuro_mini.jpg", width="content") # Expertise_Marca_VerdeEscuro_mini.jpg

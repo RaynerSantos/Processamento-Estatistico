@@ -7,9 +7,9 @@ from datetime import datetime, date
 from metodos import criar_bandeira, to_excel, recode_variavel
 
 st.set_page_config(layout='wide', page_title='Processamento de dados',
-                   page_icon='images/LOGO_Expertise_Marca_VerdeEscuro.jpg')
+                   page_icon='images/Logo_Expertise.png')
 
-st.logo(image="images/Expertise_Marca_OffWhite_mini.jpg", size="large")
+st.logo(image="images/ExpertiseAI.svg", size="large")
 
 if "data" not in st.session_state or st.session_state.data is None:
     st.warning("Antes de tudo, carregue o banco de dados com os códigos e lista de labels na página Home.")
@@ -33,8 +33,8 @@ if selected_column:
     else:
         dataframe_recode = st.session_state.lista_labels[st.session_state.lista_labels['Coluna'] == selected_column][['Codigo', 'Label']].copy()
         dataframe_recode = dataframe_recode.rename(columns={'Codigo': 'Codigo', 'Label': 'Label'})
-        dataframe_recode['Label_novo'] = None
-        dataframe_recode['Codigo_novo'] = None
+        dataframe_recode['Label nova'] = None
+        dataframe_recode['Codigo novo'] = None
         
         dataframe_recode_edited = st.data_editor(dataframe_recode, num_rows="fixed", 
                                                  use_container_width=True, 
@@ -81,5 +81,7 @@ st.write('')
 st.divider()
 if st.button("Recarregar página", icon="🔄"):
     st.rerun()
-
-st.image(image="images/Expertise_Marca_VerdeEscuro_mini.jpg")
+st.write('')
+st.write('')
+st.write('')
+st.image(image="images/Expertise_Marca_VerdeEscuro_mini.jpg")  

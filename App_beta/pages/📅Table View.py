@@ -7,9 +7,9 @@ from datetime import datetime, date
 from metodos import criar_bandeira, to_excel, mensagem_sucesso
 
 st.set_page_config(layout='wide', page_title='Processamento de dados', 
-                   page_icon='images/LOGO_Expertise_Marca_VerdeEscuro.jpg')
+                   page_icon='images/Logo_Expertise.png')
 
-st.logo(image="images/Expertise_Marca_OffWhite_mini.jpg", size="large")
+st.logo(image="images/ExpertiseAI.svg", size="large")
 
 if "data" not in st.session_state or st.session_state.data is None:
     st.warning("Antes de tudo, carregue o banco de dados com os códigos e lista de labels na página Home.")
@@ -21,13 +21,20 @@ st.subheader('Aqui você pode visualizar a frequência da coluna desejada')
 st.write('')
 
 colunas = st.session_state.data.columns.tolist()
-selected_column = st.selectbox('Selecione a coluna que deseja visualizar a tabela de frequência:', 
-                                  colunas, 
-                                  key="table_view_selected_column")
+coluna1, coluna2 = st.columns(2)
+with coluna1:
+    selected_column = st.selectbox('👇 Selecione a coluna desejada:', 
+                                    colunas, 
+                                    key="table_view_selected_column")
+with coluna2:
+    casas_decimais = st.number_input(label="📟 Insira a quantidade de casas decimais que deseja visualizar o percentual",
+                                     min_value=0, max_value=5,
+                                     value=2, 
+                                     key="casas_decimais_table_view")
 
 if st.button('Visualizar frequência', key="btn_table_view") and selected_column:
     freq = st.session_state.data[selected_column].value_counts(dropna=False).rename("Frequência").to_frame()
-    freq["%"] = ( freq["Frequência"] / freq["Frequência"].sum() ).round(4)
+    freq["%"] = ( freq["Frequência"] / freq["Frequência"].sum() * 100)
     total_line = round(pd.DataFrame(freq.sum()).T)
     total_line.index = ['Total']
     freq = pd.concat([freq, total_line], ignore_index=False)
@@ -39,10 +46,12 @@ if st.button('Visualizar frequência', key="btn_table_view") and selected_column
     freq.loc["Total", "Label"] = "Total"
 
     st.dataframe(freq[["Código", "Label", "Frequência", "%"]], hide_index=True, 
-                column_config={"%": st.column_config.NumberColumn("%", format="percent")})
+                column_config={"%": st.column_config.NumberColumn("%", format=f"%.{casas_decimais}f%%")})
     
 st.write("")
 st.write("")
 st.write("")
 st.divider()
+st.write('')
+st.write('')
 st.image(image="images/Expertise_Marca_VerdeEscuro_mini.jpg")

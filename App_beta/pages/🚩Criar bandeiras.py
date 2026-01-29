@@ -7,9 +7,9 @@ from datetime import datetime, date
 from metodos import criar_bandeira, to_excel, mensagem_sucesso
 
 st.set_page_config(layout='wide', page_title='Processamento de dados', 
-                   page_icon='images/LOGO_Expertise_Marca_VerdeEscuro.jpg')
+                   page_icon='images/Logo_Expertise.png')
 
-st.logo(image="images/Expertise_Marca_OffWhite_mini.jpg", size="large")
+st.logo(image="images/ExpertiseAI.svg", size="large")
 
 if "data" not in st.session_state or st.session_state.data is None:
     st.warning("Antes de tudo, carregue o banco de dados com os códigos e lista de labels na página Home.")
@@ -111,5 +111,7 @@ st.write('')
 st.divider()
 if st.button("Recarregar página", icon="🔄"):
     st.rerun()
-
+st.write('')
+st.write('')
+st.write('')
 st.image(image="images/Expertise_Marca_VerdeEscuro_mini.jpg")

@@ -88,7 +88,7 @@ def recode_variavel(data, lista_labels, COLUNA_ORIGINAL, NOVA_BANDEIRA, datafram
         data[NOVA_BANDEIRA] = np.nan
 
     # Criar o mapping (de-para) a partir do dataframe de recode
-    mapping_de_para = dict(zip(dataframe_recode['Codigo'], dataframe_recode['Codigo_novo']))
+    mapping_de_para = dict(zip(dataframe_recode['Codigo'], dataframe_recode['Codigo novo']))
     mapping_de_para
 
     # Aplicar o mapeamento para criar a nova bandeira
@@ -96,7 +96,7 @@ def recode_variavel(data, lista_labels, COLUNA_ORIGINAL, NOVA_BANDEIRA, datafram
         data.loc[data[COLUNA_ORIGINAL] == codigo_original, NOVA_BANDEIRA] = codigo_novo
 
     # Criar a mini lista de labels para a nova variável
-    mapping_lista_labels = dict(zip(dataframe_recode['Codigo_novo'], dataframe_recode['Label_novo']))
+    mapping_lista_labels = dict(zip(dataframe_recode['Codigo novo'], dataframe_recode['Label nova']))
 
     novo_recode = {
         'Coluna': [],
@@ -111,6 +111,72 @@ def recode_variavel(data, lista_labels, COLUNA_ORIGINAL, NOVA_BANDEIRA, datafram
 
     lista_labels = pd.concat([lista_labels, pd.DataFrame(novo_recode)], axis=0, ignore_index=True)
     return data, lista_labels
+
+
+# Função para criar a ponderação
+def criar_pond(df_universo: pd.DataFrame, df_coletado: pd.DataFrame, 
+               bd_codigo: pd.DataFrame, lista_labels: pd.DataFrame, cabecalho: str, coluna: str, linha: str):
+    """
+    Função para calcular a coluna de ponderação (máximo de 3 categorias: Cabeçalho, coluna e linha - MultiIndex):
+    1) A partir do universo, a quantidade total de entrevistas e o coletado é criado o valor da ponderação
+    2) Com o banco de dados e a lista de labels cria-se a coluna POND no banco de dados
+    """
+
+    # Soma do universo
+    total = int(df_universo.sum().sum().round())
+
+    # df_universo em percentual
+    df_universo_perc = df_universo.divide(total)
+
+    # Calcular a quantidade total de entrevistas
+    qtd_total_entrevistas = int(df_coletado.sum().sum())
+
+    # Valor ideal que deve ter de entrevistas para cada categoria
+    df_ideal = df_universo_perc.multiply(qtd_total_entrevistas)
+
+    # DataFrame com a ponderação criada de acordo com a combinação de categorias
+    df_pond = pd.DataFrame(
+        df_ideal.to_numpy() / df_coletado.astype(float).to_numpy(),
+        index=df_ideal.index,
+        columns=df_ideal.columns
+    )
+
+    # Criar um mapeamento para cada label das categorias necessárias
+    lista_labels_cabecalho = lista_labels[lista_labels["Coluna"] == cabecalho]
+    lista_labels_cabecalho_mapping = dict(zip(lista_labels_cabecalho['Codigo'], lista_labels_cabecalho['Label']))
+
+    lista_labels_coluna = lista_labels[lista_labels["Coluna"] == coluna]
+    lista_labels_coluna_mapping = dict(zip(lista_labels_coluna['Codigo'], lista_labels_coluna['Label']))
+
+    lista_labels_linha = lista_labels[lista_labels["Coluna"] == linha]
+    lista_labels_linha_mapping = dict(zip(lista_labels_linha['Codigo'], lista_labels_linha['Label']))
+
+    # Criar a nova coluna de PONDERAÇÃO de acordo com o df_pond
+    bd_codigo["POND_nova"] = np.nan
+    label_to_codigo = lista_labels.set_index("Label")["Codigo"].astype(int).to_dict()
+
+    for label_cabecalho in pd.Series(sorted(bd_codigo[cabecalho].astype(int).unique())).map(lista_labels_cabecalho_mapping):
+        s = lista_labels.loc[lista_labels["Label"] == label_cabecalho, "Codigo"]
+        if s.empty:
+            raise KeyError(f"Label não encontrado: {label_cabecalho}")
+        codigo_cabecalho = label_to_codigo[label_cabecalho]
+
+        for label_coluna in pd.Series(sorted(bd_codigo[coluna].astype(int).unique())).map(lista_labels_coluna_mapping):
+            s = lista_labels.loc[lista_labels["Label"] == label_coluna, "Codigo"]
+            if s.empty:
+                raise KeyError(f"Label não encontrado: {label_coluna}")
+            codigo_coluna = label_to_codigo[label_coluna]
+
+            for label_linha in pd.Series(sorted(bd_codigo[linha].astype(int).unique())).map(lista_labels_linha_mapping):
+                s = lista_labels.loc[lista_labels["Label"] == label_linha, "Codigo"]
+                if s.empty:
+                    raise KeyError(f"Label não encontrado: {label_linha}")
+                codigo_linha = label_to_codigo[label_linha]
+
+                pond = df_pond[label_cabecalho][label_coluna][label_linha]
+                bd_codigo.loc[((bd_codigo[cabecalho] == codigo_cabecalho) & (bd_codigo[coluna] == codigo_coluna) & (bd_codigo[linha] == codigo_linha)), "POND_nova"] = pond
+    
+    return bd_codigo
 
 
 if __name__ == "__main__":

@@ -20,7 +20,7 @@ st.divider()
 st.markdown(
     """
     <h5 style="color: "#20541B"; text-align: center;">
-        Faça o upload do banco de dados na versão CODIGOS e com a Lista de Labels, <u><span style="font-weight: 900;">ambas em Excel</span></u> para realizar o Processamento.
+        Faça o upload do banco de dados na versão CODIGOS, com a Lista de Labels e com a Lista de Variáveis, <u><span style="font-weight: 900;">ambas em Excel</span></u> para realizar o Processamento.
     </h5>
     """,
     unsafe_allow_html=True
@@ -30,15 +30,16 @@ st.markdown(
 st.write("")
 st.write("")
 # Upload das planilhas
-coluna1, coluna2 = st.columns(2)
+coluna1, coluna2, coluna3 = st.columns(3)
 with st.form('sheet_name_data'):
     with coluna1:
         nome_sheet_DATA = st.text_input(
             label="📝 Informe o nome da aba (sheet) que contém o banco de dados com os **CÓDIGOS**.", 
             value="BD_CODIGOS"
             )
-        with st.status("📅 A seguir, veja uma imagem de exemplo do banco de dados:"):
+        with st.status("📅 A seguir, veja uma imagem de exemplo do **banco de dados**:"):
             st.image(image="images/BD_CODIGOS.png", width="content")
+
     with coluna2:
         nome_sheet_lista_labels = st.text_input(
             label="📝 Informe o nome da aba (sheet) que contém a **Lista de Labels**.", 
@@ -46,10 +47,16 @@ with st.form('sheet_name_data'):
             )
         with st.status("📅 A seguir, veja uma imagem de exemplo com a **Lista de Labels**:"):
             st.image(image="images/Lista de Labels.png", width="content")
+
+    with coluna3:
+        nome_sheet_lista_variaveis = st.text_input(
+            label="📝 Informe o nome da aba (sheet) que contém a **Lista de variáveis**.", 
+            value="Lista de variáveis"
+            )
+        with st.status("📅 A seguir, veja uma imagem de exemplo com a **Lista de variáveis**:"):
+            st.image(image="images/Lista de variaveis.png", width="content")
     input_buttom_submit_DATA = st.form_submit_button("Enviar")
-# Guardar os "UploadedFile" em variáveis distintas
-st.session_state.nome_sheet_DATA = nome_sheet_DATA
-st.session_state.nome_sheet_lista_labels = nome_sheet_lista_labels
+
 if input_buttom_submit_DATA:
     st.success("Nome das abas (sheets) da planilha enviado com sucesso", icon="✅")
 
@@ -62,24 +69,30 @@ data_file = st.file_uploader("📂 Selecione o banco de dados (em xlsx)",
 if data_file is not None:
     data = pd.read_excel(data_file, sheet_name=nome_sheet_DATA)
     lista_labels = pd.read_excel(data_file, sheet_name=nome_sheet_lista_labels)
+    lista_variaveis = pd.read_excel(data_file, sheet_name=nome_sheet_lista_variaveis, header=1)
 
     lista_labels = lista_labels.iloc[1:, :].copy()
     lista_labels.columns = ['Coluna', 'Codigo', 'Label']
     lista_labels["Coluna"] = lista_labels["Coluna"].ffill().str.strip()
 
+    lista_variaveis.columns = ["Coluna", "Rotulo"]
+
     st.session_state.data = data
     st.session_state.lista_labels = lista_labels
+    st.session_state.lista_variaveis = lista_variaveis
 
     # Normalizar "Codigo" para numérico (trocando vírgula por ponto)
     lista_labels["Codigo"] = (lista_labels["Codigo"].astype(str).str.strip().str.replace(',', '.', regex=False))
     lista_labels['Codigo'] = pd.to_numeric(lista_labels["Codigo"], errors='coerce')
     st.success("Planilha carregada com sucesso!", icon="✅")
 
-if "data" in st.session_state and "lista_labels" in st.session_state:
+if "data" in st.session_state and "lista_labels" in st.session_state and "lista_variaveis" in st.session_state:
     st.write('')
     st.write('')
     with st.spinner("Please wait..."):
-        with st.expander("Colunas"):
+        with st.expander("📅 Dicionário de variáveis:"):
+            st.dataframe(st.session_state.lista_variaveis, hide_index=True, selection_mode=["multi-row", "multi-cell"])
+        with st.expander("📋 Colunas"):
             default_cols = [c for c in st.session_state.data.columns if c != 'POND']
             colunas = st.multiselect('Selecione as colunas que deseja visualizar:', 
                                     st.session_state.data.columns.tolist(), 

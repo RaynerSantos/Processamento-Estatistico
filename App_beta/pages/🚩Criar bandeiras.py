@@ -20,6 +20,12 @@ st.divider()
 st.subheader('Aqui você pode criar novas bandeiras combinando colunas existentes na sua base de dados.')
 st.write('')
 
+with st.spinner("Please wait..."):
+    with st.expander("📅 Dicionário de variáveis:"):
+        st.dataframe(st.session_state.lista_variaveis, hide_index=True, selection_mode=["multi-row", "multi-cell"])
+
+st.write('')
+
 colunas = st.session_state.data.columns.tolist()
 selected_columns = st.multiselect('Selecione as colunas que serão utilizadas para criar a nova bandeira:', 
                                   colunas, 
@@ -31,9 +37,16 @@ if selected_columns:
         st.warning("Você pode selecionar no máximo 2 colunas para criar a nova bandeira.", icon="⚠️")
     elif qtd_colunas == 1:
         # st.info("Por favor, selecione 2 colunas para criar uma bandeira combinada.", icon="ℹ️")
+        rotulo = st.session_state.lista_variaveis.loc[st.session_state.lista_variaveis["Coluna"] == selected_columns[0], "Rotulo"].iloc[0]
+        st.write(f'**{selected_columns[0]}**: {rotulo}')
         st.success("Uma coluna selecionada com sucesso!", icon="✅")
+        st.write('')
         
     elif qtd_colunas == 2:
+        rotulo = st.session_state.lista_variaveis.loc[st.session_state.lista_variaveis["Coluna"] == selected_columns[0], "Rotulo"].iloc[0]
+        st.write(f'**{selected_columns[0]}**: {rotulo}')
+        rotulo = st.session_state.lista_variaveis.loc[st.session_state.lista_variaveis["Coluna"] == selected_columns[1], "Rotulo"].iloc[0]
+        st.write(f'**{selected_columns[1]}**: {rotulo}')
         st.success("Duas colunas selecionadas com sucesso!", icon="✅")
         coluna1, coluna2 = st.columns(2)
         for i, col in enumerate(selected_columns):

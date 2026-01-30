@@ -20,6 +20,12 @@ st.divider()
 st.subheader('Aqui você pode visualizar a frequência da coluna desejada')
 st.write('')
 
+with st.spinner("Please wait..."):
+    with st.expander("📅 Dicionário de variáveis:"):
+        st.dataframe(st.session_state.lista_variaveis, hide_index=True, selection_mode=["multi-row", "multi-cell"])
+
+st.write('')
+st.write('')
 colunas = st.session_state.data.columns.tolist()
 coluna1, coluna2 = st.columns(2)
 with coluna1:

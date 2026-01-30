@@ -20,10 +20,19 @@ st.divider()
 st.subheader('Aqui você pode realizar recodes simples em suas variáveis existentes.')
 st.write('')
 
+with st.spinner("Please wait..."):
+    with st.expander("📅 Dicionário de variáveis:"):
+        st.dataframe(st.session_state.lista_variaveis, hide_index=True, selection_mode=["multi-row", "multi-cell"])
+
+st.write('')
+
 colunas = st.session_state.data.columns.tolist()
 selected_column = st.selectbox('Selecione a coluna que será recodificada:', colunas, key="recode_selected_column")
 
 if selected_column:
+    rotulo = st.session_state.lista_variaveis.loc[st.session_state.lista_variaveis["Coluna"] == selected_column, "Rotulo"].iloc[0]
+    st.write(f'**{selected_column}**: {rotulo}')
+    st.write('')
 
     nome_bandeira_recode = st.text_input(label="📝 Insira o nome da nova bandeira recodificada", placeholder="nome da nova bandeira recodificada", key="recode_nome_bandeira")
 

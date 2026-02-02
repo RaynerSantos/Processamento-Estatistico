@@ -20,7 +20,7 @@ st.divider()
 st.subheader('Aqui você pode criar a coluna de Ponderação')
 st.write('')
 
-coluna1, coluna2 = st.columns(2)
+coluna1, coluna2 = st.columns(2, border=True)
 
 with st.form('sheet_name_df_universo_df_coletado'):
     with coluna1:

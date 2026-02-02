@@ -4,7 +4,6 @@ import streamlit as st
 import time
 from io import BytesIO
 from datetime import datetime, date
-from metodos import criar_bandeira, to_excel, mensagem_sucesso
 
 st.set_page_config(layout='wide', page_title='Processamento de dados', 
                    page_icon='images/Logo_Expertise.png')

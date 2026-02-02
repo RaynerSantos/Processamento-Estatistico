@@ -30,7 +30,7 @@ st.markdown(
 st.write("")
 st.write("")
 # Upload das planilhas
-coluna1, coluna2, coluna3 = st.columns(3)
+coluna1, coluna2, coluna3 = st.columns(3, border=True, vertical_alignment="center", gap="small")
 with st.form('sheet_name_data'):
     with coluna1:
         nome_sheet_DATA = st.text_input(

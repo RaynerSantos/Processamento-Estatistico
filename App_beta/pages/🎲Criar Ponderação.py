@@ -32,7 +32,7 @@ with st.form('sheet_name_df_universo_df_coletado'):
                                                 placeholder="COLETADO",
                                                 help="A tabela deverá conter três categorias (Cabeçalho, coluna, linha).")
 
-    with st.status("📅 A seguir, veja uma imagem de exemplo da tabela:"):
+    with st.status("🔍 A seguir, veja uma imagem de exemplo da tabela:"):
         st.image(image="images/Tabela fonte universo.png", width="content")
     input_buttom_submit_DATA = st.form_submit_button("Enviar")
         
@@ -65,17 +65,17 @@ colunas = st.session_state.data.columns.tolist()
 coluna1, coluna2, coluna3 = st.columns(3)
 with st.form('cabecalho_multiindex'):
     with coluna1:
-        selected_column_cabecalho = st.selectbox('👇 Selecione a coluna que representa o nível do cabeçalho da tabela:', 
+        selected_column_cabecalho = st.selectbox('👇 Selecione a coluna que representa o **nível do cabeçalho** da tabela:', 
                                         colunas, 
                                         key="ponderacao_selected_column_cabecalho",
                                         help="A imagem com o exemplo acima seria a coluna do banco de dados que representa as **empresas**.")
     with coluna2:
-        selected_column_coluna = st.selectbox('👇 Selecione a coluna que representa o nível das colunas da tabela:', 
+        selected_column_coluna = st.selectbox('👇 Selecione a coluna que representa o **nível das colunas** da tabela:', 
                                         colunas, 
                                         key="ponderacao_selected_column_coluna",
                                         help="A imagem com o exemplo acima seria a coluna do banco de dados que representa as **regiões**.")
     with coluna3:
-        selected_column_linha = st.selectbox('👇 Selecione a coluna que representa o nível das linhas da tabela:', 
+        selected_column_linha = st.selectbox('👇 Selecione a coluna que representa o **nível das linhas** da tabela:', 
                                         colunas, 
                                         key="ponderacao_selected_column_linha",
                                         help="A imagem com o exemplo acima seria a coluna do banco de dados que representa o **porte empresarial**.")

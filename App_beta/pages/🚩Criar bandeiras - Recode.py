@@ -6,6 +6,18 @@ from io import BytesIO
 from datetime import datetime, date
 from metodos import recode_variavel
 
+def verifica_label_ordem(dataframe_recode_edited):
+            # Verificar se as labels e a ordem foi preenchida corretamente
+            mapping_de_para_df_recode = dict(zip(dataframe_recode_edited['Label nova'], dataframe_recode_edited['Ordem']))
+            lista_verif = []
+            erro = 0
+            for v in mapping_de_para_df_recode.values():
+                if v in lista_verif:
+                    erro += 1
+                    print("Verificar correspondência entre códigos e labels")
+                lista_verif.append(v)
+            return erro
+
 st.set_page_config(layout='wide', page_title='Processamento de dados',
                    page_icon='images/Logo_Expertise.png')
 
@@ -59,36 +71,43 @@ if selected_column:
     if st.button('Realizar recode', key="btn_recode") and nome_bandeira_recode:
         # st.dataframe(dataframe_recode_edited, hide_index=True)
 
-        data, lista_labels = recode_variavel(
-            data=st.session_state.data,
-            lista_labels=st.session_state.lista_labels,
-            COLUNA_ORIGINAL=selected_column,
-            NOVA_BANDEIRA=nome_bandeira_recode,
-            dataframe_recode=dataframe_recode_edited
-        )
-        st.session_state.data = data
-        st.session_state.lista_labels = lista_labels
-        st.session_state.ultima_bandeira = nome_bandeira_recode
-        st.success('✅ Recode realizado com sucesso!')
+        erro_label_ordem = verifica_label_ordem(dataframe_recode_edited)
 
-        # Exibir a frequência da nova bandeira criada
-        ultima = st.session_state.ultima_bandeira
-        st.write(f'Frequência da nova bandeira: {ultima}')
+        if erro_label_ordem > 0:
+            st.warning("Verificar correspondência entre a Label nova e a ordenação de cada Label", icon="⚠️")
+            st.write("")
 
-        freq = st.session_state.data[ultima].value_counts(dropna=False).rename("Frequência").to_frame()
-        freq["%"] = ( freq["Frequência"] / freq["Frequência"].sum() ).round(4)
-        total_line = round(pd.DataFrame(freq.sum()).T)
-        total_line.index = ['Total']
-        freq = pd.concat([freq, total_line], ignore_index=False)
-        freq["Código"] = freq.index
+        else:
+            data, lista_labels = recode_variavel(
+                data=st.session_state.data,
+                lista_labels=st.session_state.lista_labels,
+                COLUNA_ORIGINAL=selected_column,
+                NOVA_BANDEIRA=nome_bandeira_recode,
+                dataframe_recode=dataframe_recode_edited
+            )
+            st.session_state.data = data
+            st.session_state.lista_labels = lista_labels
+            st.session_state.ultima_bandeira = nome_bandeira_recode
+            st.success('✅ Recode realizado com sucesso!')
 
-        dict_codigo_label = st.session_state.lista_labels.loc[st.session_state.lista_labels["Coluna"]==st.session_state.ultima_bandeira].set_index("Codigo")["Label"]
-        freq["Código"] = freq.index
-        freq["Label"] = freq["Código"].map(dict_codigo_label)
-        freq.loc["Total", "Label"] = "Total"
+            # Exibir a frequência da nova bandeira criada
+            ultima = st.session_state.ultima_bandeira
+            st.write(f'Frequência da nova bandeira: {ultima}')
 
-        st.dataframe(freq[["Código", "Label", "Frequência", "%"]], hide_index=True,
-                        column_config={"%": st.column_config.NumberColumn("%", format="percent")})
+            freq = st.session_state.data[ultima].value_counts(dropna=False).rename("Frequência").to_frame()
+            freq["%"] = ( freq["Frequência"] / freq["Frequência"].sum() ).round(4)
+            total_line = round(pd.DataFrame(freq.sum()).T)
+            total_line.index = ['Total']
+            freq = pd.concat([freq, total_line], ignore_index=False)
+            freq["Código"] = freq.index
+
+            dict_codigo_label = st.session_state.lista_labels.loc[st.session_state.lista_labels["Coluna"]==st.session_state.ultima_bandeira].set_index("Codigo")["Label"]
+            freq["Código"] = freq.index
+            freq["Label"] = freq["Código"].map(dict_codigo_label)
+            freq.loc["Total", "Label"] = "Total"
+
+            st.dataframe(freq[["Código", "Label", "Frequência", "%"]], hide_index=True,
+                            column_config={"%": st.column_config.NumberColumn("%", format="percent")})
 
 
 st.write('')

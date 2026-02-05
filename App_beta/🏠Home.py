@@ -37,28 +37,33 @@ with st.form('sheet_name_data'):
             label="📝 Informe o nome da aba (sheet) que contém o banco de dados com os **CÓDIGOS**.", 
             value="BD_CODIGOS"
             )
-        with st.status("📅 A seguir, veja uma imagem de exemplo do **banco de dados**:"):
+        with st.status("🔍 A seguir, veja uma imagem de exemplo do **banco de dados**:"):
             st.image(image="images/BD_CODIGOS.png", width="content")
 
     with coluna2:
         nome_sheet_lista_labels = st.text_input(
             label="📝 Informe o nome da aba (sheet) que contém a **Lista de Labels**.", 
-            value="Lista de Labels"
+            value="LISTA_LABELS"
             )
-        with st.status("📅 A seguir, veja uma imagem de exemplo com a **Lista de Labels**:"):
+        with st.status("🔍 A seguir, veja uma imagem de exemplo com a **Lista de Labels**:"):
             st.image(image="images/Lista de Labels.png", width="content")
 
     with coluna3:
         nome_sheet_lista_variaveis = st.text_input(
             label="📝 Informe o nome da aba (sheet) que contém a **Lista de variáveis**.", 
-            value="Lista de variáveis"
+            value="LISTA_VARIAVEIS"
             )
-        with st.status("📅 A seguir, veja uma imagem de exemplo com a **Lista de variáveis**:"):
+        with st.status("🔍 A seguir, veja uma imagem de exemplo com a **Lista de variáveis**:"):
             st.image(image="images/Lista de variaveis.png", width="content")
     input_buttom_submit_DATA = st.form_submit_button("Enviar")
 
 if input_buttom_submit_DATA:
     st.success("Nome das abas (sheets) da planilha enviado com sucesso", icon="✅")
+
+    # Salvar os nomes das abas
+    st.session_state.nome_sheet_DATA = nome_sheet_DATA
+    st.session_state.nome_sheet_lista_labels = nome_sheet_lista_labels
+    st.session_state.nome_sheet_lista_variaveis = nome_sheet_lista_variaveis
 
 st.write('')
 data_file = st.file_uploader("📂 Selecione o banco de dados (em xlsx)", 
@@ -67,9 +72,9 @@ data_file = st.file_uploader("📂 Selecione o banco de dados (em xlsx)",
                              key="home_uploader")
 
 if data_file is not None:
-    data = pd.read_excel(data_file, sheet_name=nome_sheet_DATA)
-    lista_labels = pd.read_excel(data_file, sheet_name=nome_sheet_lista_labels)
-    lista_variaveis = pd.read_excel(data_file, sheet_name=nome_sheet_lista_variaveis, header=1)
+    data = pd.read_excel(data_file, sheet_name=st.session_state.nome_sheet_DATA)
+    lista_labels = pd.read_excel(data_file, sheet_name=st.session_state.nome_sheet_lista_labels)
+    lista_variaveis = pd.read_excel(data_file, sheet_name=st.session_state.nome_sheet_lista_variaveis, header=1)
 
     lista_labels = lista_labels.iloc[1:, :].copy()
     lista_labels.columns = ['Coluna', 'Codigo', 'Label']

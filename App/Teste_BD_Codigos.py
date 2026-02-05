@@ -6,28 +6,28 @@ from databases.utils import ordenar_labels, ordenar_labels_multipla, ordenar_val
 
 
 TipoTabela = 'IPA_5'
-Colunas = 'ONDA, EMP_G,VAR_G,GC_G,PJ_G,PF_G,CATI_G,CAMPO_G'
+Colunas = 'ONDA, EMP_G, VAR_G, GC_G, PJ_G, PF_G, CATI_G, CAMPO_G'
 Ordem_ONDA = 'ONDA_G, Jul24, Nov24, Mar25, Jul25'
-Cabecalho = 'Ondas,Empreendedores (PF+PJ),Varejo (PF+PJ),Grandes Contas (PF+PJ),Pessoa Jurídica,Pessoa Física,Cati,Campo'
+Cabecalho = 'Ondas, Empreendedores (PF+PJ), Varejo (PF+PJ), Grandes Contas (PF+PJ), Pessoa Jurídica, Pessoa Física, Cati, Campo'
 Var_linha = 'VCH_C' # ADER_AG2 | NPS_C | NEC
 NS_NR = 'NAO'
-valores_BTB = '1,2'
-valores_TTB = '4,5'
-Valores_Agrup = 'Com certeza deixaria de trabalhar,Provavelmente deixaria de trabalhar,Não sei se vou continuar ou não,Provavelmente continuaria trabalhando,Com certeza continuaria trabalhando'
+valores_BTB = '1, 2'
+valores_TTB = '4, 5'
+Valores_Agrup = 'Com certeza deixaria de trabalhar, Provavelmente deixaria de trabalhar, Não sei se vou continuar ou não, Provavelmente continuaria trabalhando, Com certeza continuaria trabalhando'
 Fecha_100 = 'NAO'
 Var_ID = 'ID_EMP'
 Var_Pond = 'POND'
 Titulo = 'VCH_C. Nos próximos 6 meses você pretende continuar a trabalhar com a CIELO ou pretende deixar de trabalhar com a CIELO?'
 
-caminho_bd = r'C:\PROJETOS\Processamento-Estatistico\BASES PARA PROCESSAMENTO\Cielo NPS 2025\Jul25\EMP_Cielo Satisfacao_JUL25_2025.08.18.xlsx'
+caminho_bd = r'C:\PROJETOS\Expertise\Processamento-Estatistico\BASES PARA PROCESSAMENTO\Cielo NPS 2025\Jul25\EMP_Cielo Satisfacao_JUL25_2025.08.18.xlsx'
 data = pd.read_excel(caminho_bd, sheet_name='BD_CODIGOS')
 df = data.copy()
 
 lista_labels = pd.read_excel(caminho_bd, sheet_name='Lista de Labels')
 
 # Variáveis para as colunas da tabela (bandeiras)
-Colunas = Colunas.split(sep=',')
-Ordem_ONDA = Ordem_ONDA.split(sep=',')
+Colunas = Colunas.split(sep=', ')
+Ordem_ONDA = Ordem_ONDA.split(sep=', ')
 dict_ord_labels = {}
 
 for col in Colunas:

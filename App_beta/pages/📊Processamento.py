@@ -6,6 +6,7 @@ from io import BytesIO
 from collections import Counter
 from utils import ordenar_labels, ordenar_labels_multipla, ordenar_valores, classificar_nps, funcao_agrupamento, classificar_satis
 from metodos import processar_tabela, mensagem_sucesso, processamento
+from metodos import verificar_incosistencias_iniciais, verif_TipoTabela, verif_bandeiras_cabecalho, verif_bandeiras
 
 # Função para salvar as tabelas em um único Excel com única aba
 def salvar_excel_unica_tabela(tabelas, TipoTabela, Var_linha):
@@ -402,67 +403,76 @@ with tab2:
         with st.expander("📅 Dicionário de variáveis:"):
             st.dataframe(st.session_state.lista_variaveis, hide_index=True, selection_mode=["multi-row", "multi-cell"])
     
-    st.write("")
-    st.write("")
-
-    with st.form('sheet_name_sintaxe'):
-        nome_sheet_sintaxe = st.text_input(
-            label="📝 Informe o nome da aba (sheet) que contém a **Sintaxe** com os parâmetros da criação das tabelas.", 
-            placeholder="Sintaxe"
-            )
-        with st.status("🔍 A seguir, veja uma imagem de exemplo da **Sintaxe**:"):
-            st.image(image="images/Sintaxe.png", width="content")
-        input_buttom_submit_sintaxe = st.form_submit_button("Enviar")
-
-    if input_buttom_submit_sintaxe:
-        st.success("Nome da aba (sheet) da planilha de **Sintaxe** foi enviado com sucesso", icon="✅")
-
-        # Salvar o nome da aba
-        st.session_state.nome_sheet_sintaxe = nome_sheet_sintaxe
-
-    st.write('')
-    data_sintaxe_file = st.file_uploader("📂 Selecione o banco de dados (em xlsx)", 
-                                type=["xlsx"], 
-                                help="Selecione o arquivo Excel contendo a Sintaxe", 
-                                key="processamento_sintaxe_uploader")
-
-    if data_sintaxe_file is not None:
-        sintaxe = pd.read_excel(data_sintaxe_file, sheet_name=st.session_state.nome_sheet_sintaxe)
-        st.session_state.sintaxe = sintaxe
-        st.success("Planilha carregada com sucesso!", icon="✅")
-
         st.write("")
         st.write("")
 
-        # Formato do output (uma única aba ou para cada tabela processada gerar uma nova aba)
-        with st.form(key='output_excel'):
-            tipo_output = st.selectbox(label='Informe a opção do formato para o output desejado', options=['Única aba', 'Várias abas'])
-            excel_name = st.text_input(label='Informe o nome desejado para a planilha com o output do Processamento  Estatístico')
-            processar_dados = st.form_submit_button("Processar Dados")
-            st.session_state.tipo_output = tipo_output
-            st.session_state.excel_name = excel_name
+        with st.form('sheet_name_sintaxe'):
+            nome_sheet_sintaxe = st.text_input(
+                label="📝 Informe o nome da aba (sheet) que contém a **Sintaxe** com os parâmetros da criação das tabelas.", 
+                placeholder="Sintaxe"
+                )
+            with st.status("🔍 A seguir, veja uma imagem de exemplo da **Sintaxe**:"):
+                st.image(image="images/Sintaxe.png", width="content")
+            input_buttom_submit_sintaxe = st.form_submit_button("Enviar")
 
-        # Botão para processar os dados
-        if processar_dados:
-            # Processar os dados e obter as tabelas
-            todas_tabelas_gerais = processamento(data=st.session_state.data, 
-                                                bd_processamento=st.session_state.sintaxe, 
-                                                lista_labels=st.session_state.lista_labels)
-            
-            if tipo_output == 'Várias abas':
-                # Salvar em Excel com formatação
-                excel_data = salvar_excel_com_formatacao(todas_tabelas_gerais, bd_processamento=st.session_state.sintaxe)
-            elif tipo_output == 'Única aba':
-                # Salvar em Excel com formatação
-                excel_data = salvar_excel_aba_unica(todas_tabelas_gerais, bd_processamento=st.session_state.sintaxe)
-            
-            # Link para download
-            st.download_button(
-                label="Baixar Excel Processado",
-                data=excel_data,
-                file_name=st.session_state.excel_name + ".xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
+        if input_buttom_submit_sintaxe:
+            st.success("Nome da aba (sheet) da planilha de **Sintaxe** foi enviado com sucesso", icon="✅")
+
+            # Salvar o nome da aba
+            st.session_state.nome_sheet_sintaxe = nome_sheet_sintaxe
+
+        st.write('')
+        data_sintaxe_file = st.file_uploader("📂 Selecione o banco de dados (em xlsx)", 
+                                    type=["xlsx"], 
+                                    help="Selecione o arquivo Excel contendo a Sintaxe", 
+                                    key="processamento_sintaxe_uploader")
+
+        if data_sintaxe_file is not None:
+            sintaxe = pd.read_excel(data_sintaxe_file, sheet_name=st.session_state.nome_sheet_sintaxe)
+            st.session_state.sintaxe = sintaxe
+            st.success("Planilha carregada com sucesso!", icon="✅")
+
+            st.write("")
+            st.write("")
+
+            # Formato do output (uma única aba ou para cada tabela processada gerar uma nova aba)
+            with st.form(key='output_excel'):
+                tipo_output = st.selectbox(label='Informe a opção do formato para o output desejado', options=['Única aba', 'Várias abas'])
+                excel_name = st.text_input(label='Informe o nome desejado para a planilha com o output do Processamento  Estatístico')
+                processar_dados = st.form_submit_button("Processar Dados")
+                st.session_state.tipo_output = tipo_output
+                st.session_state.excel_name = excel_name
+
+            # Botão para processar os dados
+            if processar_dados:
+                with st.spinner("Please wait..."):
+                    processamento_sintaxe = verificar_incosistencias_iniciais(data=st.session_state.data, 
+                                                                sintaxe=st.session_state.sintaxe, 
+                                                                lista_labels=st.session_state.lista_labels)
+                    result_verificar_inconsistencia = processamento_sintaxe.verificar_incosistencia()
+                    if result_verificar_inconsistencia != 0:
+                        st.warning(result_verificar_inconsistencia)
+
+                    else:
+                        # Processar os dados e obter as tabelas
+                        todas_tabelas_gerais = processamento(data=st.session_state.data, 
+                                                            bd_processamento=st.session_state.sintaxe, 
+                                                            lista_labels=st.session_state.lista_labels)
+                        
+                        if tipo_output == 'Várias abas':
+                            # Salvar em Excel com formatação
+                            excel_data = salvar_excel_com_formatacao(todas_tabelas_gerais, bd_processamento=st.session_state.sintaxe)
+                        elif tipo_output == 'Única aba':
+                            # Salvar em Excel com formatação
+                            excel_data = salvar_excel_aba_unica(todas_tabelas_gerais, bd_processamento=st.session_state.sintaxe)
+                        
+                        # Link para download
+                        st.download_button(
+                            label="Baixar Excel Processado",
+                            data=excel_data,
+                            file_name=st.session_state.excel_name + ".xlsx",
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        )
     
 st.write('')
 st.write('')

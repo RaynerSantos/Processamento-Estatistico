@@ -6,6 +6,9 @@ from io import BytesIO
 from datetime import datetime, date
 from metodos import recode_variavel
 
+if "bandeiras_criadas" not in st.session_state:
+    st.session_state.bandeiras_criadas = []
+
 def verifica_label_ordem(dataframe_recode_edited):
             # Verificar se as labels e a ordem foi preenchida corretamente
             mapping_de_para_df_recode = dict(zip(dataframe_recode_edited['Label nova'], dataframe_recode_edited['Ordem']))
@@ -89,6 +92,7 @@ if selected_column:
             st.session_state.lista_labels = lista_labels
             st.session_state.ultima_bandeira = nome_bandeira_recode
             st.success('✅ Recode realizado com sucesso!')
+            st.session_state.bandeiras_criadas.append(st.session_state.ultima_bandeira)
 
             # Exibir a frequência da nova bandeira criada
             ultima = st.session_state.ultima_bandeira

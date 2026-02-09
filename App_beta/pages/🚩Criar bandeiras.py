@@ -11,6 +11,9 @@ st.set_page_config(layout='wide', page_title='Processamento de dados',
 
 st.logo(image="images/ExpertiseAI.svg", size="large")
 
+if "bandeiras_criadas" not in st.session_state:
+    st.session_state.bandeiras_criadas = []
+
 if "data" not in st.session_state or st.session_state.data is None:
     st.warning("Antes de tudo, carregue o banco de dados com os códigos e lista de labels na página Home.")
     st.stop()
@@ -77,6 +80,7 @@ if selected_columns:
                 st.session_state.lista_labels = lista_labels
                 st.session_state.ultima_bandeira = nome_bandeira
                 st.success('Bandeira criada com sucesso!', icon="✅")
+                st.session_state.bandeiras_criadas.append(st.session_state.ultima_bandeira)
 
                 coluna1, coluna2 = st.columns(2)
                 with coluna1:
@@ -101,6 +105,7 @@ if selected_columns:
             if st.button('Criar bandeira', key="btn_criar_bandeira_uma_bandeira") and selected_columns and nome_bandeira:
                 st.session_state.ultima_bandeira = nome_bandeira
                 st.session_state.data[nome_bandeira] = st.session_state.data[selected_columns[0]]
+                st.session_state.bandeiras_criadas.append(st.session_state.ultima_bandeira)
                 freq = st.session_state.data[nome_bandeira].value_counts(dropna=False).rename("Frequência").to_frame()
                 freq["%"] = ( freq["Frequência"] / freq["Frequência"].sum() ).round(4)
                 total_line = round(pd.DataFrame(freq.sum()).T)

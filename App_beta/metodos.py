@@ -1190,3 +1190,116 @@ if __name__ == "__main__":
     print(data['NOVA_BANDEIRA'].value_counts(), "\n")
     print(lista_labels[lista_labels['Coluna'] == 'NOVA_BANDEIRA'], "\n")
     print("Tamanho lista_labels:", len(lista_labels[lista_labels['Coluna'] == 'NOVA_BANDEIRA']))
+
+
+def verif_TipoTabela(TipoTabela):
+        if TipoTabela not in ["SIMPLES", "IPA_5", "IPA_10", "NPS", "MULTIPLA"]:
+            return 1
+        return 0
+
+def verif_bandeiras_cabecalho(Bandeiras, Cabecalho):
+     Bandeiras = Bandeiras.split(", ")
+     Cabecalho = Cabecalho.split(", ")
+     qtd_bandeiras = len(Bandeiras)
+     qtd_cabecalho = len(Cabecalho)
+     if qtd_bandeiras != qtd_cabecalho:
+          return 1
+     return 0
+
+def verif_bandeiras(df, Bandeiras):
+     Bandeiras = Bandeiras.split(", ")
+     for col in Bandeiras:
+          if col not in df.columns:
+            # raise ValueError(f"⚠️ Coluna '{col}' não encontrada no DataFrame.")
+            return 1, col
+     return 0, col
+      
+def verif_Var_linha(df, Var_linha, TipoTabela):
+     if TipoTabela != "MULTIPLA":
+          if Var_linha not in df.columns:
+               return 1
+     return 0
+
+def verif_NS_NR(NS_NR):
+        if NS_NR not in ["NAO", "SIM"]:
+            return 1
+        return 0
+
+def verif_Fecha_100(TipoTabela, Fecha_100):
+     if TipoTabela == "MULTIPLA":
+          if Fecha_100 not in ["NAO", "SIM"]:
+               return 1
+     return 0
+
+def verif_coluna_existe(df, coluna):
+    if coluna not in df.columns:
+        return 1
+    return 0
+
+
+class verificar_incosistencias_iniciais:
+    def __init__(self, data, sintaxe, lista_labels):
+        self.data = data
+        self.sintaxe = sintaxe
+        self.lista_labels = lista_labels
+    
+    def verificar_incosistencia(self):
+        df = self.data.copy()
+        for line in range(len(self.sintaxe)):
+            i = 0
+            TipoTabela = self.sintaxe.iloc[line, i]
+            i+=1
+            Bandeiras = self.sintaxe.iloc[line, i]
+            i+=1
+            Cabecalho = self.sintaxe.iloc[line, i]
+            i+=1
+            Var_linha = self.sintaxe.iloc[line, i]
+            i+=1
+            NS_NR = self.sintaxe.iloc[line, i]
+            i+=1
+            valores_BTB = self.sintaxe.iloc[line, i]
+            i+=1
+            valores_TTB = self.sintaxe.iloc[line, i]
+            i+=1
+            Valores_Agrup = self.sintaxe.iloc[line, i]
+            i+=1
+            Fecha_100 = self.sintaxe.iloc[line, i]
+            i+=1
+            Var_ID = self.sintaxe.iloc[line, i]
+            i+=1
+            Var_Pond = self.sintaxe.iloc[line, i]
+            i+=1
+            Titulo = self.sintaxe.iloc[line, i]
+
+            res_TipoTabela = verif_TipoTabela(TipoTabela)
+            if res_TipoTabela == 1:
+                 return f"⚠️ Verificar incosistência: o **Tipo de Tabela** informado na linha {line+2} não corresponde com as opções válidas: [SIMPLES, IPA_5, IPA_10, NPS, MULTIPLA]"
+            
+            res_bandeiras_cabecalho = verif_bandeiras_cabecalho(Bandeiras, Cabecalho)
+            if res_bandeiras_cabecalho == 1:
+                 return f"⚠️ Verificar incosistência: na linha {line+2}, **o nº de Bandeiras não é compatível com o nº de inputs do Cabeçalho**."
+            
+            res_bandeira, col = verif_bandeiras(df, Bandeiras)
+            if res_bandeira == 1:
+                 return f"⚠️ Coluna **{col}** que se encontra na coluna **Bandeiras** não foi encontrada no Banco de dados."
+            
+            res_Var_linha = verif_Var_linha(df, Var_linha, TipoTabela)
+            if res_Var_linha == 1:
+                 return f"⚠️ Verificar incosistência: na linha {line+2}, a variável/coluna informada que representa o **nível da linha** da tabela não consta no Banco de dados."
+            
+            res_NS_NR = verif_NS_NR(NS_NR)
+            if res_NS_NR == 1:
+                 return f"⚠️ Verificar incosistência: o valor informado na linha {line+2} da coluna **Contabiliza_NS/NR** não corresponde com as opções válidas: [NAO, SIM]"
+            
+            res_Fecha_100 = verif_Fecha_100(TipoTabela, Fecha_100)
+            if res_Fecha_100 == 1:
+                 return(f"⚠️ Verificar incosistência: o valor informado na linha {line+2} da coluna **Fecha_100** não corresponde com as opções válidas: [NAO, SIM]")
+            
+            res_Var_ID = verif_coluna_existe(df, Var_ID)
+            if res_Var_ID == 1:
+                 return f"⚠️ Verificar incosistência: na linha {line+2}, a variável/coluna informada que representa o **Código de identificação da entrevista** não consta no Banco de dados."
+            
+            res_Var_Pond = verif_coluna_existe(df, Var_Pond)
+            if res_Var_Pond == 1:
+                 return f"⚠️ Verificar incosistência: na linha {line+2}, a variável/coluna informada que representa a **Ponderação** não consta no Banco de dados."
+        return 0   

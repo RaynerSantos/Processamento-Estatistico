@@ -85,20 +85,25 @@ def recode_variavel(data, lista_labels, COLUNA_ORIGINAL, NOVA_BANDEIRA, datafram
     return data, lista_labels
 
 
-# Função para criar a ponderação
-def criar_pond(df_universo: pd.DataFrame, df_coletado: pd.DataFrame, 
+# === Função para criar a ponderação - 3 dimensões === #
+def criar_pond_3dim(df_universo: pd.DataFrame, df_coletado: pd.DataFrame, 
                bd_codigo: pd.DataFrame, lista_labels: pd.DataFrame, cabecalho: str, coluna: str, linha: str):
     """
-    Função para calcular a coluna de ponderação (máximo de 3 categorias: Cabeçalho, coluna e linha - MultiIndex):
-    1) A partir do universo, a quantidade total de entrevistas e o coletado é criado o valor da ponderação
+    Função para calcular a coluna de ponderação (3 categorias: Cabeçalho, coluna e linha - MultiIndex):
+    1) A partir do universo e o coletado é criado o valor da ponderação
+       - Ponderação é o valor IDEAL - percentual do universo vezes o total coletado, divido pelo COLETADO em cada categoria
     2) Com o banco de dados e a lista de labels cria-se a coluna POND no banco de dados
     """
 
     # Soma do universo
     total = int(df_universo.sum().sum().round())
 
-    # df_universo em percentual
-    df_universo_perc = df_universo.divide(total)
+    if total > 1:
+        # df_universo em percentual
+        df_universo_perc = df_universo.divide(total)
+    else:
+        # df_universo em percentual
+        df_universo_perc = df_universo.copy()
 
     # Calcular a quantidade total de entrevistas
     qtd_total_entrevistas = int(df_coletado.sum().sum())
@@ -108,7 +113,7 @@ def criar_pond(df_universo: pd.DataFrame, df_coletado: pd.DataFrame,
 
     # DataFrame com a ponderação criada de acordo com a combinação de categorias
     df_pond = pd.DataFrame(
-        df_ideal.to_numpy() / df_coletado.astype(float).to_numpy(),
+        df_ideal.to_numpy() / df_coletado.astype(float).replace(0, 0.00001).to_numpy(),
         index=df_ideal.index,
         columns=df_ideal.columns
     )
@@ -147,6 +152,155 @@ def criar_pond(df_universo: pd.DataFrame, df_coletado: pd.DataFrame,
 
                 pond = df_pond[label_cabecalho][label_coluna][label_linha]
                 bd_codigo.loc[((bd_codigo[cabecalho] == codigo_cabecalho) & (bd_codigo[coluna] == codigo_coluna) & (bd_codigo[linha] == codigo_linha)), "POND_nova"] = pond
+    
+    return bd_codigo
+
+
+# Função para criar a ponderação - 2 dimensões
+def criar_pond_2dim(df_universo: pd.DataFrame, df_coletado: pd.DataFrame, 
+               bd_codigo: pd.DataFrame, lista_labels: pd.DataFrame, coluna: str, linha: str):
+    """
+    Função para calcular a coluna de ponderação (2 categorias: Coluna e linha):
+    1) A partir do universo e o coletado é criado o valor da ponderação
+       - Ponderação é o valor IDEAL - percentual do universo vezes o total coletado, divido pelo COLETADO em cada categoria
+    2) Com o banco de dados e a lista de labels cria-se a coluna POND no banco de dados
+    """
+
+    # Soma do universo
+    total = int(df_universo.sum().sum().round())
+
+    if total > 1:
+        # df_universo em percentual
+        df_universo_perc = df_universo.divide(total)
+    else:
+        # df_universo em percentual
+        df_universo_perc = df_universo.copy()
+
+    # Calcular a quantidade total de entrevistas
+    qtd_total_entrevistas = int(df_coletado.sum().sum())
+
+    # Valor ideal que deve ter de entrevistas para cada categoria
+    df_ideal = df_universo_perc.multiply(qtd_total_entrevistas)
+
+    # DataFrame com a ponderação criada de acordo com a combinação de categorias
+    df_pond = pd.DataFrame(
+        df_ideal.to_numpy() / df_coletado.astype(float).replace(0, 0.00001).to_numpy(),
+        index=df_ideal.index,
+        columns=df_ideal.columns
+    )
+
+    # Criar um mapeamento para cada label das categorias necessárias
+    lista_labels_coluna = lista_labels[lista_labels["Coluna"] == coluna]
+    lista_labels_coluna_mapping = dict(zip(lista_labels_coluna['Codigo'], lista_labels_coluna['Label']))
+
+    lista_labels_linha = lista_labels[lista_labels["Coluna"] == linha]
+    lista_labels_linha_mapping = dict(zip(lista_labels_linha['Codigo'], lista_labels_linha['Label']))
+
+    # Criar a nova coluna de PONDERAÇÃO de acordo com o df_pond
+    bd_codigo["POND_nova"] = np.nan
+    label_to_codigo = lista_labels.set_index("Label")["Codigo"].astype(int).to_dict()
+
+    for label_coluna in pd.Series(sorted(bd_codigo[coluna].astype(int).unique())).map(lista_labels_coluna_mapping):
+        s = lista_labels.loc[lista_labels["Label"] == label_coluna, "Codigo"]
+        if s.empty:
+            raise KeyError(f"Label não encontrado: {label_coluna}")
+        codigo_coluna = label_to_codigo[label_coluna]
+
+        for label_linha in pd.Series(sorted(bd_codigo[linha].astype(int).unique())).map(lista_labels_linha_mapping):
+            s = lista_labels.loc[lista_labels["Label"] == label_linha, "Codigo"]
+            if s.empty:
+                raise KeyError(f"Label não encontrado: {label_linha}")
+            codigo_linha = label_to_codigo[label_linha]
+
+            pond = df_pond.loc[label_linha, label_coluna]
+            bd_codigo.loc[((bd_codigo[coluna] == codigo_coluna) & (bd_codigo[linha] == codigo_linha)), "POND_nova"] = pond
+    
+    return bd_codigo
+
+
+# === Função para criar a ponderação - 4 dimensões === #
+def criar_pond_4dim(df_universo: pd.DataFrame, df_coletado: pd.DataFrame, 
+               bd_codigo: pd.DataFrame, lista_labels: pd.DataFrame, cabecalho_greater: str, cabecalho: str, coluna: str, linha: str):
+    """
+    Função para calcular a coluna de ponderação (4 categorias: Cabeçalho Superior, Cabeçalho, Coluna e Linha - MultiIndex):
+    1) A partir do universo e o coletado é criado o valor da ponderação
+       - Ponderação é o valor IDEAL - percentual do universo vezes o total coletado, divido pelo COLETADO em cada categoria
+    2) Com o banco de dados e a lista de labels cria-se a coluna POND no banco de dados
+    """
+
+    # Soma do universo
+    total = int(df_universo.sum().sum().round())
+
+    if total > 1:
+        # df_universo em percentual
+        df_universo_perc = df_universo.divide(total)
+    else:
+        # df_universo em percentual
+        df_universo_perc = df_universo.copy()
+
+    # Calcular a quantidade total de entrevistas
+    qtd_total_entrevistas = int(df_coletado.sum().sum())
+
+    # Valor ideal que deve ter de entrevistas para cada categoria
+    df_ideal = df_universo_perc.multiply(qtd_total_entrevistas)
+
+    # DataFrame com a ponderação criada de acordo com a combinação de categorias
+    df_pond = pd.DataFrame(
+        df_ideal.to_numpy() / df_coletado.astype(float).replace(0, 0.00001).to_numpy(),
+        index=df_ideal.index,
+        columns=df_ideal.columns
+    )
+    # df_pond = pd.DataFrame(
+    #     df_ideal.div(df_coletado.astype(float).replace(0, 0.00001)),
+    #     index=df_ideal.index,
+    #     columns=df_ideal.columns
+    # )
+    # opcional: garantir que inf não fique:
+    # df_pond = df_pond.replace([np.inf, -np.inf], np.nan)
+
+    # Criar um mapeamento para cada label das categorias necessárias
+    lista_labels_cabecalho_greater = lista_labels[lista_labels["Coluna"] == cabecalho_greater]
+    lista_labels_cabecalho_greater_mapping = dict(zip(lista_labels_cabecalho_greater['Codigo'], lista_labels_cabecalho_greater['Label']))
+
+    lista_labels_cabecalho = lista_labels[lista_labels["Coluna"] == cabecalho]
+    lista_labels_cabecalho_mapping = dict(zip(lista_labels_cabecalho['Codigo'], lista_labels_cabecalho['Label']))
+
+    lista_labels_coluna = lista_labels[lista_labels["Coluna"] == coluna]
+    lista_labels_coluna_mapping = dict(zip(lista_labels_coluna['Codigo'], lista_labels_coluna['Label']))
+
+    lista_labels_linha = lista_labels[lista_labels["Coluna"] == linha]
+    lista_labels_linha_mapping = dict(zip(lista_labels_linha['Codigo'], lista_labels_linha['Label']))
+
+    # Criar a nova coluna de PONDERAÇÃO de acordo com o df_pond
+    bd_codigo["POND_nova"] = np.nan
+    label_to_codigo = lista_labels.set_index("Label")["Codigo"].astype(int).to_dict()
+
+    for label_cabecalho_greater in pd.Series(sorted(bd_codigo[cabecalho_greater].astype(int).unique())).map(lista_labels_cabecalho_greater_mapping):
+        s = lista_labels.loc[lista_labels["Label"] == label_cabecalho_greater, "Codigo"]
+        if s.empty:
+            raise KeyError(f"Label não encontrado: {label_cabecalho_greater}")
+        codigo_cabecalho_greater = label_to_codigo[label_cabecalho_greater]
+
+        for label_cabecalho in pd.Series(sorted(bd_codigo[cabecalho].astype(int).unique())).map(lista_labels_cabecalho_mapping):
+            s = lista_labels.loc[lista_labels["Label"] == label_cabecalho, "Codigo"]
+            if s.empty:
+                raise KeyError(f"Label não encontrado: {label_cabecalho}")
+            codigo_cabecalho = label_to_codigo[label_cabecalho]
+
+            for label_coluna in pd.Series(sorted(bd_codigo[coluna].astype(int).unique())).map(lista_labels_coluna_mapping):
+                s = lista_labels.loc[lista_labels["Label"] == label_coluna, "Codigo"]
+                if s.empty:
+                    raise KeyError(f"Label não encontrado: {label_coluna}")
+                codigo_coluna = label_to_codigo[label_coluna]
+
+                for label_linha in pd.Series(sorted(bd_codigo[linha].astype(int).unique())).map(lista_labels_linha_mapping):
+                    s = lista_labels.loc[lista_labels["Label"] == label_linha, "Codigo"]
+                    if s.empty:
+                        raise KeyError(f"Label não encontrado: {label_linha}")
+                    codigo_linha = label_to_codigo[label_linha]
+
+                    pond = df_pond.loc[label_linha, (label_cabecalho_greater, label_cabecalho, label_coluna)]
+                    bd_codigo.loc[((bd_codigo[cabecalho_greater] == codigo_cabecalho_greater) & (bd_codigo[cabecalho] == codigo_cabecalho) & (bd_codigo[coluna] == codigo_coluna) & (bd_codigo[linha] == codigo_linha)), "POND_nova"] = pond
     
     return bd_codigo
 
@@ -672,18 +826,41 @@ def processamento(data, bd_processamento, lista_labels):
         else:
             return ''
         
-    # Função para realizar o agrupamento
+    # # Função para realizar o agrupamento
+    # def funcao_agrupamento(variavel, BTB, TTB):
+    #     nova_var = []
+    #     for v in variavel:
+    #         if np.isnan(v):  # Verifica se o valor é NaN
+    #             nova_var.append(np.nan)
+    #         elif int(v) in BTB:  # Converte v para inteiro antes da comparação, se necessário
+    #             nova_var.append('BTB')
+    #         elif int(v) in TTB:  # Converte v para inteiro antes da comparação, se necessário
+    #             nova_var.append('TTB')
+    #         else:
+    #             nova_var.append('Neutro')
+    #     return nova_var
     def funcao_agrupamento(variavel, BTB, TTB):
         nova_var = []
         for v in variavel:
-            if np.isnan(v):  # Verifica se o valor é NaN
+            # pega NaN e também pd.NA
+            if pd.isna(v):
                 nova_var.append(np.nan)
-            elif int(v) in BTB:  # Converte v para inteiro antes da comparação, se necessário
-                nova_var.append('BTB')
-            elif int(v) in TTB:  # Converte v para inteiro antes da comparação, se necessário
-                nova_var.append('TTB')
+                continue
+
+            # garante que dá pra comparar com suas listas de inteiros
+            try:
+                iv = int(v)
+            except (TypeError, ValueError):
+                nova_var.append(np.nan)
+                continue
+
+            if iv in BTB:
+                nova_var.append("BTB")
+            elif iv in TTB:
+                nova_var.append("TTB")
             else:
-                nova_var.append('Neutro')
+                nova_var.append("Neutro")
+
         return nova_var
 
     todas_tabelas_gerais = []

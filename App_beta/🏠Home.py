@@ -58,12 +58,15 @@ with st.form('sheet_name_data'):
     input_buttom_submit_DATA = st.form_submit_button("Enviar")
 
 if input_buttom_submit_DATA:
-    st.success("Nome das abas (sheets) da planilha enviado com sucesso", icon="✅")
-
     # Salvar os nomes das abas
     st.session_state.nome_sheet_DATA = nome_sheet_DATA
     st.session_state.nome_sheet_lista_labels = nome_sheet_lista_labels
     st.session_state.nome_sheet_lista_variaveis = nome_sheet_lista_variaveis
+
+    if not st.session_state.nome_sheet_DATA or not st.session_state.nome_sheet_lista_labels or not st.session_state.nome_sheet_lista_variaveis:
+        st.error("Preencha os três nomes de abas antes de continuar.", icon="❌")
+    else:
+        st.success("Nome das abas (sheets) enviado com sucesso", icon="✅")
 
 st.write('')
 data_file = st.file_uploader("📂 Selecione o banco de dados (em xlsx)", 
@@ -72,6 +75,31 @@ data_file = st.file_uploader("📂 Selecione o banco de dados (em xlsx)",
                              key="home_uploader")
 
 if data_file is not None:
+    # Lista as abas disponíveis (ajuda muito a evitar erro)
+    xls = pd.ExcelFile(data_file)
+    st.caption(f"Abas encontradas no arquivo: {',  '.join(xls.sheet_names)}")
+
+    nome_sheet_DATA = st.session_state.get("nome_sheet_DATA", "")
+    nome_sheet_lista_labels = st.session_state.get("nome_sheet_lista_labels", "")
+    nome_sheet_lista_variaveis = st.session_state.get("nome_sheet_lista_variaveis", "")
+
+    # Validações antes de ler
+    if not nome_sheet_DATA or not nome_sheet_lista_labels or not nome_sheet_lista_variaveis:
+        st.warning("Envie (submit) os nomes das abas acima antes de carregar as tabelas.", icon="⚠️")
+        st.stop()
+
+    if nome_sheet_DATA not in xls.sheet_names:
+        st.error(f"A aba do banco de dados com os **CÓDIGOS** '{nome_sheet_DATA}' não existe no arquivo.", icon="❌")
+        st.stop()
+
+    if nome_sheet_lista_labels not in xls.sheet_names:
+        st.error(f"A aba com a **Lista de Labels** '{nome_sheet_lista_labels}' não existe no arquivo.", icon="❌")
+        st.stop()
+
+    if nome_sheet_lista_variaveis not in xls.sheet_names:
+        st.error(f"A aba com a **Lista de Variáveis** '{nome_sheet_lista_variaveis}' não existe no arquivo.", icon="❌")
+        st.stop()
+
     data = pd.read_excel(data_file, sheet_name=st.session_state.nome_sheet_DATA)
     lista_labels = pd.read_excel(data_file, sheet_name=st.session_state.nome_sheet_lista_labels)
     lista_variaveis = pd.read_excel(data_file, sheet_name=st.session_state.nome_sheet_lista_variaveis, header=1)

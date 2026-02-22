@@ -129,29 +129,33 @@ def criar_pond_3dim(df_universo: pd.DataFrame, df_coletado: pd.DataFrame,
     lista_labels_linha_mapping = dict(zip(lista_labels_linha['Codigo'], lista_labels_linha['Label']))
 
     # Criar a nova coluna de PONDERAÇÃO de acordo com o df_pond
-    bd_codigo["POND_nova"] = np.nan
+    if "POND_nova" not in bd_codigo.columns:
+        bd_codigo["POND_nova"] = np.nan
     label_to_codigo = lista_labels.set_index("Label")["Codigo"].astype(int).to_dict()
 
     for label_cabecalho in pd.Series(sorted(bd_codigo[cabecalho].astype(int).unique())).map(lista_labels_cabecalho_mapping):
-        s = lista_labels.loc[lista_labels["Label"] == label_cabecalho, "Codigo"]
-        if s.empty:
-            raise KeyError(f"Label não encontrado: {label_cabecalho}")
-        codigo_cabecalho = label_to_codigo[label_cabecalho]
-
-        for label_coluna in pd.Series(sorted(bd_codigo[coluna].astype(int).unique())).map(lista_labels_coluna_mapping):
-            s = lista_labels.loc[lista_labels["Label"] == label_coluna, "Codigo"]
+        if label_cabecalho in [v[0] for v in df_pond.columns]:
+            s = lista_labels.loc[lista_labels["Label"] == label_cabecalho, "Codigo"]
             if s.empty:
-                raise KeyError(f"Label não encontrado: {label_coluna}")
-            codigo_coluna = label_to_codigo[label_coluna]
+                raise KeyError(f"Label não encontrado: {label_cabecalho}")
+            codigo_cabecalho = label_to_codigo[label_cabecalho]
 
-            for label_linha in pd.Series(sorted(bd_codigo[linha].astype(int).unique())).map(lista_labels_linha_mapping):
-                s = lista_labels.loc[lista_labels["Label"] == label_linha, "Codigo"]
-                if s.empty:
-                    raise KeyError(f"Label não encontrado: {label_linha}")
-                codigo_linha = label_to_codigo[label_linha]
+            for label_coluna in pd.Series(sorted(bd_codigo[coluna].astype(int).unique())).map(lista_labels_coluna_mapping):
+                if label_coluna in [v[1] for v in df_pond.columns]:
+                    s = lista_labels.loc[lista_labels["Label"] == label_coluna, "Codigo"]
+                    if s.empty:
+                        raise KeyError(f"Label não encontrado: {label_coluna}")
+                    codigo_coluna = label_to_codigo[label_coluna]
 
-                pond = df_pond[label_cabecalho][label_coluna][label_linha]
-                bd_codigo.loc[((bd_codigo[cabecalho] == codigo_cabecalho) & (bd_codigo[coluna] == codigo_coluna) & (bd_codigo[linha] == codigo_linha)), "POND_nova"] = pond
+                    for label_linha in pd.Series(sorted(bd_codigo[linha].astype(int).unique())).map(lista_labels_linha_mapping):
+                        if label_linha in df_pond.index:
+                            s = lista_labels.loc[lista_labels["Label"] == label_linha, "Codigo"]
+                            if s.empty:
+                                raise KeyError(f"Label não encontrado: {label_linha}")
+                            codigo_linha = label_to_codigo[label_linha]
+
+                            pond = df_pond[label_cabecalho][label_coluna][label_linha]
+                            bd_codigo.loc[((bd_codigo[cabecalho] == codigo_cabecalho) & (bd_codigo[coluna] == codigo_coluna) & (bd_codigo[linha] == codigo_linha)), "POND_nova"] = pond
     
     return bd_codigo
 
@@ -197,23 +201,26 @@ def criar_pond_2dim(df_universo: pd.DataFrame, df_coletado: pd.DataFrame,
     lista_labels_linha_mapping = dict(zip(lista_labels_linha['Codigo'], lista_labels_linha['Label']))
 
     # Criar a nova coluna de PONDERAÇÃO de acordo com o df_pond
-    bd_codigo["POND_nova"] = np.nan
+    if "POND_nova" not in bd_codigo.columns:
+        bd_codigo["POND_nova"] = np.nan
     label_to_codigo = lista_labels.set_index("Label")["Codigo"].astype(int).to_dict()
 
     for label_coluna in pd.Series(sorted(bd_codigo[coluna].astype(int).unique())).map(lista_labels_coluna_mapping):
-        s = lista_labels.loc[lista_labels["Label"] == label_coluna, "Codigo"]
-        if s.empty:
-            raise KeyError(f"Label não encontrado: {label_coluna}")
-        codigo_coluna = label_to_codigo[label_coluna]
-
-        for label_linha in pd.Series(sorted(bd_codigo[linha].astype(int).unique())).map(lista_labels_linha_mapping):
-            s = lista_labels.loc[lista_labels["Label"] == label_linha, "Codigo"]
+        if label_coluna in df_pond.columns:
+            s = lista_labels.loc[lista_labels["Label"] == label_coluna, "Codigo"]
             if s.empty:
-                raise KeyError(f"Label não encontrado: {label_linha}")
-            codigo_linha = label_to_codigo[label_linha]
+                raise KeyError(f"Label não encontrado: {label_coluna}")
+            codigo_coluna = label_to_codigo[label_coluna]
 
-            pond = df_pond.loc[label_linha, label_coluna]
-            bd_codigo.loc[((bd_codigo[coluna] == codigo_coluna) & (bd_codigo[linha] == codigo_linha)), "POND_nova"] = pond
+            for label_linha in pd.Series(sorted(bd_codigo[linha].astype(int).unique())).map(lista_labels_linha_mapping):
+                if label_linha in df_pond.index:
+                    s = lista_labels.loc[lista_labels["Label"] == label_linha, "Codigo"]
+                    if s.empty:
+                        raise KeyError(f"Label não encontrado: {label_linha}")
+                    codigo_linha = label_to_codigo[label_linha]
+
+                    pond = df_pond.loc[label_linha, label_coluna]
+                    bd_codigo.loc[((bd_codigo[coluna] == codigo_coluna) & (bd_codigo[linha] == codigo_linha)), "POND_nova"] = pond
     
     return bd_codigo
 
@@ -250,13 +257,6 @@ def criar_pond_4dim(df_universo: pd.DataFrame, df_coletado: pd.DataFrame,
         index=df_ideal.index,
         columns=df_ideal.columns
     )
-    # df_pond = pd.DataFrame(
-    #     df_ideal.div(df_coletado.astype(float).replace(0, 0.00001)),
-    #     index=df_ideal.index,
-    #     columns=df_ideal.columns
-    # )
-    # opcional: garantir que inf não fique:
-    # df_pond = df_pond.replace([np.inf, -np.inf], np.nan)
 
     # Criar um mapeamento para cada label das categorias necessárias
     lista_labels_cabecalho_greater = lista_labels[lista_labels["Coluna"] == cabecalho_greater]
@@ -272,35 +272,40 @@ def criar_pond_4dim(df_universo: pd.DataFrame, df_coletado: pd.DataFrame,
     lista_labels_linha_mapping = dict(zip(lista_labels_linha['Codigo'], lista_labels_linha['Label']))
 
     # Criar a nova coluna de PONDERAÇÃO de acordo com o df_pond
-    bd_codigo["POND_nova"] = np.nan
+    if "POND_nova" not in bd_codigo.columns:
+        bd_codigo["POND_nova"] = np.nan
     label_to_codigo = lista_labels.set_index("Label")["Codigo"].astype(int).to_dict()
 
     for label_cabecalho_greater in pd.Series(sorted(bd_codigo[cabecalho_greater].astype(int).unique())).map(lista_labels_cabecalho_greater_mapping):
-        s = lista_labels.loc[lista_labels["Label"] == label_cabecalho_greater, "Codigo"]
-        if s.empty:
-            raise KeyError(f"Label não encontrado: {label_cabecalho_greater}")
-        codigo_cabecalho_greater = label_to_codigo[label_cabecalho_greater]
-
-        for label_cabecalho in pd.Series(sorted(bd_codigo[cabecalho].astype(int).unique())).map(lista_labels_cabecalho_mapping):
-            s = lista_labels.loc[lista_labels["Label"] == label_cabecalho, "Codigo"]
+        if label_cabecalho_greater in [v[0] for v in df_pond.columns]:
+            s = lista_labels.loc[lista_labels["Label"] == label_cabecalho_greater, "Codigo"]
             if s.empty:
-                raise KeyError(f"Label não encontrado: {label_cabecalho}")
-            codigo_cabecalho = label_to_codigo[label_cabecalho]
+                raise KeyError(f"Label não encontrado: {label_cabecalho_greater}")
+            codigo_cabecalho_greater = label_to_codigo[label_cabecalho_greater]
 
-            for label_coluna in pd.Series(sorted(bd_codigo[coluna].astype(int).unique())).map(lista_labels_coluna_mapping):
-                s = lista_labels.loc[lista_labels["Label"] == label_coluna, "Codigo"]
-                if s.empty:
-                    raise KeyError(f"Label não encontrado: {label_coluna}")
-                codigo_coluna = label_to_codigo[label_coluna]
-
-                for label_linha in pd.Series(sorted(bd_codigo[linha].astype(int).unique())).map(lista_labels_linha_mapping):
-                    s = lista_labels.loc[lista_labels["Label"] == label_linha, "Codigo"]
+            for label_cabecalho in pd.Series(sorted(bd_codigo[cabecalho].astype(int).unique())).map(lista_labels_cabecalho_mapping):
+                if label_cabecalho in [v[1] for v in df_pond.columns]:
+                    s = lista_labels.loc[lista_labels["Label"] == label_cabecalho, "Codigo"]
                     if s.empty:
-                        raise KeyError(f"Label não encontrado: {label_linha}")
-                    codigo_linha = label_to_codigo[label_linha]
+                        raise KeyError(f"Label não encontrado: {label_cabecalho}")
+                    codigo_cabecalho = label_to_codigo[label_cabecalho]
 
-                    pond = df_pond.loc[label_linha, (label_cabecalho_greater, label_cabecalho, label_coluna)]
-                    bd_codigo.loc[((bd_codigo[cabecalho_greater] == codigo_cabecalho_greater) & (bd_codigo[cabecalho] == codigo_cabecalho) & (bd_codigo[coluna] == codigo_coluna) & (bd_codigo[linha] == codigo_linha)), "POND_nova"] = pond
+                    for label_coluna in pd.Series(sorted(bd_codigo[coluna].astype(int).unique())).map(lista_labels_coluna_mapping):
+                        if label_coluna in [v[2] for v in df_pond.columns]:
+                            s = lista_labels.loc[lista_labels["Label"] == label_coluna, "Codigo"]
+                            if s.empty:
+                                raise KeyError(f"Label não encontrado: {label_coluna}")
+                            codigo_coluna = label_to_codigo[label_coluna]
+
+                            for label_linha in pd.Series(sorted(bd_codigo[linha].astype(int).unique())).map(lista_labels_linha_mapping):
+                                if label_linha in df_pond.index:
+                                    s = lista_labels.loc[lista_labels["Label"] == label_linha, "Codigo"]
+                                    if s.empty:
+                                        raise KeyError(f"Label não encontrado: {label_linha}")
+                                    codigo_linha = label_to_codigo[label_linha]
+
+                                pond = df_pond.loc[label_linha, (label_cabecalho_greater, label_cabecalho, label_coluna)]
+                                bd_codigo.loc[((bd_codigo[cabecalho_greater] == codigo_cabecalho_greater) & (bd_codigo[cabecalho] == codigo_cabecalho) & (bd_codigo[coluna] == codigo_coluna) & (bd_codigo[linha] == codigo_linha)), "POND_nova"] = pond
     
     return bd_codigo
 

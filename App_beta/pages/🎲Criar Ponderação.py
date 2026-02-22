@@ -223,7 +223,8 @@ with tab2:
                                                 coluna=selected_column_coluna, linha=selected_column_linha)
         
         st.write("")
-        st.dataframe(st.session_state.data[["ID_EMP", selected_column_cabecalho, 
+        st.dataframe(st.session_state.data[[
+                                            selected_column_cabecalho, 
                                             selected_column_coluna, selected_column_linha, "POND", "POND_nova"]], 
                                             hide_index=True, 
                                             selection_mode=["multi-row", "multi-cell"])
@@ -341,7 +342,8 @@ with tab3:
                                                 coluna=selected_column_coluna, linha=selected_column_linha)
         
         st.write("")
-        st.dataframe(st.session_state.data[[selected_column_cabecalho_greater, selected_column_cabecalho, 
+        st.dataframe(st.session_state.data[[
+                                            "ID_EMP", selected_column_cabecalho_greater, selected_column_cabecalho, 
                                             selected_column_coluna, selected_column_linha, "POND", "POND_nova"]], 
                                             hide_index=True, 
                                             selection_mode=["multi-row", "multi-cell"])

@@ -50,12 +50,36 @@ if selected_column:
     st.write("")
     st.write("")
 
+    dataframe_recode_value_counts = pd.DataFrame(st.session_state.data[selected_column].value_counts(dropna=False))
+    labels_sub = st.session_state.lista_labels.loc[st.session_state.lista_labels["Coluna"] == selected_column]
+    dataframe_recode_value_counts["Codigo"] = dataframe_recode_value_counts.index
+    dataframe_recode_value_counts["Label"] = dataframe_recode_value_counts["Codigo"].map(dict(zip(labels_sub["Codigo"], labels_sub["Label"])))
+    dataframe_recode_value_counts['Label nova'] = None
+    dataframe_recode_value_counts['Ordem'] = None
+    dataframe_recode_value_counts = dataframe_recode_value_counts[["Codigo", "Label", "Label nova", "Ordem"]]
+
     dataframe_recode = st.session_state.lista_labels[st.session_state.lista_labels['Coluna'] == selected_column][['Codigo', 'Label']].copy()
     dataframe_recode = dataframe_recode.rename(columns={'Codigo': 'Codigo', 'Label': 'Label'})
     dataframe_recode['Label nova'] = None
     dataframe_recode['Ordem'] = None
+
+    df_merge = dataframe_recode.merge(
+        dataframe_recode_value_counts,
+        on="Codigo",
+        how="outer",
+        suffixes=("_recode", "_vc")
+    )
+    df_merge["Label"] = df_merge["Label_recode"].combine_first(df_merge["Label_vc"])
+    df_merge["Label nova"] = df_merge["Label nova_recode"].combine_first(df_merge["Label nova_vc"])
+    df_merge["Ordem"] = df_merge["Ordem_recode"].combine_first(df_merge["Ordem_vc"])
+
+    df_merge_recode = df_merge.drop(columns=[
+        "Label_recode", "Label_vc",
+        "Label nova_recode", "Label nova_vc",
+        "Ordem_recode", "Ordem_vc"
+    ])
     
-    dataframe_recode_edited = st.data_editor(dataframe_recode, 
+    dataframe_recode_edited = st.data_editor(df_merge_recode, 
                                              num_rows="fixed", 
                                             #  use_container_width=True, 
                                              key="dataframe_recode_editor", 

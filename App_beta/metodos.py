@@ -735,7 +735,7 @@ def processar_tabela(bd_dados: pd.DataFrame, lista_labels: pd.DataFrame,
 
             tabela_geral_front = tabela_geral.multiply(100)
             tabela_geral_front = tabela_geral_front.applymap(lambda x: f"{x:.1f}%".replace(".", ","))
-            tabela_geral_front.loc['Media'] = media_tabela
+            tabela_geral_front.loc['Media'] = media_tabela.apply(lambda x: f"{x:.1f}".replace(".", ","))
 
             tabela_geral.loc['Media'] = media_tabela
 

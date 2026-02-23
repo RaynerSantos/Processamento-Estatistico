@@ -21,7 +21,7 @@ st.write('')
 
 with st.spinner("Please wait..."):
     with st.expander("📅 Dicionário de variáveis:"):
-        st.dataframe(st.session_state.lista_variaveis, hide_index=True, selection_mode=["multi-row", "multi-cell"])
+        st.dataframe(st.session_state.lista_variaveis, hide_index=True, selection_mode=["multi-row", "multi-cell"], use_container_width=True)
 
 st.write('')
 st.write('')
@@ -55,8 +55,12 @@ if st.button('Visualizar frequência', key="btn_table_view") and selected_column
     freq["Label"] = freq["Código"].map(dict_codigo_label)
     freq.loc["Total", "Label"] = "Total"
 
-    st.dataframe(freq[["Código", "Label", "Frequência", "%"]], hide_index=True, 
-                column_config={"%": st.column_config.NumberColumn("%", format=f"%.{casas_decimais}f%%")})
+    st.dataframe(
+        freq[["Código", "Label", "Frequência", "%"]], 
+        hide_index=True, 
+        column_config={"%": st.column_config.NumberColumn("%", format=f"%.{casas_decimais}f%%")},
+        use_container_width=True
+        )
     
 st.write("")
 st.write("")

@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-from regex import F
 import streamlit as st
 from io import BytesIO
 from collections import Counter
@@ -88,7 +87,11 @@ with tab1:
     st.write("")
     with st.spinner("Please wait..."):
         with st.expander("📅 Dicionário de variáveis:"):
-            st.dataframe(st.session_state.lista_variaveis, hide_index=True, selection_mode=["multi-row", "multi-cell"])
+            st.dataframe(
+                st.session_state.lista_variaveis, hide_index=True, 
+                selection_mode=["multi-row", "multi-cell"], 
+                use_container_width=True
+                )
 
     st.write('')
     st.write('')
@@ -124,7 +127,7 @@ with tab1:
     colunas = st.session_state.data.columns.tolist()
 
     # Upload das planilhas
-    coluna1, coluna2 = st.columns(2, border=True)
+    coluna1, coluna2 = st.columns(2)
     with st.form('parametros_gerar_tabela_processada'):
         with coluna1:
             TipoTabela = st.selectbox(
@@ -133,8 +136,11 @@ with tab1:
                 key="processamento_unico_TipoTabela",
                 help="ℹ️ Tipo de tabela = como a variável que ficará na **linha** deve ser interpretada e exibida. Ela pode ser: **categórica** (SIMPLES), **Likert 5 pontos** (IPA_5), **numérica para BTB/TTB** (IPA_10), **NPS** (NPS) ou **múltipla escolha** (MULTIPLA)."
                 )
-            with st.status("ℹ️ Informação do Tipo da Tabela Selecionada"):
+            with st.status("ℹ️ Informação do Tipo da Tabela Selecionada:"):
+            # st.write("ℹ️ Informação do Tipo da Tabela Selecionada:")
                 st.write(f"**{TipoTabela}**: {dict_tipo_tabela[TipoTabela]}")
+            st.write("")
+            st.write("")
         
         with coluna2:
             if TipoTabela == "MULTIPLA":
@@ -154,13 +160,14 @@ with tab1:
                     )
             
 
-        # coluna3, coluna4 = st.columns(2, border=True)    
+        # coluna3, coluna4 = st.columns(2)    
         Colunas = st.multiselect(
             label="📝 Informe as **bandeiras** que deverão representar as colunas da tabela processada", 
             options=colunas, 
             key="processamento_unico_Colunas",
             help="ℹ️ As bandeiras são simplesmente as variáveis que constará nas colunas da tabela processada."
             )
+        st.write("")
         st.write("")
         
         Cabecalho = st.text_input(
@@ -169,7 +176,8 @@ with tab1:
             key="processamento_unico_cabecalho",
             help="ℹ️ O cabeçalho é o nome ideal das colunas que você deseja que apareça na tabela processada. Ex.: nome da coluna: **Q3** → nome do cabeçalho para esta coluna: **Setor de atividade**."
             )
-        st.write("")    
+        st.write("")  
+        st.write("")  
         
         NS_NR = st.selectbox(
             label="📝 Deseja que a tabela contabilize os casos de **NS/NR (Não sabe / Não respondeu)**?", 
@@ -178,9 +186,10 @@ with tab1:
             help="ℹ️ Escolha a opção desejada se a tabela retornará os percentuais de NS/NR ou não."
             )
         st.write("")
+        st.write("")
         
         if TipoTabela == "IPA_10" or TipoTabela == "IPA_5":
-            coluna3, coluna4 = st.columns(2, border=True)
+            coluna3, coluna4 = st.columns(2)
             with coluna3:
                 valores_BTB = st.text_input(
                 label="📝 Informe a **faixa de notas BTB** - notas baixas desejada. **Coloque os valores separados por vírgula e um espaço (, )**", 
@@ -196,6 +205,8 @@ with tab1:
                     key="processamento_unico_valores_ttb",
                     help="ℹ️ Agrupamento de notas altas."
                 )
+            st.write("")
+            st.write("")
             
         if TipoTabela == "MULTIPLA":
             Valores_Agrup = st.text_input(
@@ -204,6 +215,8 @@ with tab1:
                 key="processamento_unico_valores_agrup",
                 help="ℹ️ Importante! Quando o Tipo de Tabela processada for MULTIPLA, o nome da variável deverá ser diferente das colunas de múltipla resposta. Ex.: Se as colunas múltiplas são 'Q8_1, Q8_2, Q8_3' então, o nome da coluna da variável que deverá constar na linha será 'Q8'."
             )
+            st.write("")
+            st.write("")
 
             Fecha_100 = st.selectbox(
                 label="📝 Deseja que a tabela feche os percentuais em 100% (**contabiliza o nº de respostas**) ou, acima de 100% (**contabiliza o nº de respondentes**)?", 
@@ -212,8 +225,9 @@ with tab1:
                 help="ℹ️ Escolha a opção desejada se a tabela retornará os percentuais fechando 100% ou não."
             )
             st.write("")
+            st.write("")
 
-        coluna5, coluna6 = st.columns(2, border=True)
+        coluna5, coluna6 = st.columns(2)
         with coluna5:
             Var_ID = st.selectbox(
                 label="📝 Informe qual a **variável/coluna identificadora**, utilizada para identificar a entrevista como única", 
@@ -229,6 +243,7 @@ with tab1:
                 key="processamento_unico_var_pond",
                 help="ℹ️ Observação: se o projeto não tiver ponderação, é necessário criar uma coluna no banco de dados do projeto para representar a variável POND e preencher os campos com o nº 1."
             )
+        st.write("")
         st.write("")
 
         Titulo = st.text_input(
@@ -273,7 +288,7 @@ with tab1:
                 kwargs["Fecha_100"] = st.session_state.get("processamento_unico_fecha_100", "SIM")
 
             tabela_processada, tabela_processada_front = processar_tabela(**kwargs)
-            st.dataframe(tabela_processada_front, hide_index=False)
+            st.dataframe(tabela_processada_front, hide_index=False, use_container_width=True)
 
             st.write("")
             # Salvar em Excel com formatação
@@ -412,7 +427,7 @@ with tab2:
                 placeholder="Sintaxe"
                 )
             with st.status("🔍 A seguir, veja uma imagem de exemplo da **Sintaxe**:"):
-                st.image(image="images/Sintaxe.png", width="content")
+                st.image(image="images/Sintaxe.png")
             input_buttom_submit_sintaxe = st.form_submit_button("Enviar")
 
         if input_buttom_submit_sintaxe:
@@ -478,4 +493,4 @@ st.write('')
 st.write('')
 st.divider()
 st.write('')
-st.image(image="images/Expertise_Marca_VerdeEscuro_mini.jpg", width="content") # Expertise_Marca_VerdeEscuro_mini.jpg
+st.image(image="images/Expertise_Marca_VerdeEscuro_mini.jpg") # Expertise_Marca_VerdeEscuro_mini.jpg

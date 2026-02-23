@@ -37,7 +37,7 @@ st.write('')
 
 with st.spinner("Please wait..."):
     with st.expander("📅 Dicionário de variáveis:"):
-        st.dataframe(st.session_state.lista_variaveis, hide_index=True, selection_mode=["multi-row", "multi-cell"])
+        st.dataframe(st.session_state.lista_variaveis, hide_index=True, selection_mode=["multi-row", "multi-cell"], use_container_width=True)
 
 st.write('')
 
@@ -47,7 +47,8 @@ selected_column = st.selectbox('Selecione a coluna que será recodificada:', col
 if selected_column:
     rotulo = st.session_state.lista_variaveis.loc[st.session_state.lista_variaveis["Coluna"] == selected_column, "Rotulo"].iloc[0]
     st.write(f'**{selected_column}**: {rotulo}')
-    st.write('')
+    st.write("")
+    st.write("")
 
     dataframe_recode = st.session_state.lista_labels[st.session_state.lista_labels['Coluna'] == selected_column][['Codigo', 'Label']].copy()
     dataframe_recode = dataframe_recode.rename(columns={'Codigo': 'Codigo', 'Label': 'Label'})
@@ -58,7 +59,10 @@ if selected_column:
                                              num_rows="fixed", 
                                             #  use_container_width=True, 
                                              key="dataframe_recode_editor", 
-                                             hide_index=True)
+                                             hide_index=True,
+                                             use_container_width=True
+                                             )
+    st.write("")
     
     nome_bandeira_recode = st.text_input(
         label="📝 Insira o nome da nova bandeira recodificada", 
@@ -93,6 +97,7 @@ if selected_column:
             st.session_state.ultima_bandeira = nome_bandeira_recode
             st.success('✅ Recode realizado com sucesso!')
             st.session_state.bandeiras_criadas.append(st.session_state.ultima_bandeira)
+            st.write("")
 
             # Exibir a frequência da nova bandeira criada
             ultima = st.session_state.ultima_bandeira

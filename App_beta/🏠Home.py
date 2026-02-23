@@ -30,7 +30,7 @@ st.markdown(
 st.write("")
 st.write("")
 # Upload das planilhas
-coluna1, coluna2, coluna3 = st.columns(3, border=True, vertical_alignment="center", gap="small")
+coluna1, coluna2, coluna3 = st.columns(3, vertical_alignment="center", gap="small")
 with st.form('sheet_name_data'):
     with coluna1:
         nome_sheet_DATA = st.text_input(
@@ -38,7 +38,7 @@ with st.form('sheet_name_data'):
             value="BD_CODIGOS"
             )
         with st.status("🔍 A seguir, veja uma imagem de exemplo do **banco de dados**:"):
-            st.image(image="images/BD_CODIGOS.png", width="content")
+            st.image(image="images/BD_CODIGOS.png")
 
     with coluna2:
         nome_sheet_lista_labels = st.text_input(
@@ -46,7 +46,7 @@ with st.form('sheet_name_data'):
             value="LISTA_LABELS"
             )
         with st.status("🔍 A seguir, veja uma imagem de exemplo com a **Lista de Labels**:"):
-            st.image(image="images/Lista de Labels.png", width="content")
+            st.image(image="images/Lista de Labels.png")
 
     with coluna3:
         nome_sheet_lista_variaveis = st.text_input(
@@ -54,7 +54,7 @@ with st.form('sheet_name_data'):
             value="LISTA_VARIAVEIS"
             )
         with st.status("🔍 A seguir, veja uma imagem de exemplo com a **Lista de variáveis**:"):
-            st.image(image="images/Lista de variaveis.png", width="content")
+            st.image(image="images/Lista de variaveis.png")
     input_buttom_submit_DATA = st.form_submit_button("Enviar")
 
 if input_buttom_submit_DATA:
@@ -132,7 +132,7 @@ if "data" in st.session_state and "lista_labels" in st.session_state and "lista_
                                     default=default_cols,
                                     key="home_colunas")
         dados_filtrados = st.session_state.data[colunas]
-        st.dataframe(dados_filtrados, hide_index=True, selection_mode=["multi-row", "multi-cell"])
+        st.dataframe(dados_filtrados, hide_index=True, selection_mode=["multi-row", "multi-cell"], use_container_width=True)
 
         excel_data = to_excel(st.session_state.data, st.session_state.lista_labels)
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -153,4 +153,4 @@ if st.button("Recarregar página", icon="🔄"):
 st.write('')
 st.write('')
 st.write('')
-st.image(image="images/Expertise_Marca_VerdeEscuro_mini.jpg", width="content") # Expertise_Marca_VerdeEscuro_mini.jpg
+st.image(image="images/Expertise_Marca_VerdeEscuro_mini.jpg") # Expertise_Marca_VerdeEscuro_mini.jpg

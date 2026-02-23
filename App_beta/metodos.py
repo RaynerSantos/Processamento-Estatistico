@@ -85,229 +85,251 @@ def recode_variavel(data, lista_labels, COLUNA_ORIGINAL, NOVA_BANDEIRA, datafram
     return data, lista_labels
 
 
-# === Função para criar a ponderação - 3 dimensões === #
-def criar_pond_3dim(df_universo: pd.DataFrame, df_coletado: pd.DataFrame, 
-               bd_codigo: pd.DataFrame, lista_labels: pd.DataFrame, cabecalho: str, coluna: str, linha: str):
+# ===================================================================== #
+# === Classe para Criar a ponderação em módulos e etapas definidas === #
+class Criar_Pond():
     """
-    Função para calcular a coluna de ponderação (3 categorias: Cabeçalho, coluna e linha - MultiIndex):
-    1) A partir do universo e o coletado é criado o valor da ponderação
-       - Ponderação é o valor IDEAL - percentual do universo vezes o total coletado, divido pelo COLETADO em cada categoria
-    2) Com o banco de dados e a lista de labels cria-se a coluna POND no banco de dados
+        Classe para calcular a coluna de ponderação:
+        1) Verificar se há inconsistência no nome do cabeçalho MultiIndex
+        2) A partir do universo e o coletado é criado o valor da ponderação
+        - Ponderação é o valor IDEAL - percentual do universo vezes o total coletado, divido pelo COLETADO em cada categoria
+        3) Com o banco de dados e a lista de labels cria-se a coluna POND no banco de dados
+        
     """
+    
+    def __init__(self, df_universo: pd.DataFrame, df_coletado: pd.DataFrame, bd_codigo: pd.DataFrame, lista_labels: pd.DataFrame):
+        self.df_universo = df_universo
+        self.df_coletado = df_coletado
+        self.bd_codigo = bd_codigo
+        self.lista_labels = lista_labels
 
-    # Soma do universo
-    total = int(df_universo.sum().sum().round())
+    def n_niveis_colunas(self):
+        cols = self.df_universo.columns
+        cols_nlevels = cols.nlevels + 1
+        self.cols_nlevels = cols_nlevels
+        return cols_nlevels if isinstance(cols, pd.MultiIndex) else 2
 
-    if total > 1:
-        # df_universo em percentual
-        df_universo_perc = df_universo.divide(total)
-    else:
-        # df_universo em percentual
-        df_universo_perc = df_universo.copy()
+    def verificar_cols_multiindex(self):
+        # Buscando os nomes das colunas e índices
+        lista_de_colunas_indice = []
+        lista_de_labels_fonte = []
+        if isinstance(self.df_universo.columns, pd.MultiIndex):
+            for col in self.df_universo.columns:
+                for item in col:
+                    if ": " not in item:
+                        return f"❌ Não há separação correta com **dois pontos e um espaço -> (: )** entre o nome da COLUNA e a LABEL correspondente. Verificar valor na tabela: **{item}**."
+                    else:
+                        item_coluna = item.split(": ")[0]
+                        item_label = item.split(": ")[1]
+                        if item_coluna not in lista_de_colunas_indice:
+                            lista_de_colunas_indice.append(item_coluna)
+                        if item_label not in lista_de_labels_fonte:
+                            lista_de_labels_fonte.append(item_label)
 
-    # Calcular a quantidade total de entrevistas
-    qtd_total_entrevistas = int(df_coletado.sum().sum())
+            for index in self.df_universo.index:
+                index_linha = index.split(": ")[0]
+                index_linha_label = index.split(": ")[1]
+                if index_linha not in lista_de_colunas_indice:
+                    lista_de_colunas_indice.append(index_linha)
+                if index_linha_label not in lista_de_labels_fonte:
+                    lista_de_labels_fonte.append(index_linha_label)
 
-    # Valor ideal que deve ter de entrevistas para cada categoria
-    df_ideal = df_universo_perc.multiply(qtd_total_entrevistas)
+            for col in lista_de_colunas_indice:
+                if col not in self.lista_labels["Coluna"].unique():
+                    return f"❌ Nome da Coluna '{col}' não se encontra na Lista de Labels."
+                
 
-    # DataFrame com a ponderação criada de acordo com a combinação de categorias
-    df_pond = pd.DataFrame(
-        df_ideal.to_numpy() / df_coletado.astype(float).replace(0, 0.00001).to_numpy(),
-        index=df_ideal.index,
-        columns=df_ideal.columns
-    )
+                labels_validas = set(self.lista_labels.loc[self.lista_labels["Coluna"] == col, "Label"])
+                labels_fonte_col = set()
+                for c in self.df_universo.columns:
+                    for item in c:
+                        if item.split(": ")[0] == col:
+                            labels_fonte_col.add(item.split(": ")[1])
 
-    # Criar um mapeamento para cada label das categorias necessárias
-    lista_labels_cabecalho = lista_labels[lista_labels["Coluna"] == cabecalho]
-    lista_labels_cabecalho_mapping = dict(zip(lista_labels_cabecalho['Codigo'], lista_labels_cabecalho['Label']))
+                for idx in self.df_universo.index:
+                    if idx.split(": ")[0] == col:
+                        labels_fonte_col.add(idx.split(": ")[1])
 
-    lista_labels_coluna = lista_labels[lista_labels["Coluna"] == coluna]
-    lista_labels_coluna_mapping = dict(zip(lista_labels_coluna['Codigo'], lista_labels_coluna['Label']))
+                faltando = labels_fonte_col - labels_validas
+                if faltando:
+                    return f"❌ Label(s) {sorted(faltando)} não encontrada(s) na Lista de Labels para a coluna '{col}'."
+        
+        else:
+            for item in self.df_universo.columns:
+                if ": " not in item:
+                    return f"❌ Não há separação correta com **dois pontos e um espaço -> (: )** entre o nome da COLUNA e a LABEL correspondente. Verificar valor na tabela: **{item}**."
+                else:
+                    item_coluna = item.split(": ")[0]
+                    item_label = item.split(": ")[1]
+                    if item_coluna not in lista_de_colunas_indice:
+                        lista_de_colunas_indice.append(item_coluna)
+                    if item_label not in lista_de_labels_fonte:
+                        lista_de_labels_fonte.append(item_label)
 
-    lista_labels_linha = lista_labels[lista_labels["Coluna"] == linha]
-    lista_labels_linha_mapping = dict(zip(lista_labels_linha['Codigo'], lista_labels_linha['Label']))
+            for index in self.df_universo.index:
+                index_linha = index.split(": ")[0]
+                index_linha_label = index.split(": ")[1]
+                if index_linha not in lista_de_colunas_indice:
+                    lista_de_colunas_indice.append(index_linha)
+                if index_linha_label not in lista_de_labels_fonte:
+                    lista_de_labels_fonte.append(index_linha_label)
 
-    # Criar a nova coluna de PONDERAÇÃO de acordo com o df_pond
-    if "POND_nova" not in bd_codigo.columns:
-        bd_codigo["POND_nova"] = np.nan
-    label_to_codigo = lista_labels.set_index("Label")["Codigo"].astype(int).to_dict()
+            for col in lista_de_colunas_indice:
+                if col not in self.lista_labels["Coluna"].unique():
+                    return f"❌ Nome da Coluna '{col}' não se encontra na Lista de Labels."
+                
 
-    for label_cabecalho in pd.Series(sorted(bd_codigo[cabecalho].astype(int).unique())).map(lista_labels_cabecalho_mapping):
-        if label_cabecalho in [v[0] for v in df_pond.columns]:
-            s = lista_labels.loc[lista_labels["Label"] == label_cabecalho, "Codigo"]
-            if s.empty:
-                raise KeyError(f"Label não encontrado: {label_cabecalho}")
-            codigo_cabecalho = label_to_codigo[label_cabecalho]
+                labels_validas = set(self.lista_labels.loc[self.lista_labels["Coluna"] == col, "Label"])
+                labels_fonte_col = set()
+                for item in self.df_universo.columns:
+                    if item.split(": ")[0] == col:
+                        labels_fonte_col.add(item.split(": ")[1])
 
-            for label_coluna in pd.Series(sorted(bd_codigo[coluna].astype(int).unique())).map(lista_labels_coluna_mapping):
-                if label_coluna in [v[1] for v in df_pond.columns]:
-                    s = lista_labels.loc[lista_labels["Label"] == label_coluna, "Codigo"]
+                for idx in self.df_universo.index:
+                    if idx.split(": ")[0] == col:
+                        labels_fonte_col.add(idx.split(": ")[1])
+
+                faltando = labels_fonte_col - labels_validas
+                if faltando:
+                    return f"❌ Label(s) {sorted(faltando)} não encontrada(s) na Lista de Labels para a coluna '{col}'."
+
+
+        # Mapeando os códigos para os Labels de cada coluna e índice
+        mapping_lvls = {}
+        for col in lista_de_colunas_indice:
+            mapping_lvls[col] = dict(zip(self.lista_labels[self.lista_labels["Coluna"] == col]['Codigo'], self.lista_labels[self.lista_labels["Coluna"] == col]['Label']))
+
+        qtd_cols_index = len(mapping_lvls)
+        
+        self.qtd_cols_index = qtd_cols_index
+        self.lista_de_colunas_indice = lista_de_colunas_indice
+        self.mapping_lvls = mapping_lvls
+                
+        return qtd_cols_index
+
+
+    def criar_pond(self):
+        # Soma do universo
+        total = int(self.df_universo.sum().sum().round())
+
+        if total > 1:
+            # df_universo em percentual
+            df_universo_perc = self.df_universo.divide(total)
+        else:
+            # df_universo em percentual
+            df_universo_perc = self.df_universo.copy()
+
+        # Calcular a quantidade total de entrevistas
+        qtd_total_entrevistas = int(self.df_coletado.sum().sum())
+
+        # Valor ideal que deve ter de entrevistas para cada categoria
+        df_ideal = df_universo_perc.multiply(qtd_total_entrevistas)
+
+        # DataFrame com a ponderação criada de acordo com a combinação de categorias
+        df_pond = pd.DataFrame(
+            df_ideal.to_numpy() / self.df_coletado.astype(float).replace(0, 0.00001).to_numpy(),
+            index=df_ideal.index,
+            columns=df_ideal.columns
+        )
+
+        # Criar a nova coluna de PONDERAÇÃO de acordo com o df_pond
+        if "POND_nova" not in self.bd_codigo.columns:
+            self.bd_codigo["POND_nova"] = np.nan
+        label_to_codigo = self.lista_labels.set_index("Label")["Codigo"].astype(int).to_dict()
+
+        if self.cols_nlevels == 2:
+            for label_coluna in pd.Series(sorted(self.bd_codigo[self.lista_de_colunas_indice[0]].astype(int).unique())).map(self.mapping_lvls[self.lista_de_colunas_indice[0]]):
+                if label_coluna in [v.split(": ")[1] for v in df_pond.columns]:
+                    s = self.lista_labels.loc[self.lista_labels["Label"] == label_coluna, "Codigo"]
                     if s.empty:
                         raise KeyError(f"Label não encontrado: {label_coluna}")
                     codigo_coluna = label_to_codigo[label_coluna]
+                    valor_label_coluna = self.lista_de_colunas_indice[0] + ": " + label_coluna
 
-                    for label_linha in pd.Series(sorted(bd_codigo[linha].astype(int).unique())).map(lista_labels_linha_mapping):
-                        if label_linha in df_pond.index:
-                            s = lista_labels.loc[lista_labels["Label"] == label_linha, "Codigo"]
+                    for label_linha in pd.Series(sorted(self.bd_codigo[self.lista_de_colunas_indice[1]].astype(int).unique())).map(self.mapping_lvls[self.lista_de_colunas_indice[1]]):
+                        if label_linha in [ i.split(": ")[1] for i in df_pond.index]:
+                            s = self.lista_labels.loc[self.lista_labels["Label"] == label_linha, "Codigo"]
                             if s.empty:
                                 raise KeyError(f"Label não encontrado: {label_linha}")
                             codigo_linha = label_to_codigo[label_linha]
+                            valor_label_linha = self.lista_de_colunas_indice[1] + ": " + label_linha
 
-                            pond = df_pond[label_cabecalho][label_coluna][label_linha]
-                            bd_codigo.loc[((bd_codigo[cabecalho] == codigo_cabecalho) & (bd_codigo[coluna] == codigo_coluna) & (bd_codigo[linha] == codigo_linha)), "POND_nova"] = pond
-    
-    return bd_codigo
+                            pond = df_pond.loc[valor_label_linha, valor_label_coluna]
+                            self.bd_codigo.loc[((self.bd_codigo[self.lista_de_colunas_indice[0]] == codigo_coluna) & 
+                                            (self.bd_codigo[self.lista_de_colunas_indice[1]] == codigo_linha)), "POND_nova"] = pond
+                            
 
-
-# Função para criar a ponderação - 2 dimensões
-def criar_pond_2dim(df_universo: pd.DataFrame, df_coletado: pd.DataFrame, 
-               bd_codigo: pd.DataFrame, lista_labels: pd.DataFrame, coluna: str, linha: str):
-    """
-    Função para calcular a coluna de ponderação (2 categorias: Coluna e linha):
-    1) A partir do universo e o coletado é criado o valor da ponderação
-       - Ponderação é o valor IDEAL - percentual do universo vezes o total coletado, divido pelo COLETADO em cada categoria
-    2) Com o banco de dados e a lista de labels cria-se a coluna POND no banco de dados
-    """
-
-    # Soma do universo
-    total = int(df_universo.sum().sum().round())
-
-    if total > 1:
-        # df_universo em percentual
-        df_universo_perc = df_universo.divide(total)
-    else:
-        # df_universo em percentual
-        df_universo_perc = df_universo.copy()
-
-    # Calcular a quantidade total de entrevistas
-    qtd_total_entrevistas = int(df_coletado.sum().sum())
-
-    # Valor ideal que deve ter de entrevistas para cada categoria
-    df_ideal = df_universo_perc.multiply(qtd_total_entrevistas)
-
-    # DataFrame com a ponderação criada de acordo com a combinação de categorias
-    df_pond = pd.DataFrame(
-        df_ideal.to_numpy() / df_coletado.astype(float).replace(0, 0.00001).to_numpy(),
-        index=df_ideal.index,
-        columns=df_ideal.columns
-    )
-
-    # Criar um mapeamento para cada label das categorias necessárias
-    lista_labels_coluna = lista_labels[lista_labels["Coluna"] == coluna]
-    lista_labels_coluna_mapping = dict(zip(lista_labels_coluna['Codigo'], lista_labels_coluna['Label']))
-
-    lista_labels_linha = lista_labels[lista_labels["Coluna"] == linha]
-    lista_labels_linha_mapping = dict(zip(lista_labels_linha['Codigo'], lista_labels_linha['Label']))
-
-    # Criar a nova coluna de PONDERAÇÃO de acordo com o df_pond
-    if "POND_nova" not in bd_codigo.columns:
-        bd_codigo["POND_nova"] = np.nan
-    label_to_codigo = lista_labels.set_index("Label")["Codigo"].astype(int).to_dict()
-
-    for label_coluna in pd.Series(sorted(bd_codigo[coluna].astype(int).unique())).map(lista_labels_coluna_mapping):
-        if label_coluna in df_pond.columns:
-            s = lista_labels.loc[lista_labels["Label"] == label_coluna, "Codigo"]
-            if s.empty:
-                raise KeyError(f"Label não encontrado: {label_coluna}")
-            codigo_coluna = label_to_codigo[label_coluna]
-
-            for label_linha in pd.Series(sorted(bd_codigo[linha].astype(int).unique())).map(lista_labels_linha_mapping):
-                if label_linha in df_pond.index:
-                    s = lista_labels.loc[lista_labels["Label"] == label_linha, "Codigo"]
-                    if s.empty:
-                        raise KeyError(f"Label não encontrado: {label_linha}")
-                    codigo_linha = label_to_codigo[label_linha]
-
-                    pond = df_pond.loc[label_linha, label_coluna]
-                    bd_codigo.loc[((bd_codigo[coluna] == codigo_coluna) & (bd_codigo[linha] == codigo_linha)), "POND_nova"] = pond
-    
-    return bd_codigo
-
-
-# === Função para criar a ponderação - 4 dimensões === #
-def criar_pond_4dim(df_universo: pd.DataFrame, df_coletado: pd.DataFrame, 
-               bd_codigo: pd.DataFrame, lista_labels: pd.DataFrame, cabecalho_greater: str, cabecalho: str, coluna: str, linha: str):
-    """
-    Função para calcular a coluna de ponderação (4 categorias: Cabeçalho Superior, Cabeçalho, Coluna e Linha - MultiIndex):
-    1) A partir do universo e o coletado é criado o valor da ponderação
-       - Ponderação é o valor IDEAL - percentual do universo vezes o total coletado, divido pelo COLETADO em cada categoria
-    2) Com o banco de dados e a lista de labels cria-se a coluna POND no banco de dados
-    """
-
-    # Soma do universo
-    total = int(df_universo.sum().sum().round())
-
-    if total > 1:
-        # df_universo em percentual
-        df_universo_perc = df_universo.divide(total)
-    else:
-        # df_universo em percentual
-        df_universo_perc = df_universo.copy()
-
-    # Calcular a quantidade total de entrevistas
-    qtd_total_entrevistas = int(df_coletado.sum().sum())
-
-    # Valor ideal que deve ter de entrevistas para cada categoria
-    df_ideal = df_universo_perc.multiply(qtd_total_entrevistas)
-
-    # DataFrame com a ponderação criada de acordo com a combinação de categorias
-    df_pond = pd.DataFrame(
-        df_ideal.to_numpy() / df_coletado.astype(float).replace(0, 0.00001).to_numpy(),
-        index=df_ideal.index,
-        columns=df_ideal.columns
-    )
-
-    # Criar um mapeamento para cada label das categorias necessárias
-    lista_labels_cabecalho_greater = lista_labels[lista_labels["Coluna"] == cabecalho_greater]
-    lista_labels_cabecalho_greater_mapping = dict(zip(lista_labels_cabecalho_greater['Codigo'], lista_labels_cabecalho_greater['Label']))
-
-    lista_labels_cabecalho = lista_labels[lista_labels["Coluna"] == cabecalho]
-    lista_labels_cabecalho_mapping = dict(zip(lista_labels_cabecalho['Codigo'], lista_labels_cabecalho['Label']))
-
-    lista_labels_coluna = lista_labels[lista_labels["Coluna"] == coluna]
-    lista_labels_coluna_mapping = dict(zip(lista_labels_coluna['Codigo'], lista_labels_coluna['Label']))
-
-    lista_labels_linha = lista_labels[lista_labels["Coluna"] == linha]
-    lista_labels_linha_mapping = dict(zip(lista_labels_linha['Codigo'], lista_labels_linha['Label']))
-
-    # Criar a nova coluna de PONDERAÇÃO de acordo com o df_pond
-    if "POND_nova" not in bd_codigo.columns:
-        bd_codigo["POND_nova"] = np.nan
-    label_to_codigo = lista_labels.set_index("Label")["Codigo"].astype(int).to_dict()
-
-    for label_cabecalho_greater in pd.Series(sorted(bd_codigo[cabecalho_greater].astype(int).unique())).map(lista_labels_cabecalho_greater_mapping):
-        if label_cabecalho_greater in [v[0] for v in df_pond.columns]:
-            s = lista_labels.loc[lista_labels["Label"] == label_cabecalho_greater, "Codigo"]
-            if s.empty:
-                raise KeyError(f"Label não encontrado: {label_cabecalho_greater}")
-            codigo_cabecalho_greater = label_to_codigo[label_cabecalho_greater]
-
-            for label_cabecalho in pd.Series(sorted(bd_codigo[cabecalho].astype(int).unique())).map(lista_labels_cabecalho_mapping):
-                if label_cabecalho in [v[1] for v in df_pond.columns]:
-                    s = lista_labels.loc[lista_labels["Label"] == label_cabecalho, "Codigo"]
+        elif self.cols_nlevels == 3:
+            for label_cabecalho in pd.Series(sorted(self.bd_codigo[self.lista_de_colunas_indice[0]].astype(int).unique())).map(self.mapping_lvls[self.lista_de_colunas_indice[0]]):
+                if label_cabecalho in [v[0].split(": ")[1] for v in df_pond.columns]:
+                    s = self.lista_labels.loc[self.lista_labels["Label"] == label_cabecalho, "Codigo"]
                     if s.empty:
                         raise KeyError(f"Label não encontrado: {label_cabecalho}")
                     codigo_cabecalho = label_to_codigo[label_cabecalho]
+                    valor_label_cabecalho = self.lista_de_colunas_indice[0] + ": " + label_cabecalho
 
-                    for label_coluna in pd.Series(sorted(bd_codigo[coluna].astype(int).unique())).map(lista_labels_coluna_mapping):
-                        if label_coluna in [v[2] for v in df_pond.columns]:
-                            s = lista_labels.loc[lista_labels["Label"] == label_coluna, "Codigo"]
+                    for label_coluna in pd.Series(sorted(self.bd_codigo[self.lista_de_colunas_indice[1]].astype(int).unique())).map(self.mapping_lvls[self.lista_de_colunas_indice[1]]):
+                        if label_coluna in [v[1].split(": ")[1] for v in df_pond.columns]:
+                            s = self.lista_labels.loc[self.lista_labels["Label"] == label_coluna, "Codigo"]
                             if s.empty:
                                 raise KeyError(f"Label não encontrado: {label_coluna}")
                             codigo_coluna = label_to_codigo[label_coluna]
+                            valor_label_coluna = self.lista_de_colunas_indice[1] + ": " + label_coluna
 
-                            for label_linha in pd.Series(sorted(bd_codigo[linha].astype(int).unique())).map(lista_labels_linha_mapping):
-                                if label_linha in df_pond.index:
-                                    s = lista_labels.loc[lista_labels["Label"] == label_linha, "Codigo"]
+                            for label_linha in pd.Series(sorted(self.bd_codigo[self.lista_de_colunas_indice[2]].astype(int).unique())).map(self.mapping_lvls[self.lista_de_colunas_indice[2]]):
+                                if label_linha in [ i.split(": ")[1] for i in df_pond.index]:
+                                    s = self.lista_labels.loc[self.lista_labels["Label"] == label_linha, "Codigo"]
                                     if s.empty:
                                         raise KeyError(f"Label não encontrado: {label_linha}")
                                     codigo_linha = label_to_codigo[label_linha]
+                                    valor_label_linha = self.lista_de_colunas_indice[2] + ": " + label_linha
 
-                                pond = df_pond.loc[label_linha, (label_cabecalho_greater, label_cabecalho, label_coluna)]
-                                bd_codigo.loc[((bd_codigo[cabecalho_greater] == codigo_cabecalho_greater) & (bd_codigo[cabecalho] == codigo_cabecalho) & (bd_codigo[coluna] == codigo_coluna) & (bd_codigo[linha] == codigo_linha)), "POND_nova"] = pond
-    
-    return bd_codigo
+                                    pond = df_pond.loc[valor_label_linha, (valor_label_cabecalho, valor_label_coluna)]
+                                    self.bd_codigo.loc[((self.bd_codigo[self.lista_de_colunas_indice[0]] == codigo_cabecalho) & 
+                                                    (self.bd_codigo[self.lista_de_colunas_indice[1]] == codigo_coluna) & 
+                                                    (self.bd_codigo[self.lista_de_colunas_indice[2]] == codigo_linha)), "POND_nova"] = pond
+
+
+        elif self.cols_nlevels == 4:
+            for label_cabecalho_greater in pd.Series(sorted(self.bd_codigo[self.lista_de_colunas_indice[0]].astype(int).unique())).map(self.mapping_lvls[self.lista_de_colunas_indice[0]]):
+                if label_cabecalho_greater in [v[0].split(": ")[1] for v in df_pond.columns]:
+                    s = self.lista_labels.loc[self.lista_labels["Label"] == label_cabecalho_greater, "Codigo"]
+                    if s.empty:
+                        raise KeyError(f"Label não encontrado: {label_cabecalho_greater}")
+                    codigo_cabecalho_greater = label_to_codigo[label_cabecalho_greater]
+                    valor_label_cabecalho_greater = self.lista_de_colunas_indice[0] + ": " + label_cabecalho_greater
+
+                    for label_cabecalho in pd.Series(sorted(self.bd_codigo[self.lista_de_colunas_indice[1]].astype(int).unique())).map(self.mapping_lvls[self.lista_de_colunas_indice[1]]):
+                        if label_cabecalho in [v[1].split(": ")[1] for v in df_pond.columns]:
+                            s = self.lista_labels.loc[self.lista_labels["Label"] == label_cabecalho, "Codigo"]
+                            if s.empty:
+                                raise KeyError(f"Label não encontrado: {label_cabecalho}")
+                            codigo_cabecalho = label_to_codigo[label_cabecalho]
+                            valor_label_cabecalho = self.lista_de_colunas_indice[1] + ": " + label_cabecalho
+
+                            for label_coluna in pd.Series(sorted(self.bd_codigo[self.lista_de_colunas_indice[2]].astype(int).unique())).map(self.mapping_lvls[self.lista_de_colunas_indice[2]]):
+                                if label_coluna in [v[2].split(": ")[1] for v in df_pond.columns]:
+                                    s = self.lista_labels.loc[self.lista_labels["Label"] == label_coluna, "Codigo"]
+                                    if s.empty:
+                                        raise KeyError(f"Label não encontrado: {label_coluna}")
+                                    codigo_coluna = label_to_codigo[label_coluna]
+                                    valor_label_coluna = self.lista_de_colunas_indice[2] + ": " + label_coluna
+
+                                    for label_linha in pd.Series(sorted(self.bd_codigo[self.lista_de_colunas_indice[3]].astype(int).unique())).map(self.mapping_lvls[self.lista_de_colunas_indice[3]]):
+                                        if label_linha in [ i.split(": ")[1] for i in df_pond.index]:
+                                            s = self.lista_labels.loc[self.lista_labels["Label"] == label_linha, "Codigo"]
+                                            if s.empty:
+                                                raise KeyError(f"Label não encontrado: {label_linha}")
+                                            codigo_linha = label_to_codigo[label_linha]
+                                            valor_label_linha = self.lista_de_colunas_indice[3] + ": " + label_linha
+
+                                            pond = df_pond.loc[valor_label_linha, (valor_label_cabecalho_greater, valor_label_cabecalho, valor_label_coluna)]
+                                            self.bd_codigo.loc[((self.bd_codigo[self.lista_de_colunas_indice[0]] == codigo_cabecalho_greater) & 
+                                                            (self.bd_codigo[self.lista_de_colunas_indice[1]] == codigo_cabecalho) & 
+                                                            (self.bd_codigo[self.lista_de_colunas_indice[2]] == codigo_coluna) & 
+                                                            (self.bd_codigo[self.lista_de_colunas_indice[3]] == codigo_linha)), "POND_nova"] = pond
+        
+        return self.bd_codigo, self.lista_de_colunas_indice
 
 
 

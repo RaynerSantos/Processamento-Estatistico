@@ -25,7 +25,7 @@ st.write('')
 
 with st.spinner("Please wait..."):
     with st.expander("📅 Dicionário de variáveis:"):
-        st.dataframe(st.session_state.lista_variaveis, hide_index=True, selection_mode=["multi-row", "multi-cell"])
+        st.dataframe(st.session_state.lista_variaveis, hide_index=True, selection_mode=["multi-row", "multi-cell"], use_container_width=True)
 
 st.write('')
 
@@ -55,14 +55,14 @@ if selected_columns:
         for i, col in enumerate(selected_columns):
             if i % 2 == 0:
                 with coluna1:
-                    st.write(f'Labels da coluna {col}:')
+                    st.write(f'Labels da coluna **{col}**:')
                     labels_col = st.session_state.lista_labels[st.session_state.lista_labels['Coluna'] == col][['Codigo', 'Label']]
-                    st.dataframe(labels_col, hide_index=True)
+                    st.dataframe(labels_col, hide_index=True, use_container_width=True)
             else:
                 with coluna2:
-                    st.write(f'Labels da coluna {col}:')
+                    st.write(f'Labels da coluna **{col}**:')
                     labels_col = st.session_state.lista_labels[st.session_state.lista_labels['Coluna'] == col][['Codigo', 'Label']]
-                    st.dataframe(labels_col, hide_index=True)
+                    st.dataframe(labels_col, hide_index=True, use_container_width=True)
 
     nome_bandeira = st.text_input(label="📝 Insira o nome da nova bandeira", 
                                   placeholder="nome da nova bandeira", 
@@ -89,7 +89,8 @@ if selected_columns:
                     if ultima:
                         st.dataframe(
                             st.session_state.lista_labels[st.session_state.lista_labels["Coluna"] == ultima][["Codigo", "Label"]],
-                            hide_index=True
+                            hide_index=True,
+                            use_container_width=True
                         )
                 with coluna2:
                     freq = st.session_state.data[ultima].value_counts(dropna=False).rename("Frequência").to_frame()
@@ -99,7 +100,8 @@ if selected_columns:
                     freq = pd.concat([freq, total_line], ignore_index=False)
                     freq["Código"] = freq.index
                     st.dataframe(freq[["Código", "Frequência", "%"]], hide_index=True,
-                                 column_config={"%": st.column_config.NumberColumn("%", format="percent")})
+                                 column_config={"%": st.column_config.NumberColumn("%", format="percent")},
+                                 use_container_width=True)
 
         elif qtd_colunas == 1:
             if st.button('Criar bandeira', key="btn_criar_bandeira_uma_bandeira") and selected_columns and nome_bandeira:
@@ -123,7 +125,8 @@ if selected_columns:
                 freq.loc["Total", "Label"] = "Total"
 
                 st.dataframe(freq[["Código", "Label", "Frequência", "%"]], hide_index=True, 
-                            column_config={"%": st.column_config.NumberColumn("%", format="percent")})
+                            column_config={"%": st.column_config.NumberColumn("%", format="percent")},
+                            use_container_width=True)
 
 st.write('')
 st.divider()

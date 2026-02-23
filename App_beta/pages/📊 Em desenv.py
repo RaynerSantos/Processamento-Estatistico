@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-from regex import F
 import streamlit as st
 from io import BytesIO
 from collections import Counter

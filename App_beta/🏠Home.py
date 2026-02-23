@@ -33,28 +33,31 @@ st.write("")
 coluna1, coluna2, coluna3 = st.columns(3, vertical_alignment="center", gap="small")
 with st.form('sheet_name_data'):
     with coluna1:
-        nome_sheet_DATA = st.text_input(
-            label="📝 Informe o nome da aba (sheet) que contém o banco de dados com os **CÓDIGOS**.", 
-            value="BD_CODIGOS"
-            )
-        with st.status("🔍 A seguir, veja uma imagem de exemplo do **banco de dados**:"):
-            st.image(image="images/BD_CODIGOS.png")
+        with st.container(border=True):
+            nome_sheet_DATA = st.text_input(
+                label="📝 Informe o nome da aba (sheet) que contém o banco de dados com os **CÓDIGOS**.", 
+                value="BD_CODIGOS"
+                )
+            with st.status("🔍 A seguir, veja uma imagem de exemplo do **banco de dados**:"):
+                st.image(image="images/BD_CODIGOS.png")
 
     with coluna2:
-        nome_sheet_lista_labels = st.text_input(
-            label="📝 Informe o nome da aba (sheet) que contém a **Lista de Labels**.", 
-            value="LISTA_LABELS"
-            )
-        with st.status("🔍 A seguir, veja uma imagem de exemplo com a **Lista de Labels**:"):
-            st.image(image="images/Lista de Labels.png")
+        with st.container(border=True):
+            nome_sheet_lista_labels = st.text_input(
+                label="📝 Informe o nome da aba (sheet) que contém a **Lista de Labels**.", 
+                value="LISTA_LABELS"
+                )
+            with st.status("🔍 A seguir, veja uma imagem de exemplo com a **Lista de Labels**:"):
+                st.image(image="images/Lista de Labels.png")
 
     with coluna3:
-        nome_sheet_lista_variaveis = st.text_input(
-            label="📝 Informe o nome da aba (sheet) que contém a **Lista de variáveis**.", 
-            value="LISTA_VARIAVEIS"
-            )
-        with st.status("🔍 A seguir, veja uma imagem de exemplo com a **Lista de variáveis**:"):
-            st.image(image="images/Lista de variaveis.png")
+        with st.container(border=True):
+            nome_sheet_lista_variaveis = st.text_input(
+                label="📝 Informe o nome da aba (sheet) que contém a **Lista de variáveis**.", 
+                value="LISTA_VARIAVEIS"
+                )
+            with st.status("🔍 A seguir, veja uma imagem de exemplo com a **Lista de variáveis**:"):
+                st.image(image="images/Lista de variaveis.png")
     input_buttom_submit_DATA = st.form_submit_button("Enviar")
 
 if input_buttom_submit_DATA:

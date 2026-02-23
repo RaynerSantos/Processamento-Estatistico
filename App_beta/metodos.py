@@ -136,7 +136,7 @@ class Criar_Pond():
 
             for col in lista_de_colunas_indice:
                 if col not in self.lista_labels["Coluna"].unique():
-                    return f"❌ Nome da Coluna '{col}' não se encontra na Lista de Labels."
+                    return f"❌ Nome da Coluna **{col}** não se encontra na Lista de Labels."
                 
 
                 labels_validas = set(self.lista_labels.loc[self.lista_labels["Coluna"] == col, "Label"])
@@ -152,7 +152,7 @@ class Criar_Pond():
 
                 faltando = labels_fonte_col - labels_validas
                 if faltando:
-                    return f"❌ Label(s) {sorted(faltando)} não encontrada(s) na Lista de Labels para a coluna '{col}'."
+                    return f"❌ Label(s) **{sorted(faltando)}** não encontrada(s) na Lista de Labels para a coluna '{col}'."
         
         else:
             for item in self.df_universo.columns:

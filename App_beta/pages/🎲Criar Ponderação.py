@@ -25,31 +25,34 @@ c1, c2, c3 = st.columns(3, vertical_alignment="bottom")
 
 with st.form('sheet_name_DFuniverso_DFcoletado'):
     with c1:
-        nome_sheet_df_universo = st.text_input(
-            label="📝 Digite o nome da aba (sheet) que contém a tabela com a **quantidade real do universo do projeto**.", 
-            value="FONTE",
-            help="A tabela deverá conter duas categorias (Coluna, Linha).",
-            key="pond_nome_sheet_df_universo"
-            )
+        with st.container(border=True):
+            nome_sheet_df_universo = st.text_input(
+                label="📝 Digite o nome da aba (sheet) que contém a tabela com a **quantidade real do universo do projeto**.", 
+                value="FONTE",
+                help="A tabela deverá conter duas categorias (Coluna, Linha).",
+                key="pond_nome_sheet_df_universo"
+                )
     with c2:
-        nome_sheet_df_coletado = st.text_input(
-            label="📝 Digite o nome da aba (sheet) que contém a tabela com a **quantidade coletada do projeto**.", 
-            value="COLETADO",
-            help="A tabela deverá conter duas categorias (Coluna, Linha).",
-            key="pond_nome_sheet_df_coletado"
-            )
+        with st.container(border=True):
+            nome_sheet_df_coletado = st.text_input(
+                label="📝 Digite o nome da aba (sheet) que contém a tabela com a **quantidade coletada do projeto**.", 
+                value="COLETADO",
+                help="A tabela deverá conter duas categorias (Coluna, Linha).",
+                key="pond_nome_sheet_df_coletado"
+                )
     with c3:
-        qtd_dimensao = st.number_input(
-            label="📝 Digite a quantidade de **dimensões** da sua tabela, ou seja, quantas variáveis serão combinadas para criar a ponderação.",
-            value=3,
-            min_value=2,
-            max_value=4,
-            key="pond_qtd_dimensao",
-            # help="Informe a quantidade de **dimensões** da sua tabela, ou seja, quantas variáveis serão combinadas para criar a ponderação."
-        )
+        with st.container(border=True):
+            qtd_dimensao = st.number_input(
+                label="📝 Digite a quantidade de **dimensões** da sua tabela, ou seja, quantas variáveis serão combinadas para criar a ponderação.",
+                value=3,
+                min_value=2,
+                max_value=4,
+                key="pond_qtd_dimensao",
+                # help="Informe a quantidade de **dimensões** da sua tabela, ou seja, quantas variáveis serão combinadas para criar a ponderação."
+            )
 
     with st.status("🔍 A seguir, veja uma imagem de exemplo da tabela:"):
-        st.image(image="images/Tabela fonte universo.png")
+        st.image(image="images/Tabela fonte universo_4dim.png")
     input_buttom_submit_DATA = st.form_submit_button("Enviar")
 
 if input_buttom_submit_DATA:

@@ -28,14 +28,16 @@ st.write('')
 colunas = st.session_state.data.columns.tolist()
 coluna1, coluna2 = st.columns(2)
 with coluna1:
-    selected_column = st.selectbox('👇 Selecione a coluna desejada:', 
-                                    colunas, 
-                                    key="table_view_selected_column")
+    with st.container(border=True):
+        selected_column = st.selectbox('👇 Selecione a coluna desejada:', 
+                                        colunas, 
+                                        key="table_view_selected_column")
 with coluna2:
-    casas_decimais = st.number_input(label="📟 Insira a quantidade de casas decimais que deseja visualizar o percentual",
-                                     min_value=0, max_value=5,
-                                     value=2, 
-                                     key="casas_decimais_table_view")
+    with st.container(border=True):
+        casas_decimais = st.number_input(label="📟 Insira a quantidade de casas decimais que deseja visualizar o percentual",
+                                        min_value=0, max_value=5,
+                                        value=2, 
+                                        key="casas_decimais_table_view")
 
 # if selected_column:
 #     rotulo = st.session_state.lista_variaveis.loc[st.session_state.lista_variaveis["Coluna"] == selected_column, "Rotulo"].iloc[0]

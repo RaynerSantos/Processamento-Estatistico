@@ -130,34 +130,36 @@ with tab1:
     coluna1, coluna2 = st.columns(2)
     with st.form('parametros_gerar_tabela_processada'):
         with coluna1:
-            TipoTabela = st.selectbox(
-                label="📝 Informe o **tipo da tabela** a ser processada", 
-                options=dict_tipo_tabela.keys(), 
-                key="processamento_unico_TipoTabela",
-                help="ℹ️ Tipo de tabela = como a variável que ficará na **linha** deve ser interpretada e exibida. Ela pode ser: **categórica** (SIMPLES), **Likert 5 pontos** (IPA_5), **numérica para BTB/TTB** (IPA_10), **NPS** (NPS) ou **múltipla escolha** (MULTIPLA)."
-                )
-            with st.status("ℹ️ Informação do Tipo da Tabela Selecionada:"):
-            # st.write("ℹ️ Informação do Tipo da Tabela Selecionada:")
-                st.write(f"**{TipoTabela}**: {dict_tipo_tabela[TipoTabela]}")
+            with st.container(border=True):
+                TipoTabela = st.selectbox(
+                    label="📝 Informe o **tipo da tabela** a ser processada", 
+                    options=dict_tipo_tabela.keys(), 
+                    key="processamento_unico_TipoTabela",
+                    help="ℹ️ Tipo de tabela = como a variável que ficará na **linha** deve ser interpretada e exibida. Ela pode ser: **categórica** (SIMPLES), **Likert 5 pontos** (IPA_5), **numérica para BTB/TTB** (IPA_10), **NPS** (NPS) ou **múltipla escolha** (MULTIPLA)."
+                    )
+                with st.status("ℹ️ Informação do Tipo da Tabela Selecionada:"):
+                # st.write("ℹ️ Informação do Tipo da Tabela Selecionada:")
+                    st.write(f"**{TipoTabela}**: {dict_tipo_tabela[TipoTabela]}")
             st.write("")
             st.write("")
         
         with coluna2:
-            if TipoTabela == "MULTIPLA":
-                Var_linha = st.text_input(
-                    label="📝 Informe o nome da variável que deverá constar no **nível das linhas** da tabela processada. Se as colunas de múltipla resposta são: 'Q8_1, Q8_2, Q8_3' então, informe um nome diferente para a variável linha, ex.: 'Q8'.",
-                    placeholder="Nome_variavel_linha",
-                    key="processamento_unico_var_linha",
-                    help="ℹ️ Importante! Quando o Tipo de Tabela processada for MULTIPLA, o nome da variável deverá ser diferente das colunas de múltipla resposta. Ex.: Se as colunas múltiplas são 'Q8_1, Q8_2, Q8_3' então, o nome da coluna da variável que deverá constar na linha será 'Q8'."
-                )
-
-            else:
-                Var_linha = st.selectbox(
-                    label="📝 Informe qual a variável que deverá constar no **nível das linhas** da tabela processada", 
-                    options=colunas, 
-                    key="processamento_unico_var_linha",
-                    help="ℹ️ A variável linha é aquela que cruzará com toda informação das bandeiras."
+            with st.container(border=True):
+                if TipoTabela == "MULTIPLA":
+                    Var_linha = st.text_input(
+                        label="📝 Informe o nome da variável que deverá constar no **nível das linhas** da tabela processada. Se as colunas de múltipla resposta são: 'Q8_1, Q8_2, Q8_3' então, informe um nome diferente para a variável linha, ex.: 'Q8'.",
+                        placeholder="Nome_variavel_linha",
+                        key="processamento_unico_var_linha",
+                        help="ℹ️ Importante! Quando o Tipo de Tabela processada for MULTIPLA, o nome da variável deverá ser diferente das colunas de múltipla resposta. Ex.: Se as colunas múltiplas são 'Q8_1, Q8_2, Q8_3' então, o nome da coluna da variável que deverá constar na linha será 'Q8'."
                     )
+
+                else:
+                    Var_linha = st.selectbox(
+                        label="📝 Informe qual a variável que deverá constar no **nível das linhas** da tabela processada", 
+                        options=colunas, 
+                        key="processamento_unico_var_linha",
+                        help="ℹ️ A variável linha é aquela que cruzará com toda informação das bandeiras."
+                        )
             
 
         # coluna3, coluna4 = st.columns(2)    
@@ -229,20 +231,22 @@ with tab1:
 
         coluna5, coluna6 = st.columns(2)
         with coluna5:
-            Var_ID = st.selectbox(
-                label="📝 Informe qual a **variável/coluna identificadora**, utilizada para identificar a entrevista como única", 
-                options=colunas, 
-                key="processamento_unico_var_id",
-                help="ℹ️ Essa é a variável/coluna que identifica o respondente e não pode ter código repetido. Ex.: 'codigo_entrevistado'."
-            )
+            with st.container(border=True):
+                Var_ID = st.selectbox(
+                    label="📝 Informe qual a **variável/coluna identificadora**, utilizada para identificar a entrevista como única", 
+                    options=colunas, 
+                    key="processamento_unico_var_id",
+                    help="ℹ️ Essa é a variável/coluna que identifica o respondente e não pode ter código repetido. Ex.: 'codigo_entrevistado'."
+                )
         
         with coluna6:
-            Var_Pond = st.selectbox(
-                label="📝 Informe qual a **variável/coluna de ponderação**", 
-                options=colunas, 
-                key="processamento_unico_var_pond",
-                help="ℹ️ Observação: se o projeto não tiver ponderação, é necessário criar uma coluna no banco de dados do projeto para representar a variável POND e preencher os campos com o nº 1."
-            )
+            with st.container(border=True):
+                Var_Pond = st.selectbox(
+                    label="📝 Informe qual a **variável/coluna de ponderação**", 
+                    options=colunas, 
+                    key="processamento_unico_var_pond",
+                    help="ℹ️ Observação: se o projeto não tiver ponderação, é necessário criar uma coluna no banco de dados do projeto para representar a variável POND e preencher os campos com o nº 1."
+                )
         st.write("")
         st.write("")
 
@@ -321,6 +325,10 @@ def salvar_excel_com_formatacao(todas_tabelas_gerais, bd_processamento):
                 # Formatar as linhas que não terão casas decimais
                 num_format = workbook.add_format({'num_format': '0'})
                 for row in range((len(todas_tabelas_gerais[i][:-2])+4), (len(todas_tabelas_gerais[i])+4)):
+                    worksheet.set_row(row, None, num_format)
+                # Formatar os valores da Média que terá somente 1 casa decimal
+                num_format = workbook.add_format({'num_format': '0.0'})
+                for row in range((len(todas_tabelas_gerais[i][:-2])+3), (len(todas_tabelas_gerais[i])+2)):
                     worksheet.set_row(row, None, num_format)
 
             elif (bd_processamento['TipoTabela'][i] == 'MULTIPLA'):
@@ -416,7 +424,12 @@ with tab2:
 
     with st.spinner("Please wait..."):
         with st.expander("📅 Dicionário de variáveis:"):
-            st.dataframe(st.session_state.lista_variaveis, hide_index=True, selection_mode=["multi-row", "multi-cell"])
+            st.dataframe(
+                st.session_state.lista_variaveis, 
+                hide_index=True, 
+                selection_mode=["multi-row", "multi-cell"],
+                use_container_width=True                
+                )
     
         st.write("")
         st.write("")

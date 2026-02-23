@@ -42,23 +42,24 @@ with st.spinner("Please wait..."):
 st.write('')
 
 colunas = st.session_state.data.columns.tolist()
-selected_column = st.selectbox('Selecione a coluna que será recodificada:', colunas, key="recode_selected_column")
+selected_column = st.multiselect('Selecione a(s) coluna(s) que será(ão) recodificada(s):', colunas, key="recode_selected_column")
 
 if selected_column:
-    rotulo = st.session_state.lista_variaveis.loc[st.session_state.lista_variaveis["Coluna"] == selected_column, "Rotulo"].iloc[0]
-    st.write(f'**{selected_column}**: {rotulo}')
+    for col in selected_column:
+        rotulo = st.session_state.lista_variaveis.loc[st.session_state.lista_variaveis["Coluna"] == col, "Rotulo"].iloc[0]
+        st.write(f'**{col}**: {rotulo}')
     st.write("")
     st.write("")
 
-    dataframe_recode_value_counts = pd.DataFrame(st.session_state.data[selected_column].value_counts(dropna=False))
-    labels_sub = st.session_state.lista_labels.loc[st.session_state.lista_labels["Coluna"] == selected_column]
+    dataframe_recode_value_counts = pd.DataFrame(st.session_state.data[selected_column[0]].value_counts(dropna=False))
+    labels_sub = st.session_state.lista_labels.loc[st.session_state.lista_labels["Coluna"] == selected_column[0]]
     dataframe_recode_value_counts["Codigo"] = dataframe_recode_value_counts.index
     dataframe_recode_value_counts["Label"] = dataframe_recode_value_counts["Codigo"].map(dict(zip(labels_sub["Codigo"], labels_sub["Label"])))
     dataframe_recode_value_counts['Label nova'] = None
     dataframe_recode_value_counts['Ordem'] = None
     dataframe_recode_value_counts = dataframe_recode_value_counts[["Codigo", "Label", "Label nova", "Ordem"]]
 
-    dataframe_recode = st.session_state.lista_labels[st.session_state.lista_labels['Coluna'] == selected_column][['Codigo', 'Label']].copy()
+    dataframe_recode = st.session_state.lista_labels[st.session_state.lista_labels['Coluna'] == selected_column[0]][['Codigo', 'Label']].copy()
     dataframe_recode = dataframe_recode.rename(columns={'Codigo': 'Codigo', 'Label': 'Label'})
     dataframe_recode['Label nova'] = None
     dataframe_recode['Ordem'] = None
@@ -89,14 +90,16 @@ if selected_column:
     st.write("")
     
     nome_bandeira_recode = st.text_input(
-        label="📝 Insira o nome da nova bandeira recodificada", 
+        label="📝 Digite o(s) nome(s) da(s) nova(s) bandeira(s) recodificada utilizando vírgula e um espaço (, )", 
         placeholder="nome da nova bandeira recodificada", 
         key="recode_nome_bandeira"
     )
 
-    if nome_bandeira_recode in st.session_state.data.columns:
-        st.error(f"A coluna '{nome_bandeira_recode}' já existe no DataFrame. Por favor, escolha outro nome.", 
-                 icon="⚠️")
+    nome_bandeira_recode = nome_bandeira_recode.split(", ")
+    for nome in nome_bandeira_recode:
+        if nome in st.session_state.data.columns:
+            st.error(f"A coluna '{nome}' já existe no DataFrame. Por favor, escolha outro nome.", 
+                    icon="⚠️")
         
 
     if st.button('Realizar recode', key="btn_recode") and nome_bandeira_recode:
@@ -109,18 +112,20 @@ if selected_column:
             st.write("")
 
         else:
-            data, lista_labels = recode_variavel(
-                data=st.session_state.data,
-                lista_labels=st.session_state.lista_labels,
-                COLUNA_ORIGINAL=selected_column,
-                NOVA_BANDEIRA=nome_bandeira_recode,
-                dataframe_recode=dataframe_recode_edited
-            )
-            st.session_state.data = data
-            st.session_state.lista_labels = lista_labels
-            st.session_state.ultima_bandeira = nome_bandeira_recode
+            dict_name_col_bandeira = dict(zip(selected_column, nome_bandeira_recode))
+            for col, name_bandeira in dict_name_col_bandeira.items():
+                data, lista_labels = recode_variavel(
+                    data=st.session_state.data,
+                    lista_labels=st.session_state.lista_labels,
+                    COLUNA_ORIGINAL=col,
+                    NOVA_BANDEIRA=name_bandeira,
+                    dataframe_recode=dataframe_recode_edited
+                )
+                st.session_state.data = data
+                st.session_state.lista_labels = lista_labels
+                st.session_state.ultima_bandeira = name_bandeira
+                st.session_state.bandeiras_criadas.append(st.session_state.ultima_bandeira)
             st.success('✅ Recode realizado com sucesso!')
-            st.session_state.bandeiras_criadas.append(st.session_state.ultima_bandeira)
             st.write("")
 
             # Exibir a frequência da nova bandeira criada

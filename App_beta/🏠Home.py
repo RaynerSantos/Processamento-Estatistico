@@ -127,7 +127,12 @@ if "data" in st.session_state and "lista_labels" in st.session_state and "lista_
     st.write('')
     with st.spinner("Please wait..."):
         with st.expander("📅 Dicionário de variáveis:"):
-            st.dataframe(st.session_state.lista_variaveis, hide_index=True, selection_mode=["multi-row", "multi-cell"])
+            st.dataframe(
+                st.session_state.lista_variaveis, 
+                hide_index=True, 
+                selection_mode=["multi-row", "multi-cell"], 
+                use_container_width=True
+                )
         with st.expander("📋 Colunas"):
             default_cols = [c for c in st.session_state.data.columns if c != 'POND']
             colunas = st.multiselect('Selecione as colunas que deseja visualizar:', 

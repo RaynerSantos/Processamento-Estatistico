@@ -117,7 +117,7 @@ class Criar_Pond():
             for col in self.df_universo.columns:
                 for item in col:
                     if ": " not in item:
-                        return f"❌ Não há separação correta com **dois pontos e um espaço -> (: )** entre o nome da COLUNA e a LABEL correspondente. Verificar valor na tabela: **{item}**."
+                        return f"Não há separação correta com **dois pontos e um espaço -> (: )** entre o nome da COLUNA e a LABEL correspondente. Verificar valor na tabela: **{item}**."
                     else:
                         item_coluna = item.split(": ")[0]
                         item_label = item.split(": ")[1]
@@ -136,7 +136,7 @@ class Criar_Pond():
 
             for col in lista_de_colunas_indice:
                 if col not in self.lista_labels["Coluna"].unique():
-                    return f"❌ Nome da Coluna **{col}** não se encontra na Lista de Labels."
+                    return f"Nome da Coluna **{col}** não se encontra na Lista de Labels."
                 
 
                 labels_validas = set(self.lista_labels.loc[self.lista_labels["Coluna"] == col, "Label"])
@@ -152,12 +152,12 @@ class Criar_Pond():
 
                 faltando = labels_fonte_col - labels_validas
                 if faltando:
-                    return f"❌ Label(s) **{sorted(faltando)}** não encontrada(s) na Lista de Labels para a coluna '{col}'."
+                    return f"Label(s) **{sorted(faltando)}** não encontrada(s) na Lista de Labels para a coluna '{col}'."
         
         else:
             for item in self.df_universo.columns:
                 if ": " not in item:
-                    return f"❌ Não há separação correta com **dois pontos e um espaço -> (: )** entre o nome da COLUNA e a LABEL correspondente. Verificar valor na tabela: **{item}**."
+                    return f"Não há separação correta com **dois pontos e um espaço -> (: )** entre o nome da COLUNA e a LABEL correspondente. Verificar valor na tabela: **{item}**."
                 else:
                     item_coluna = item.split(": ")[0]
                     item_label = item.split(": ")[1]
@@ -176,7 +176,7 @@ class Criar_Pond():
 
             for col in lista_de_colunas_indice:
                 if col not in self.lista_labels["Coluna"].unique():
-                    return f"❌ Nome da Coluna '{col}' não se encontra na Lista de Labels."
+                    return f"Nome da Coluna '{col}' não se encontra na Lista de Labels."
                 
 
                 labels_validas = set(self.lista_labels.loc[self.lista_labels["Coluna"] == col, "Label"])
@@ -191,7 +191,7 @@ class Criar_Pond():
 
                 faltando = labels_fonte_col - labels_validas
                 if faltando:
-                    return f"❌ Label(s) {sorted(faltando)} não encontrada(s) na Lista de Labels para a coluna '{col}'."
+                    return f"Label(s) {sorted(faltando)} não encontrada(s) na Lista de Labels para a coluna '{col}'."
 
 
         # Mapeando os códigos para os Labels de cada coluna e índice

@@ -152,7 +152,7 @@ if data_file_pond is not None:
     Criar_ponderacao.n_niveis_colunas()
     result = Criar_ponderacao.verificar_cols_multiindex()
     if isinstance(result, str):
-        st.write(result)
+        st.error(result, icon="❌")
     else:
         st.session_state.data, lista_de_colunas_indice = Criar_ponderacao.criar_pond()
 

@@ -56,16 +56,21 @@ def criar_bandeira(data, lista_labels, COLUNAS_SELECIONADAS, COL_NAME):
 def recode_variavel(data, lista_labels, COLUNA_ORIGINAL, NOVA_BANDEIRA, dataframe_recode):
     if NOVA_BANDEIRA in data.columns:
         raise ValueError(f"A coluna '{NOVA_BANDEIRA}' já existe no DataFrame.")
-    else:
-        data[NOVA_BANDEIRA] = np.nan
 
     # Criar o mapping (de-para) a partir do dataframe de recode
     mapping_de_para = dict(zip(dataframe_recode['Codigo'], dataframe_recode['Ordem']))
     mapping_de_para
 
     # Aplicar o mapeamento para criar a nova bandeira
-    for codigo_original, codigo_novo in mapping_de_para.items():
-        data.loc[data[COLUNA_ORIGINAL] == codigo_original, NOVA_BANDEIRA] = codigo_novo
+    # for codigo_original, codigo_novo in mapping_de_para.items():
+    #     data.loc[data[COLUNA_ORIGINAL] == codigo_original, NOVA_BANDEIRA] = codigo_novo
+    data[NOVA_BANDEIRA] = data[COLUNA_ORIGINAL].map(mapping_de_para)
+
+    # Garante que qualquer None/"" vire missing padrão
+    data[NOVA_BANDEIRA] = data[NOVA_BANDEIRA].replace({None: np.nan, "": np.nan})
+
+    # Se eu quiser que "vazio" vire 90
+    # data[NOVA_BANDEIRA] = data[NOVA_BANDEIRA].fillna(90)  # exemplo: 90 = NS/NR
 
     # Criar a mini lista de labels para a nova variável
     mapping_lista_labels = dict(zip(dataframe_recode['Ordem'], dataframe_recode['Label nova']))

@@ -44,6 +44,20 @@ with coluna2:
 #     st.write(f'**{selected_column}**: {rotulo}')
 #     st.write("")
 
+def fmt_int_ptbr(x):
+    if pd.isna(x):
+        return ""
+    # 8634 -> "8.634"
+    return f"{int(x):,}".replace(",", ".")
+
+def fmt_pct_ptbr(x, casas=2):
+    if pd.isna(x):
+        return ""
+    # 56.12 -> "56,12%"
+    s = f"{x:,.{casas}f}"          # "56.12" (ou "1,234.56" se tiver milhar)
+    s = s.replace(",", "X").replace(".", ",").replace("X", ".")
+    return s + "%"
+
 if st.button('Visualizar frequência', key="btn_table_view") and selected_column:
     freq = st.session_state.data[selected_column].value_counts(dropna=False).rename("Frequência").to_frame()
     freq["%"] = ( freq["Frequência"] / freq["Frequência"].sum() * 100)
@@ -57,12 +71,24 @@ if st.button('Visualizar frequência', key="btn_table_view") and selected_column
     freq["Label"] = freq["Código"].map(dict_codigo_label)
     freq.loc["Total", "Label"] = "Total"
 
+    # st.dataframe(
+    #     freq[["Código", "Label", "Frequência", "%"]], 
+    #     hide_index=True, 
+    #     column_config={"%": st.column_config.NumberColumn("%", format=f"%.{casas_decimais}f%%")},
+    #     use_container_width=True
+    #     )
+    
+    # >>> Colunas formatadas para exibição (pt-BR)
+    freq["Frequência_fmt"] = freq["Frequência"].apply(fmt_int_ptbr)
+    freq["%_fmt"] = freq["%"].apply(lambda v: fmt_pct_ptbr(v, casas=casas_decimais))
+
     st.dataframe(
-        freq[["Código", "Label", "Frequência", "%"]], 
-        hide_index=True, 
-        column_config={"%": st.column_config.NumberColumn("%", format=f"%.{casas_decimais}f%%")},
+        freq[["Código", "Label", "Frequência_fmt", "%_fmt"]].rename(
+            columns={"Frequência_fmt": "Frequência", "%_fmt": "%"}
+        ),
+        hide_index=True,
         use_container_width=True
-        )
+    )
     
 st.write("")
 st.write("")

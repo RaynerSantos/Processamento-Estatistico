@@ -9,16 +9,31 @@ from metodos import recode_variavel
 if "bandeiras_criadas" not in st.session_state:
     st.session_state.bandeiras_criadas = []
 
-def verifica_label_ordem(dataframe_recode_edited):
-    # Verificar se as labels e a ordem foi preenchida corretamente
-    mapping_de_para_df_recode = dict(zip(dataframe_recode_edited['Label nova'], dataframe_recode_edited['Ordem']))
-    lista_verif = []
+def verifica_label_ordem(df):
     erro = 0
-    for v in mapping_de_para_df_recode.values():
-        if v in lista_verif:
-            erro += 1
-            print("Verificar correspondência entre códigos e labels")
-        lista_verif.append(v)
+
+    # 1) Uma mesma Label nova com mais de uma Ordem
+    ordens_por_label = df.groupby('Label nova')['Ordem'].nunique()
+    labels_inconsistentes = ordens_por_label[ordens_por_label > 1]
+
+    if not labels_inconsistentes.empty:
+        erro += len(labels_inconsistentes)
+        print("Labels com mais de uma ordem:")
+        print(labels_inconsistentes)
+
+    # 2) Uma mesma Ordem atribuída a mais de uma Label nova
+    labels_por_ordem = df.groupby('Ordem')['Label nova'].nunique()
+    ordens_inconsistentes = labels_por_ordem[labels_por_ordem > 1]
+
+    if not ordens_inconsistentes.empty:
+        erro += len(ordens_inconsistentes)
+        print("\nOrdens atribuídas a mais de uma label:")
+        print(ordens_inconsistentes)
+
+        # opcional: mostrar as linhas problemáticas
+        print("\nLinhas com ordens duplicadas entre labels diferentes:")
+        print(df[df['Ordem'].isin(ordens_inconsistentes.index)].sort_values('Ordem'))
+
     return erro
 
 def verif_cols_selected(selected_column, lista_labels):
@@ -124,7 +139,7 @@ if selected_column:
     nome_bandeira_recode = nome_bandeira_recode.split(", ")
     for nome in nome_bandeira_recode:
         if nome in st.session_state.data.columns:
-            st.error(f"A coluna '{nome}' já existe no DataFrame. Por favor, escolha outro nome.", 
+            st.warning(f"A coluna '{nome}' já existe no DataFrame. Por favor, escolha outro nome.", 
                     icon="⚠️")
             
 
@@ -134,7 +149,7 @@ if selected_column:
         erro_label_ordem = verifica_label_ordem(dataframe_recode_edited)
 
         if erro_label_ordem > 0:
-            st.warning("Verificar correspondência entre a Label nova e a ordenação de cada Label", icon="⚠️")
+            st.warning("Verificar correspondência entre a **Label nova** e a **ordenação** de cada Label", icon="⚠️")
             st.write("")
 
         else:
@@ -145,15 +160,17 @@ if selected_column:
             else:
                 dict_name_col_bandeira = dict(zip(selected_column, nome_bandeira_recode))
                 for col, name_bandeira in dict_name_col_bandeira.items():
-                    data, lista_labels = recode_variavel(
+                    data, lista_labels, lista_variaveis = recode_variavel(
                         data=st.session_state.data,
                         lista_labels=st.session_state.lista_labels,
+                        lista_variaveis=st.session_state.lista_variaveis,
                         COLUNA_ORIGINAL=col,
                         NOVA_BANDEIRA=name_bandeira,
                         dataframe_recode=dataframe_recode_edited
                     )
                     st.session_state.data = data
                     st.session_state.lista_labels = lista_labels
+                    st.session_state.lista_variaveis = lista_variaveis
                     st.session_state.ultima_bandeira = name_bandeira
                     st.session_state.bandeiras_criadas.append(st.session_state.ultima_bandeira)
                 st.success('✅ Recode realizado com sucesso!')

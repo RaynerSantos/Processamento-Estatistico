@@ -21,7 +21,7 @@ def mensagem_sucesso():
 
 COLUNAS_SELECIONADAS = ['SEXO', 'REG_POND']
 COL_NAME = 'SEXO_REG'
-def criar_bandeira(data, lista_labels, COLUNAS_SELECIONADAS, COL_NAME):
+def criar_bandeira(data, lista_labels, lista_variaveis, COLUNAS_SELECIONADAS, COL_NAME, ROTULO):
     # Criar a nova coluna de bandeira combinada
     if COL_NAME in data.columns:
         raise ValueError(f"A coluna '{COL_NAME}' já existe no DataFrame.")
@@ -49,11 +49,13 @@ def criar_bandeira(data, lista_labels, COLUNAS_SELECIONADAS, COL_NAME):
         codigo_map = {valor: i + 1 for i, valor in enumerate(sorted(data[COL_NAME].unique()))}
         data[COL_NAME] = data[COL_NAME].map(codigo_map)
 
+        lista_variaveis.loc[len(lista_variaveis)] = [COL_NAME, ROTULO]
+
         return data, lista_labels
     
 
 # Criar uma função para fazer um recode simples baseado em uma coluna e um mapeamento fornecido
-def recode_variavel(data, lista_labels, COLUNA_ORIGINAL, NOVA_BANDEIRA, dataframe_recode):
+def recode_variavel(data, lista_labels, lista_variaveis, COLUNA_ORIGINAL, NOVA_BANDEIRA, dataframe_recode):
     if NOVA_BANDEIRA in data.columns:
         raise ValueError(f"A coluna '{NOVA_BANDEIRA}' já existe no DataFrame.")
 
@@ -87,7 +89,10 @@ def recode_variavel(data, lista_labels, COLUNA_ORIGINAL, NOVA_BANDEIRA, datafram
         novo_recode['Label'].append(label)
 
     lista_labels = pd.concat([lista_labels, pd.DataFrame(novo_recode)], axis=0, ignore_index=True)
-    return data, lista_labels
+
+    ROTULO = lista_variaveis.loc[lista_variaveis["Coluna"] == COLUNA_ORIGINAL, "Rotulo"].iloc[0]
+    lista_variaveis.loc[len(lista_variaveis)] = [NOVA_BANDEIRA, ROTULO]
+    return data, lista_labels, lista_variaveis
 
 
 # ===================================================================== #

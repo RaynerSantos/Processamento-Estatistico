@@ -64,18 +64,26 @@ if selected_columns:
                     labels_col = st.session_state.lista_labels[st.session_state.lista_labels['Coluna'] == col][['Codigo', 'Label']]
                     st.dataframe(labels_col, hide_index=True, use_container_width=True)
 
-    nome_bandeira = st.text_input(label="📝 Insira o nome da nova bandeira", 
+    nome_bandeira = st.text_input(label="📝 Digite o nome da nova bandeira", 
                                   placeholder="nome da nova bandeira", 
                                   key="criar_nome_bandeira")
+    st.write("")
+    st.write("")
+    ROTULO_BANDEIRA = st.text_input(label="📝 Digite a informação sobre o que se trata a nova bandeira", 
+                                  placeholder="Informação da nova bandeira", 
+                                  key="rotulo_nome_bandeira")
 
     if nome_bandeira in st.session_state.data.columns:
-        st.error(f"A coluna '{nome_bandeira}' já existe no DataFrame. Por favor, escolha outro nome.", icon="⚠️")
+        st.warning(f"A coluna '{nome_bandeira}' já existe no DataFrame. Por favor, escolha outro nome.", icon="⚠️")
     else:
         if qtd_colunas == 2:
             # lógica para criar a nova bandeira com base nas colunas selecionadas
             if st.button('Criar bandeira', key="btn_criar_bandeira") and selected_columns and nome_bandeira:
                 # Criação de uma nova coluna "Bandeira" com base nas colunas selecionadas
-                data, lista_labels = criar_bandeira(st.session_state.data, st.session_state.lista_labels, selected_columns, nome_bandeira)
+                data, lista_labels = criar_bandeira(st.session_state.data, 
+                                                    st.session_state.lista_labels,
+                                                    st.session_state.lista_variaveis, 
+                                                    selected_columns, nome_bandeira, ROTULO_BANDEIRA)
                 st.session_state.data = data
                 st.session_state.lista_labels = lista_labels
                 st.session_state.ultima_bandeira = nome_bandeira

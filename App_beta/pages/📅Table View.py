@@ -39,6 +39,11 @@ with coluna2:
                                         value=2, 
                                         key="casas_decimais_table_view")
 
+if selected_column:
+    rotulo = st.session_state.lista_variaveis.loc[st.session_state.lista_variaveis["Coluna"] == selected_column, "Rotulo"].iloc[0]
+    st.write(f'**{selected_column}**: {rotulo}')
+    st.write("")
+
 # if selected_column:
 #     rotulo = st.session_state.lista_variaveis.loc[st.session_state.lista_variaveis["Coluna"] == selected_column, "Rotulo"].iloc[0]
 #     st.write(f'**{selected_column}**: {rotulo}')
@@ -57,6 +62,7 @@ def fmt_pct_ptbr(x, casas=2):
     s = f"{x:,.{casas}f}"          # "56.12" (ou "1,234.56" se tiver milhar)
     s = s.replace(",", "X").replace(".", ",").replace("X", ".")
     return s + "%"
+
 
 if st.button('Visualizar frequência', key="btn_table_view") and selected_column:
     freq = st.session_state.data[selected_column].value_counts(dropna=False).rename("Frequência").to_frame()

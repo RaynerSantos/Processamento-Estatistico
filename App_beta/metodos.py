@@ -1239,11 +1239,13 @@ def processamento(data, bd_processamento, lista_labels):
 
                 
                 # Gerar Tabelas Sem Ponderação
-                tabela = pd.crosstab(df[Var_linha], df[col], dropna=False)
+                tabela = pd.crosstab(df[Var_linha], df[col], dropna=True)
                 tabela = tabela.fillna(0)
                 if len(tabela) == 0:
-                    tabela = pd.DataFrame(0, index=df[Var_linha][pd.notna(df[Var_linha])].unique(), 
-                                        columns=df[col][pd.notna(df[col])].unique())
+                    tabela = pd.DataFrame(0, 
+                                          index=df[Var_linha][pd.notna(df[Var_linha])].unique(), 
+                                          columns=df[col][pd.notna(df[col])].unique()
+                                          )
                 tabelas_sem_pond.append(tabela)
 
                 # Gerar Tabelas para valores agrupados
@@ -1256,7 +1258,7 @@ def processamento(data, bd_processamento, lista_labels):
                     aux_tabelas_pond.append(tabela)
 
                     # Tabelas sem ponderação
-                    tabela = pd.crosstab(df['var_agrupada'], df[col], dropna=False)
+                    tabela = pd.crosstab(df['var_agrupada'], df[col], dropna=True)
                     aux_tabelas_sem_pond.append(tabela)
                 
             tabela_geral = pd.concat(tabelas_pond, axis=1)
@@ -1487,33 +1489,33 @@ class verificar_incosistencias_iniciais:
 
             res_TipoTabela = verif_TipoTabela(TipoTabela)
             if res_TipoTabela == 1:
-                 return f"⚠️ Verificar incosistência: o **Tipo de Tabela** informado na linha {line+2} não corresponde com as opções válidas: [SIMPLES, IPA_5, IPA_10, NPS, MULTIPLA]"
+                 return f"❌ Verificar incosistência: o **Tipo de Tabela** informado na linha {line+2} não corresponde com as opções válidas: [SIMPLES, IPA_5, IPA_10, NPS, MULTIPLA]"
             
             res_bandeiras_cabecalho = verif_bandeiras_cabecalho(Bandeiras, Cabecalho)
             if res_bandeiras_cabecalho == 1:
-                 return f"⚠️ Verificar incosistência: na linha {line+2}, **o nº de Bandeiras não é compatível com o nº de inputs do Cabeçalho**."
+                 return f"❌ Verificar incosistência: na linha {line+2}, **o nº de Bandeiras não é compatível com o nº de inputs do Cabeçalho**."
             
             res_bandeira, col = verif_bandeiras(df, Bandeiras)
             if res_bandeira == 1:
-                 return f"⚠️ Coluna **{col}** que se encontra na coluna **Bandeiras** não foi encontrada no Banco de dados."
+                 return f"❌ Coluna **{col}** que se encontra na coluna **Bandeiras** não foi encontrada no Banco de dados."
             
             res_Var_linha = verif_Var_linha(df, Var_linha, TipoTabela)
             if res_Var_linha == 1:
-                 return f"⚠️ Verificar incosistência: na linha {line+2}, a variável/coluna informada que representa o **nível da linha** da tabela não consta no Banco de dados."
+                 return f"❌ Verificar incosistência: na linha {line+2}, a variável/coluna informada que representa o **nível da linha** da tabela não consta no Banco de dados."
             
             res_NS_NR = verif_NS_NR(NS_NR)
             if res_NS_NR == 1:
-                 return f"⚠️ Verificar incosistência: o valor informado na linha {line+2} da coluna **Contabiliza_NS/NR** não corresponde com as opções válidas: [NAO, SIM]"
+                 return f"❌ Verificar incosistência: o valor informado na linha {line+2} da coluna **Contabiliza_NS/NR** não corresponde com as opções válidas: [NAO, SIM]"
             
             res_Fecha_100 = verif_Fecha_100(TipoTabela, Fecha_100)
             if res_Fecha_100 == 1:
-                 return(f"⚠️ Verificar incosistência: o valor informado na linha {line+2} da coluna **Fecha_100** não corresponde com as opções válidas: [NAO, SIM]")
+                 return(f"❌ Verificar incosistência: o valor informado na linha {line+2} da coluna **Fecha_100** não corresponde com as opções válidas: [NAO, SIM]")
             
             res_Var_ID = verif_coluna_existe(df, Var_ID)
             if res_Var_ID == 1:
-                 return f"⚠️ Verificar incosistência: na linha {line+2}, a variável/coluna informada que representa o **Código de identificação da entrevista** não consta no Banco de dados."
+                 return f"❌ Verificar incosistência: na linha {line+2}, a variável/coluna informada que representa o **Código de identificação da entrevista** não consta no Banco de dados."
             
             res_Var_Pond = verif_coluna_existe(df, Var_Pond)
             if res_Var_Pond == 1:
-                 return f"⚠️ Verificar incosistência: na linha {line+2}, a variável/coluna informada que representa a **Ponderação** não consta no Banco de dados."
+                 return f"❌ Verificar incosistência: na linha {line+2}, a variável/coluna informada que representa a **Ponderação** não consta no Banco de dados."
         return 0   

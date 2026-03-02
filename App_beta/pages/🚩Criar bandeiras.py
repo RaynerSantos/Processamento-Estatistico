@@ -15,7 +15,7 @@ if "bandeiras_criadas" not in st.session_state:
     st.session_state.bandeiras_criadas = []
 
 if "data" not in st.session_state or st.session_state.data is None:
-    st.warning("Antes de tudo, carregue o banco de dados com os códigos e lista de labels na página Home.")
+    st.warning("Antes de tudo, carregue o banco de dados com os códigos e lista de labels na página Home.", icon="⚠️")
     st.stop()
 
 st.title('Pré-Processamento de Dados Estatísticos')
@@ -74,7 +74,7 @@ if selected_columns:
                                   key="rotulo_nome_bandeira")
 
     if nome_bandeira in st.session_state.data.columns:
-        st.warning(f"A coluna '{nome_bandeira}' já existe no DataFrame. Por favor, escolha outro nome.", icon="⚠️")
+        st.error(f"A coluna '{nome_bandeira}' já existe no DataFrame. Por favor, escolha outro nome.", icon="❌")
     else:
         if qtd_colunas == 2:
             # lógica para criar a nova bandeira com base nas colunas selecionadas
@@ -87,8 +87,10 @@ if selected_columns:
                 st.session_state.data = data
                 st.session_state.lista_labels = lista_labels
                 st.session_state.ultima_bandeira = nome_bandeira
+                st.write('')
                 st.success('Bandeira criada com sucesso!', icon="✅")
                 st.session_state.bandeiras_criadas.append(st.session_state.ultima_bandeira)
+                st.write('')
 
                 coluna1, coluna2 = st.columns(2)
                 with coluna1:

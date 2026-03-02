@@ -72,7 +72,7 @@ st.set_page_config(layout='wide', page_title='Processamento de dados',
 st.logo(image="images/ExpertiseAI.svg", size="large")
 
 if "data" not in st.session_state or st.session_state.data is None:
-    st.warning("Antes de tudo, carregue o banco de dados com os códigos e lista de labels na página Home.")
+    st.warning("Antes de tudo, carregue o banco de dados com os códigos e lista de labels na página Home.", icon="⚠️")
     st.stop()
 
 st.title('Processamento de Dados Estatísticos')
@@ -275,12 +275,12 @@ with tab1:
         qtd_bandeiras = len(Colunas)
         qtd_cabecalho = len(Cabecalho.split(", "))
         if qtd_bandeiras != qtd_cabecalho:
-            st.warning("A quantidade de valores para o **Cabeçalho** deve ser a mesma quantidade para as **Bandeiras**", icon="⚠️")
+            st.error("A quantidade de valores para o **Cabeçalho** deve ser a mesma quantidade para as **Bandeiras**", icon="❌")
 
         elif TipoTabela == "MULTIPLA" and Var_linha in Valores_Agrup:
             verificar_Valores_Agrup = Valores_Agrup.split(", ")
             if Var_linha in Valores_Agrup:
-                st.warning("O nome da variável referente ao **nível linha** da tabela não pode ser o mesmo nome das colunas que representam a **variável MULTIPLA**", icon="⚠️")
+                st.error("O nome da variável referente ao **nível linha** da tabela não pode ser o mesmo nome das colunas que representam a **variável MULTIPLA**", icon="❌")
 
         else:
             if TipoTabela in ("IPA_10", "IPA_5"):
@@ -304,7 +304,7 @@ with tab1:
                     mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                     on_click=mensagem_sucesso
                 )
-            
+
 
 # Função para salvar as tabelas em um único Excel com várias abas e formatação
 def salvar_excel_com_formatacao(todas_tabelas_gerais, bd_processamento):
@@ -355,6 +355,7 @@ def salvar_excel_com_formatacao(todas_tabelas_gerais, bd_processamento):
                 for row in range((len(todas_tabelas_gerais[i][:-2])+4), (len(todas_tabelas_gerais[i])+4)):
                     worksheet.set_row(row, None, num_format)
     return output.getvalue()
+
 
 # Função para salvar as tabelas em um único Excel com única aba
 def salvar_excel_aba_unica(todas_tabelas_gerais, bd_processamento):
@@ -479,7 +480,7 @@ with tab2:
                                                                 lista_labels=st.session_state.lista_labels)
                     result_verificar_inconsistencia = processamento_sintaxe.verificar_incosistencia()
                     if result_verificar_inconsistencia != 0:
-                        st.warning(result_verificar_inconsistencia)
+                        st.error(result_verificar_inconsistencia)
 
                     else:
                         # Processar os dados e obter as tabelas

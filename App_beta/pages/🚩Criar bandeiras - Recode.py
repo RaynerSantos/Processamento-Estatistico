@@ -68,7 +68,7 @@ st.set_page_config(layout='wide', page_title='Processamento de dados',
 st.logo(image="images/ExpertiseAI.svg", size="large")
 
 if "data" not in st.session_state or st.session_state.data is None:
-    st.warning("Antes de tudo, carregue o banco de dados com os códigos e lista de labels na página Home.")
+    st.warning("Antes de tudo, carregue o banco de dados com os códigos e lista de labels na página Home.", icon="⚠️")
     st.stop()
 
 st.title('Pré-Processamento de Dados Estatísticos')
@@ -139,8 +139,8 @@ if selected_column:
     nome_bandeira_recode = nome_bandeira_recode.split(", ")
     for nome in nome_bandeira_recode:
         if nome in st.session_state.data.columns:
-            st.warning(f"A coluna '{nome}' já existe no DataFrame. Por favor, escolha outro nome.", 
-                    icon="⚠️")
+            st.error(f"A coluna '{nome}' já existe no DataFrame. Por favor, escolha outro nome.", 
+                    icon="❌")
             
 
     if st.button('Realizar recode', key="btn_recode") and nome_bandeira_recode:
@@ -149,13 +149,13 @@ if selected_column:
         erro_label_ordem = verifica_label_ordem(dataframe_recode_edited)
 
         if erro_label_ordem > 0:
-            st.warning("Verificar correspondência entre a **Label nova** e a **ordenação** de cada Label", icon="⚠️")
+            st.error("Verificar correspondência entre a **Label nova** e a **ordenação** de cada Label", icon="❌")
             st.write("")
 
         else:
             res_verificacao = verif_cols_selected(selected_column, st.session_state.lista_labels)
             if isinstance(res_verificacao, str):
-                st.warning(res_verificacao, icon="⚠️")
+                st.error(res_verificacao, icon="❌")
 
             else:
                 dict_name_col_bandeira = dict(zip(selected_column, nome_bandeira_recode))
@@ -173,6 +173,7 @@ if selected_column:
                     st.session_state.lista_variaveis = lista_variaveis
                     st.session_state.ultima_bandeira = name_bandeira
                     st.session_state.bandeiras_criadas.append(st.session_state.ultima_bandeira)
+                st.write("")
                 st.success('✅ Recode realizado com sucesso!')
                 st.write("")
 

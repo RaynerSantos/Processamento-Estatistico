@@ -102,6 +102,13 @@ def salvar_excel_aba_unica(todas_tabelas_gerais, bd_processamento):
             linha_atual += tamanho + 3 + 4  # Adiciona +4 para considerar o cabeçalho e +3 de espaçamento
     return output.getvalue()
 
+
+if "params_fase1_ok" not in st.session_state:
+    st.session_state.params_fase1_ok = False
+if "params_fase3_ok" not in st.session_state:
+    st.session_state.params_fase3_ok = False
+
+
 dict_tipo_tabela = {
         "SIMPLES": (
             "Use quando a variável da **linha** for **categórica** (não numérica), como gênero, região, cargo, canal de compra, etc. A tabela mostrará a **distribuição por categorias** (quantidade e/ou %)."
@@ -149,18 +156,22 @@ with st.spinner("Please wait..."):
         st.subheader("Preencha os parâmetros solicitados abaixo para gerar o Estatístico")
         st.write("")
 
-        selected_columns_bandeiras = st.multiselect("Selecione as **BANDEIRAS** que representam as colunas da tabela, separados por ', ' (virgula e um espaço).", 
-                                                    options=Colunas,
-                                                    key="Processamento_Bandeiras")
+        with st.container(border=True):
+            selected_columns_bandeiras = st.multiselect(
+                "Selecione as **BANDEIRAS** que representam as colunas da tabela, separados por ', ' (virgula e um espaço).", 
+                options=Colunas,
+                key="Processamento_Bandeiras"
+            )
         st.write("")
         st.write("")
         
-        selected_columns_Cabecalho = st.text_input(
-            label="📝 Informe o **cabeçalho** desejado que substituará os nomes das colunas na tabela. **Coloque o cabeçalho separado por vírgula e um espaço (, )**", 
-            placeholder="Mercado PME, Mercado 500+, TIM, TIM PME, TIM 500+, TIM Prime, VIVO, VIVO PME, VIVO 500+, CLARO, CLARO PME, CLARO 500+", 
-            key="processamento_cabecalho",
-            help="ℹ️ O cabeçalho é o nome ideal das colunas que você deseja que apareça na tabela processada. Ex.: nome da coluna: **Q3** → nome do cabeçalho para esta coluna: **Setor de atividade**."
-            )
+        with st.container(border=True):
+            selected_columns_Cabecalho = st.text_input(
+                label="📝 Informe o **cabeçalho** desejado que substituará os nomes das colunas na tabela. **Coloque o cabeçalho separado por vírgula e um espaço (, )**", 
+                placeholder="Mercado PME, Mercado 500+, TIM, TIM PME, TIM 500+, TIM Prime, VIVO, VIVO PME, VIVO 500+, CLARO, CLARO PME, CLARO 500+", 
+                key="processamento_cabecalho",
+                help="ℹ️ O cabeçalho é o nome ideal das colunas que você deseja que apareça na tabela processada. Ex.: nome da coluna: **Q3** → nome do cabeçalho para esta coluna: **Setor de atividade**."
+                )
         st.write("")
         st.divider()
         st.write("")
@@ -169,94 +180,103 @@ with st.spinner("Please wait..."):
 
         for tipo, desc in dict_tipo_tabela.items():
             if tipo == "SIMPLES":
-                st.write(f"**{tipo}**: {desc}")
-                selected_columns_SIMPLES = st.multiselect(f"Selecione as colunas que serão processadas na categoria de tabela **{tipo}**", 
-                                                          options=Colunas,
-                                                          key="TipoTabela_SIMPLES")
-                if selected_columns_SIMPLES:
-                    qtd_simples = len(selected_columns_SIMPLES)
-                    TipoTabela_SIMPLES = [tipo] * qtd_simples
+                with st.container(border=True):
+                    st.write(f"**{tipo}**: {desc}")
+                    selected_columns_SIMPLES = st.multiselect(f"Selecione as colunas que serão processadas na categoria de tabela **{tipo}**", 
+                                                            options=Colunas,
+                                                            key="TipoTabela_SIMPLES")
+                    if selected_columns_SIMPLES:
+                        qtd_simples = len(selected_columns_SIMPLES)
+                        TipoTabela_SIMPLES = [tipo] * qtd_simples
                 st.write("")
                 st.divider()
                 st.write("")
 
             
             elif tipo == "IPA_5":
-                st.write(f"**{tipo}**: {desc}")
-                selected_columns_IPA_5 = st.multiselect(f"Selecione as colunas que serão processadas na categoria de tabela **{tipo}**", 
-                                                          options=Colunas,
-                                                          key="TipoTabela_IPA_5")
-                if selected_columns_IPA_5:
-                    qtd_ipa_5 = len(selected_columns_IPA_5)
-                    TipoTabela_IPA_5 = [tipo] * qtd_ipa_5
+                with st.container(border=True):
+                    st.write(f"**{tipo}**: {desc}")
+                    selected_columns_IPA_5 = st.multiselect(f"Selecione as colunas que serão processadas na categoria de tabela **{tipo}**", 
+                                                            options=Colunas,
+                                                            key="TipoTabela_IPA_5")
+                    if selected_columns_IPA_5:
+                        qtd_ipa_5 = len(selected_columns_IPA_5)
+                        TipoTabela_IPA_5 = [tipo] * qtd_ipa_5
                 st.write("")
-                coluna1, coluna2 = st.columns(2, border=True)
+                coluna1, coluna2 = st.columns(2)
                 with coluna1: 
-                    valores_BTB_IPA_5 = st.text_input(
-                        label="📝 Informe a **faixa de notas BTB** - notas baixas desejada. **Coloque os valores separados por vírgula e um espaço (, )**", 
-                        placeholder="1, 2", 
-                        key="processamento_valores_btb_IPA_5",
-                        help="ℹ️ Agrupamento de notas baixas."
-                        )
-                    st.session_state.valores_BTB_IPA_5 = valores_BTB_IPA_5
+                    with st.container(border=True):
+                        valores_BTB_IPA_5 = st.text_input(
+                            label="📝 Informe a **faixa de notas BTB** - notas baixas desejada. **Coloque os valores separados por vírgula e um espaço (, )**", 
+                            placeholder="1, 2", 
+                            key="processamento_valores_btb_IPA_5",
+                            help="ℹ️ Agrupamento de notas baixas."
+                            )
+                        st.session_state.valores_BTB_IPA_5 = valores_BTB_IPA_5
                 
                 with coluna2:
-                    valores_TTB_IPA_5 = st.text_input(
-                        label="📝 Informe a **faixa de notas TTB** - notas altas desejada. **Coloque os valores separados por vírgula e um espaço (, )**", 
-                        placeholder="4, 5", 
-                        key="processamento_valores_ttb_IPA_5",
-                        help="ℹ️ Agrupamento de notas altas."
-                    )
-                    st.session_state.valores_TTB_IPA_5 = valores_TTB_IPA_5
+                    with st.container(border=True):
+                        valores_TTB_IPA_5 = st.text_input(
+                            label="📝 Informe a **faixa de notas TTB** - notas altas desejada. **Coloque os valores separados por vírgula e um espaço (, )**", 
+                            placeholder="4, 5", 
+                            key="processamento_valores_ttb_IPA_5",
+                            help="ℹ️ Agrupamento de notas altas."
+                        )
+                        st.session_state.valores_TTB_IPA_5 = valores_TTB_IPA_5
                 st.write("")
                 st.divider()
                 st.write("")
 
             elif tipo == "IPA_10":
-                st.write(f"**{tipo}**: {desc}")
-                selected_columns_IPA_10 = st.multiselect(f"Selecione as colunas que serão processadas na categoria de tabela **{tipo}**", 
-                                                          options=Colunas,
-                                                          key="TipoTabela_IPA_10")
-                if selected_columns_IPA_10:
-                    qtd_ipa_10 = len(selected_columns_IPA_10)
-                    TipoTabela_IPA_10 = [tipo] * qtd_ipa_10
+                with st.container(border=True):
+                    st.write(f"**{tipo}**: {desc}")
+                    selected_columns_IPA_10 = st.multiselect(f"Selecione as colunas que serão processadas na categoria de tabela **{tipo}**", 
+                                                            options=Colunas,
+                                                            key="TipoTabela_IPA_10")
+                    if selected_columns_IPA_10:
+                        qtd_ipa_10 = len(selected_columns_IPA_10)
+                        TipoTabela_IPA_10 = [tipo] * qtd_ipa_10
                 st.write("")
-                coluna3, coluna4 = st.columns(2, border=True)
-                with coluna3: 
-                    valores_BTB_IPA_10 = st.text_input(
-                        label="📝 Informe a **faixa de notas BTB** - notas baixas desejada. **Coloque os valores separados por vírgula e um espaço (, )**", 
-                        placeholder="1, 2, 3", 
-                        key="processamento_valores_btb_IPA_10",
-                        help="ℹ️ Agrupamento de notas baixas."
-                        )
-                    st.session_state.valores_BTB_IPA_10 = valores_BTB_IPA_10
+                coluna3, coluna4 = st.columns(2)
+                with coluna3:
+                    with st.container(border=True):
+                        valores_BTB_IPA_10 = st.text_input(
+                            label="📝 Informe a **faixa de notas BTB** - notas baixas desejada. **Coloque os valores separados por vírgula e um espaço (, )**", 
+                            placeholder="1, 2, 3", 
+                            key="processamento_valores_btb_IPA_10",
+                            help="ℹ️ Agrupamento de notas baixas."
+                            )
+                        st.session_state.valores_BTB_IPA_10 = valores_BTB_IPA_10
                 
                 with coluna4:
-                    valores_TTB_IPA_10 = st.text_input(
-                        label="📝 Informe a **faixa de notas TTB** - notas altas desejada. **Coloque os valores separados por vírgula e um espaço (, )**", 
-                        placeholder="8, 9, 10", 
-                        key="processamento_valores_ttb_IPA_10",
-                        help="ℹ️ Agrupamento de notas altas."
-                    )
-                    st.session_state.valores_TTB_IPA_10 = valores_TTB_IPA_10
+                    with st.container(border=True):
+                        valores_TTB_IPA_10 = st.text_input(
+                            label="📝 Informe a **faixa de notas TTB** - notas altas desejada. **Coloque os valores separados por vírgula e um espaço (, )**", 
+                            placeholder="8, 9, 10", 
+                            key="processamento_valores_ttb_IPA_10",
+                            help="ℹ️ Agrupamento de notas altas."
+                        )
+                        st.session_state.valores_TTB_IPA_10 = valores_TTB_IPA_10
                 st.write("")
                 st.divider()
                 st.write("")
 
             elif tipo == "NPS":
-                st.write(f"**{tipo}**: {desc}")
-                selected_columns_NPS = st.multiselect(f"Selecione as colunas que serão processadas na categoria de tabela **{tipo}**", 
-                                                          options=Colunas,
-                                                          key="TipoTabela_NPS")
-                if selected_columns_NPS:
-                    qtd_nps = len(selected_columns_NPS)
-                    TipoTabela_NPS = [tipo] * qtd_nps
+                with st.container(border=True):
+                    st.write(f"**{tipo}**: {desc}")
+                    selected_columns_NPS = st.multiselect(f"Selecione as colunas que serão processadas na categoria de tabela **{tipo}**", 
+                                                            options=Colunas,
+                                                            key="TipoTabela_NPS")
+                    if selected_columns_NPS:
+                        qtd_nps = len(selected_columns_NPS)
+                        TipoTabela_NPS = [tipo] * qtd_nps
                 st.write("")            
     
         input_buttom_submit_processamento = st.form_submit_button("Enviar")
 
     if input_buttom_submit_processamento:
-        st.session_state.input_buttom_submit_processamento = input_buttom_submit_processamento
+        st.session_state.params_fase1_ok = True
+        # st.session_state.input_buttom_submit_processamento = input_buttom_submit_processamento
         st.session_state.selected_columns_bandeiras = selected_columns_bandeiras
         st.session_state.selected_columns_Cabecalho = selected_columns_Cabecalho
         selected_columns = selected_columns_SIMPLES + selected_columns_IPA_5 + selected_columns_IPA_10 + selected_columns_NPS
@@ -340,12 +360,13 @@ with st.spinner("Please wait..."):
                 selected_columns_MULTIPLA = []
 
         st.write("")
-        Fecha_100 = st.selectbox(
-                label="📝 Deseja que as tabelas múltiplas fechem os percentuais em 100% (**contabiliza o nº de respostas**) ou, acima de 100% (**contabiliza o nº de respondentes**)?", 
-                options=["NAO", "SIM"], 
-                key="processamento_fecha_100",
-                help="ℹ️ Escolha a opção desejada se a tabela retornará os percentuais fechando 100% ou não."
-            )
+        with st.container(border=True):
+            Fecha_100 = st.selectbox(
+                    label="📝 Deseja que as tabelas múltiplas fechem os percentuais em 100% (**SIM: contabiliza o nº de respostas**) ou, acima de 100% (**NAO: contabiliza o nº de respondentes**)?", 
+                    options=["NAO", "SIM"], 
+                    key="processamento_fecha_100",
+                    help="ℹ️ Escolha a opção desejada se a tabela retornará os percentuais fechando 100% ou não."
+                )
         
         st.write("")
         st.write("")
@@ -368,30 +389,33 @@ with st.spinner("Please wait..."):
     st.write("")
     
     with st.form('parametros_processamento_formulario_third_fase'):
-        coluna5, coluna6, coluna7 = st.columns(3, border=True)
+        coluna5, coluna6, coluna7 = st.columns(3)
         with coluna5:
-            NS_NR = st.selectbox(
-                label="📝 Deseja que a tabela contabilize os casos de **NS/NR (Não sabe / Não respondeu)**?", 
-                options=["NAO", "SIM"], 
-                key="processamento_ns_nr",
-                help="ℹ️ Escolha a opção desejada se a tabela retornará os percentuais de NS/NR ou não."
-            )
+            with st.container(border=True):
+                NS_NR = st.selectbox(
+                    label="📝 Deseja que a tabela contabilize os casos de **NS/NR (Não sabe / Não respondeu)**?", 
+                    options=["NAO", "SIM"], 
+                    key="processamento_ns_nr",
+                    help="ℹ️ Escolha a opção desejada se a tabela retornará os percentuais de NS/NR ou não."
+                )
 
         with coluna6:
-            Var_ID = st.selectbox(
-                label="📝 Informe qual a **variável/coluna identificadora**, utilizada para identificar a entrevista como única", 
-                options=Colunas, 
-                key="processamento_unico_var_id",
-                help="ℹ️ Essa é a variável/coluna que identifica o respondente e não pode ter código repetido. Ex.: 'codigo_entrevistado'."
-            )
+            with st.container(border=True):
+                Var_ID = st.selectbox(
+                    label="📝 Informe qual a **variável/coluna identificadora**, utilizada para identificar a entrevista como única", 
+                    options=Colunas, 
+                    key="processamento_unico_var_id",
+                    help="ℹ️ Essa é a variável/coluna que identifica o respondente e não pode ter código repetido. Ex.: 'codigo_entrevistado'."
+                )
         
         with coluna7:
-            Var_Pond = st.selectbox(
-                label="📝 Informe qual a **variável/coluna de ponderação**", 
-                options=Colunas, 
-                key="processamento_unico_var_pond",
-                help="ℹ️ Observação: se o projeto não tiver ponderação, é necessário criar uma coluna no banco de dados do projeto para representar a variável POND e preencher os campos com o nº 1."
-            )
+            with st.container(border=True):
+                Var_Pond = st.selectbox(
+                    label="📝 Informe qual a **variável/coluna de ponderação**", 
+                    options=Colunas, 
+                    key="processamento_unico_var_pond",
+                    help="ℹ️ Observação: se o projeto não tiver ponderação, é necessário criar uma coluna no banco de dados do projeto para representar a variável POND e preencher os campos com o nº 1."
+                )
         st.write("")
 
         # Titulo = st.text_input(
@@ -403,20 +427,15 @@ with st.spinner("Please wait..."):
         input_buttom_submit_processamento_third_fase = st.form_submit_button("Enviar")
 
     if input_buttom_submit_processamento_third_fase:
-        st.session_state.input_buttom_submit_processamento_third_fase = input_buttom_submit_processamento_third_fase
+        st.session_state.params_fase3_ok = True
+
+    if st.session_state.params_fase1_ok and st.session_state.params_fase3_ok:
         st.session_state.NS_NR = [NS_NR] * len(st.session_state.selected_columns)
         st.session_state.Var_ID = [Var_ID] * len(st.session_state.selected_columns)
         st.session_state.Var_Pond = [Var_Pond] * len(st.session_state.selected_columns)
 
-        if st.session_state.input_buttom_submit_processamento and st.session_state.input_buttom_submit_processamento_third_fase:
-            # st.write(f"**TipoTabela**: {st.session_state.TipoTabela}")
-            # st.write(f"**Var_linha**: {st.session_state.selected_columns}")
-            # st.write(f"**Bandeiras**: {st.session_state.Bandeiras}")
-            # st.write(f"**Cabeçalho**: {st.session_state.Cabecalho}")
-            # st.write(f"**Contabiliza_NS/NR**: {st.session_state.NS_NR}")
-            # st.write(f"**Var_ID**: {st.session_state.Var_ID}")
-            # st.write(f"**Var_Pond**: {st.session_state.Var_Pond}")
-
+        # cria sintaxe SOMENTE se ainda não existir
+        if "sintaxe" not in st.session_state:
             sintaxe = pd.DataFrame({
                 "TipoTabela": st.session_state.TipoTabela,
                 "Bandeiras": st.session_state.Bandeiras,
@@ -424,80 +443,85 @@ with st.spinner("Please wait..."):
                 "Var_linha": st.session_state.selected_columns,
                 "Contabiliza_NS/NR": st.session_state.NS_NR
             })
+            st.session_state.sintaxe = sintaxe
 
-            st.session_state.BTB = np.where(sintaxe["TipoTabela"] == "IPA_5", st.session_state.valores_BTB_IPA_5, 
-                                            np.where(sintaxe["TipoTabela"] == "IPA_10", st.session_state.valores_BTB_IPA_10,
-                                            None))
-            st.session_state.TTB = np.where(sintaxe["TipoTabela"] == "IPA_5", st.session_state.valores_TTB_IPA_5, 
-                                            np.where(sintaxe["TipoTabela"] == "IPA_10", st.session_state.valores_TTB_IPA_10,
-                                            None))
-            sintaxe["BTB"] = st.session_state.BTB
-            sintaxe["TTB"] = st.session_state.TTB
+        st.session_state.BTB = np.where(st.session_state.sintaxe["TipoTabela"] == "IPA_5", st.session_state.valores_BTB_IPA_5, 
+                                        np.where(st.session_state.sintaxe["TipoTabela"] == "IPA_10", st.session_state.valores_BTB_IPA_10,
+                                        None))
+        st.session_state.TTB = np.where(st.session_state.sintaxe["TipoTabela"] == "IPA_5", st.session_state.valores_TTB_IPA_5, 
+                                        np.where(st.session_state.sintaxe["TipoTabela"] == "IPA_10", st.session_state.valores_TTB_IPA_10,
+                                        None))
+        st.session_state.sintaxe["BTB"] = st.session_state.BTB
+        st.session_state.sintaxe["TTB"] = st.session_state.TTB
 
-            # cria a coluna com os agrupamentos (lista de colunas) quando Var_linha estiver no dict
-            sintaxe["Valores_Agrup"] = sintaxe["Var_linha"].map(st.session_state.dict_tabela_multipla)
+        # cria a coluna com os agrupamentos (lista de colunas) quando Var_linha estiver no dict
+        st.session_state.sintaxe["Valores_Agrup"] = st.session_state.sintaxe["Var_linha"].map(st.session_state.dict_tabela_multipla)
 
-            # substituir NaN por lista vazia para os não-múltiplos:
-            sintaxe["Valores_Agrup"] = sintaxe["Valores_Agrup"].apply(lambda x: x if isinstance(x, list) else [])
-            sintaxe["Valores_Agrup"] = sintaxe["Valores_Agrup"].apply(lambda lst: ", ".join(lst) if lst else "")
+        # substituir NaN por lista vazia para os não-múltiplos:
+        st.session_state.sintaxe["Valores_Agrup"] = st.session_state.sintaxe["Valores_Agrup"].apply(lambda x: x if isinstance(x, list) else [])
+        st.session_state.sintaxe["Valores_Agrup"] = st.session_state.sintaxe["Valores_Agrup"].apply(lambda lst: ", ".join(lst) if lst else "")
 
-            st.session_state.Fecha_100 = np.where(sintaxe["TipoTabela"] == "MULTIPLA", st.session_state.Fecha_100, None)
-            sintaxe["Fecha_100"] = st.session_state.Fecha_100
-            sintaxe["Var_ID"] = st.session_state.Var_ID
-            sintaxe["Var_Pond"] = st.session_state.Var_Pond
+        st.session_state.Fecha_100 = np.where(st.session_state.sintaxe["TipoTabela"] == "MULTIPLA", st.session_state.Fecha_100, None)
+        st.session_state.sintaxe["Fecha_100"] = st.session_state.Fecha_100
+        st.session_state.sintaxe["Var_ID"] = st.session_state.Var_ID
+        st.session_state.sintaxe["Var_Pond"] = st.session_state.Var_Pond
 
-            st.write("")
-            # st.dataframe(st.session_state.lista_variaveis)
-            mapping_de_para_lista_variaveis = dict(zip(st.session_state.lista_variaveis['Coluna'], st.session_state.lista_variaveis['Rotulo']))
-            sintaxe["Titulo"] = sintaxe["Var_linha"].map(mapping_de_para_lista_variaveis)
+        st.write("")
+        # st.dataframe(st.session_state.lista_variaveis)
+        mapping_de_para_lista_variaveis = dict(zip(st.session_state.lista_variaveis['Coluna'], st.session_state.lista_variaveis['Rotulo']))
+        st.session_state.sintaxe["Titulo"] = st.session_state.sintaxe["Var_linha"].map(mapping_de_para_lista_variaveis)
 
-            mask = sintaxe["TipoTabela"].eq("MULTIPLA") & sintaxe["Valores_Agrup"].apply(len).gt(0)
-            primeiras = sintaxe.loc[mask, "Valores_Agrup"].str[0]  # pega o primeiro item da lista
-            # st.write(f"Primeiras: {primeiras}")
+        mask = st.session_state.sintaxe["TipoTabela"].eq("MULTIPLA") & st.session_state.sintaxe["Valores_Agrup"].apply(len).gt(0)
+        primeiras = st.session_state.sintaxe.loc[mask, "Valores_Agrup"].str[0]  # pega o primeiro item da lista
+        # st.write(f"Primeiras: {primeiras}")
 
-            sintaxe.loc[mask, "Titulo"] = primeiras.map(mapping_de_para_lista_variaveis).fillna(sintaxe.loc[mask, "Var_linha"])
+        st.session_state.sintaxe.loc[mask, "Titulo"] = primeiras.map(mapping_de_para_lista_variaveis).fillna(st.session_state.sintaxe.loc[mask, "Var_linha"])
 
-            st.write("")
-            sintaxe_edited = st.data_editor(sintaxe,
-                                            num_rows="fixed", 
-                                            #  use_container_width=True, 
-                                             key="dataframe_sintaxe_editor", 
-                                             hide_index=True)
-
-
-    st.write("")
-    st.divider()
-    st.write("")
-
-    # Formato do output (uma única aba ou para cada tabela processada gerar uma nova aba)
-    with st.form(key='output_excel_processamento'):
-        tipo_output = st.selectbox(label='Informe a opção do formato para o output desejado', options=['Única aba', 'Várias abas'])
-        excel_name = st.text_input(label='Informe o nome desejado para a planilha com o output do Processamento  Estatístico')
-        processar_dados = st.form_submit_button("Processar Dados")
-        st.session_state.tipo_output = tipo_output
-        st.session_state.excel_name = excel_name
-
-    if processar_dados:
-        st.session_state.sintaxe_edited = sintaxe_edited
-        # Processar os dados e obter as tabelas
-        todas_tabelas_gerais = processamento(data=st.session_state.data, 
-                                            bd_processamento=st.session_state.sintaxe_edited, 
-                                            lista_labels=st.session_state.lista_labels)
-        
-        if tipo_output == 'Várias abas':
-            # Salvar em Excel com formatação
-            excel_data = salvar_excel_com_formatacao(todas_tabelas_gerais, bd_processamento=st.session_state.sintaxe_edited)
-        elif tipo_output == 'Única aba':
-            # Salvar em Excel com formatação
-            excel_data = salvar_excel_aba_unica(todas_tabelas_gerais, bd_processamento=st.session_state.sintaxe_edited)
-        
-        # Link para download
-        st.download_button(
-            label="Baixar Excel Processado",
-            data=excel_data,
-            file_name=st.session_state.excel_name + ".xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        st.write("")
+        st.subheader("Parâmetros para a criação das tabelas:")
+        st.write("Cada linha é uma tabela que será processada de acordo com os parâmetros fornecidos")
+        sintaxe_edited = st.data_editor(
+            st.session_state.sintaxe,
+            num_rows="dynamic",
+            key="dataframe_sintaxe_editor", 
+            hide_index=True
         )
+
+        st.session_state.sintaxe_edited = sintaxe_edited
+
+        st.write("")
+        st.divider()
+        st.write("")
+
+        # Formato do output (uma única aba ou para cada tabela processada gerar uma nova aba)
+        with st.form(key='output_excel_processamento'):
+            tipo_output = st.selectbox(label='Formato do output', options=['Única aba', 'Várias abas'])
+            excel_name = st.text_input(label='Nome do arquivo')
+            processar_dados = st.form_submit_button("Processar Dados")
+
+        if processar_dados:
+            st.session_state.sintaxe_edited = sintaxe_edited
+            # Processar os dados e obter as tabelas
+            todas_tabelas_gerais = processamento(
+                data=st.session_state.data, 
+                bd_processamento=st.session_state.sintaxe_edited, 
+                lista_labels=st.session_state.lista_labels
+            )
+            
+            if tipo_output == 'Várias abas':
+                # Salvar em Excel com formatação
+                excel_data = salvar_excel_com_formatacao(todas_tabelas_gerais, bd_processamento=st.session_state.sintaxe_edited)
+            elif tipo_output == 'Única aba':
+                # Salvar em Excel com formatação
+                excel_data = salvar_excel_aba_unica(todas_tabelas_gerais, bd_processamento=st.session_state.sintaxe_edited)
+            
+            # Link para download
+            st.download_button(
+                label="Baixar Excel Processado",
+                data=excel_data,
+                file_name=excel_name + ".xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
 
 
 st.write('')
@@ -506,7 +530,7 @@ st.write('')
 st.write('')
 st.divider()
 st.write('')
-st.image(image="images/Expertise_Marca_VerdeEscuro_mini.jpg", width="content") # Expertise_Marca_VerdeEscuro_mini.jpg
+st.image(image="images/Expertise_Marca_VerdeEscuro_mini.jpg") # Expertise_Marca_VerdeEscuro_mini.jpg
             
 
 

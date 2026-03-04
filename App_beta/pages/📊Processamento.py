@@ -162,70 +162,77 @@ with tab1:
                         )
             
 
-        # coluna3, coluna4 = st.columns(2)    
-        Colunas = st.multiselect(
-            label="📝 Informe as **bandeiras** que deverão representar as colunas da tabela processada", 
-            options=colunas, 
-            key="processamento_unico_Colunas",
-            help="ℹ️ As bandeiras são simplesmente as variáveis que constará nas colunas da tabela processada."
-            )
+        with st.container(border=True):
+            # coluna3, coluna4 = st.columns(2)    
+            Colunas = st.multiselect(
+                label="📝 Informe as **bandeiras** que deverão representar as colunas da tabela processada", 
+                options=colunas, 
+                key="processamento_unico_Colunas",
+                help="ℹ️ As bandeiras são simplesmente as variáveis que constará nas colunas da tabela processada."
+                )
         st.write("")
         st.write("")
         
-        Cabecalho = st.text_input(
-            label="📝 Informe o **cabeçalho** desejado que substituará os nomes das colunas na tabela. **Coloque o cabeçalho separado por vírgula e um espaço (, )**", 
-            placeholder="Mercado PME, Mercado 500+, TIM, TIM PME, TIM 500+, TIM Prime, VIVO, VIVO PME, VIVO 500+, CLARO, CLARO PME, CLARO 500+", 
-            key="processamento_unico_cabecalho",
-            help="ℹ️ O cabeçalho é o nome ideal das colunas que você deseja que apareça na tabela processada. Ex.: nome da coluna: **Q3** → nome do cabeçalho para esta coluna: **Setor de atividade**."
-            )
+        with st.container(border=True):
+            Cabecalho = st.text_input(
+                label="📝 Informe o **cabeçalho** desejado que substituará os nomes das colunas na tabela. **Coloque o cabeçalho separado por vírgula e um espaço (, )**", 
+                placeholder="Mercado PME, Mercado 500+, TIM, TIM PME, TIM 500+, TIM Prime, VIVO, VIVO PME, VIVO 500+, CLARO, CLARO PME, CLARO 500+", 
+                key="processamento_unico_cabecalho",
+                help="ℹ️ O cabeçalho é o nome ideal das colunas que você deseja que apareça na tabela processada. Ex.: nome da coluna: **Q3** → nome do cabeçalho para esta coluna: **Setor de atividade**."
+                )
         st.write("")  
         st.write("")  
         
-        NS_NR = st.selectbox(
-            label="📝 Deseja que a tabela contabilize os casos de **NS/NR (Não sabe / Não respondeu)**?", 
-            options=["NAO", "SIM"], 
-            key="processamento_unico_ns_nr",
-            help="ℹ️ Escolha a opção desejada se a tabela retornará os percentuais de NS/NR ou não."
-            )
+        with st.container(border=True):
+            NS_NR = st.selectbox(
+                label="📝 Deseja que a tabela contabilize os casos de **NS/NR (Não sabe / Não respondeu)**?", 
+                options=["NAO", "SIM"], 
+                key="processamento_unico_ns_nr",
+                help="ℹ️ Escolha a opção desejada se a tabela retornará os percentuais de NS/NR ou não."
+                )
         st.write("")
         st.write("")
         
         if TipoTabela == "IPA_10" or TipoTabela == "IPA_5":
             coluna3, coluna4 = st.columns(2)
             with coluna3:
-                valores_BTB = st.text_input(
-                label="📝 Informe a **faixa de notas BTB** - notas baixas desejada. **Coloque os valores separados por vírgula e um espaço (, )**", 
-                placeholder="1, 2, 3", 
-                key="processamento_unico_valores_btb",
-                help="ℹ️ Agrupamento de notas baixas."
-                )
+                with st.container(border=True):
+                    valores_BTB = st.text_input(
+                    label="📝 Informe a **faixa de notas BTB** - notas baixas desejada. **Coloque os valores separados por vírgula e um espaço (, )**", 
+                    placeholder="1, 2, 3", 
+                    key="processamento_unico_valores_btb",
+                    help="ℹ️ Agrupamento de notas baixas."
+                    )
 
             with coluna4:
-                valores_TTB = st.text_input(
-                    label="📝 Informe a **faixa de notas TTB** - notas altas desejada. **Coloque os valores separados por vírgula e um espaço (, )**", 
-                    placeholder="8, 9, 10", 
-                    key="processamento_unico_valores_ttb",
-                    help="ℹ️ Agrupamento de notas altas."
-                )
+                with st.container(border=True):
+                    valores_TTB = st.text_input(
+                        label="📝 Informe a **faixa de notas TTB** - notas altas desejada. **Coloque os valores separados por vírgula e um espaço (, )**", 
+                        placeholder="8, 9, 10", 
+                        key="processamento_unico_valores_ttb",
+                        help="ℹ️ Agrupamento de notas altas."
+                    )
             st.write("")
             st.write("")
             
         if TipoTabela == "MULTIPLA":
-            Valores_Agrup = st.text_input(
-                label="📝 Informe quais as **variáveis/colunas representam a variável MÚLTIPLA** escolhida (respostas ficam registradas em **várias colunas** no banco de dados). Ex.: Q8_1, Q8_2, Q8_3",
-                placeholder="Q8_1, Q8_2, Q8_3",
-                key="processamento_unico_valores_agrup",
-                help="ℹ️ Importante! Quando o Tipo de Tabela processada for MULTIPLA, o nome da variável deverá ser diferente das colunas de múltipla resposta. Ex.: Se as colunas múltiplas são 'Q8_1, Q8_2, Q8_3' então, o nome da coluna da variável que deverá constar na linha será 'Q8'."
-            )
+            with st.container(border=True):
+                Valores_Agrup = st.text_input(
+                    label="📝 Informe quais as **variáveis/colunas representam a variável MÚLTIPLA** escolhida (respostas ficam registradas em **várias colunas** no banco de dados). Ex.: Q8_1, Q8_2, Q8_3",
+                    placeholder="Q8_1, Q8_2, Q8_3",
+                    key="processamento_unico_valores_agrup",
+                    help="ℹ️ Importante! Quando o Tipo de Tabela processada for MULTIPLA, o nome da variável deverá ser diferente das colunas de múltipla resposta. Ex.: Se as colunas múltiplas são 'Q8_1, Q8_2, Q8_3' então, o nome da coluna da variável que deverá constar na linha será 'Q8'."
+                )
             st.write("")
             st.write("")
 
-            Fecha_100 = st.selectbox(
-                label="📝 Deseja que a tabela feche os percentuais em 100% (**contabiliza o nº de respostas**) ou, acima de 100% (**contabiliza o nº de respondentes**)?", 
-                options=["NAO", "SIM"], 
-                key="processamento_unico_fecha_100",
-                help="ℹ️ Escolha a opção desejada se a tabela retornará os percentuais fechando 100% ou não."
-            )
+            with st.container(border=True):
+                Fecha_100 = st.selectbox(
+                    label="📝 Deseja que a tabela feche os percentuais em 100% (**SIM: contabiliza o nº de respostas**) ou, acima de 100% (**NAO: contabiliza o nº de respondentes**)?", 
+                    options=["NAO", "SIM"], 
+                    key="processamento_unico_fecha_100",
+                    help="ℹ️ Escolha a opção desejada se a tabela retornará os percentuais fechando 100% ou não."
+                )
             st.write("")
             st.write("")
 
@@ -250,12 +257,13 @@ with tab1:
         st.write("")
         st.write("")
 
-        Titulo = st.text_input(
-            label="📝 Informe qual deverá ser o **título** da tabela processada.",
-            placeholder="Título da tabela",
-            key="processamento_unico_titulo",
-            help="ℹ️"
-        )
+        with st.container(border=True):
+            Titulo = st.text_input(
+                label="📝 Informe qual deverá ser o **título** da tabela processada.",
+                placeholder="Título da tabela",
+                key="processamento_unico_titulo",
+                help="ℹ️"
+            )
             
         input_buttom_submit_processamento_unico = st.form_submit_button("Enviar")
 

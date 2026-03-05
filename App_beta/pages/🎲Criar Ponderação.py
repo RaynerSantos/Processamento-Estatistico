@@ -1,3 +1,4 @@
+from __future__ import annotations
 import pandas as pd
 import numpy as np
 import streamlit as st
@@ -5,6 +6,8 @@ import time
 from io import BytesIO
 from datetime import datetime, date
 from metodos import Criar_Pond
+from dataclasses import dataclass
+from typing import Dict, Iterable, List, Tuple, Union, Optional
 
 st.set_page_config(layout='wide', page_title='Processamento de dados', 
                    page_icon='images/Logo_Expertise.png')
@@ -20,13 +23,16 @@ st.divider()
 st.subheader('Aqui você pode criar a coluna de Ponderação')
 st.write('')
 
-tab1, tab2 = st.tabs(["Ponderação", "RAKE"])
+tab1, tab2 = st.tabs(["Ponderação", "RAKE (IPF)"])
 
 with tab1:
     c1, c2, c3 = st.columns(3, vertical_alignment="bottom")
 
     with st.form('sheet_name_DFuniverso_DFcoletado'):
         with c1:
+            st.write('')
+            st.write('')
+            st.write('')
             with st.container(border=True):
                 nome_sheet_df_universo = st.text_input(
                     label="📝 Digite o nome da aba (sheet) que contém a tabela com a **quantidade real do universo do projeto**.", 
@@ -166,91 +172,242 @@ with tab1:
         else:
             st.session_state.data, lista_de_colunas_indice = Criar_ponderacao.criar_pond()
 
-            st.write("")
-            with st.expander("📋 Colunas"):
-                # default_cols = st.session_state.data.columns.tolist()
-                colunas = st.multiselect('Selecione as colunas que deseja visualizar:', 
-                                            st.session_state.data.columns.tolist(), 
-                                            default=lista_de_colunas_indice + ["POND", "POND_nova"],
-                                            key="pond_colunas")
-            dados_filtrados = st.session_state.data[colunas]
-            st.dataframe(dados_filtrados, hide_index=True, selection_mode=["multi-row", "multi-cell"], use_container_width=True)
+            with st.spinner("Please wait..."):
+                with st.expander("📋 Colunas"):
+                    # default_cols = st.session_state.data.columns.tolist()
+                    colunas = st.multiselect('Selecione as colunas que deseja visualizar:', 
+                                                st.session_state.data.columns.tolist(), 
+                                                default=lista_de_colunas_indice + ["POND", "POND_nova"],
+                                                key="pond_colunas")
+                dados_filtrados = st.session_state.data[colunas]
+                st.dataframe(dados_filtrados, hide_index=True, selection_mode=["multi-row", "multi-cell"], use_container_width=True)
+                st.success("Ponderação realizada com sucesso!", icon="✅")
 
 
-def rake_weights(df, weight_col, margins, control=None):
+
+@dataclass
+class RakeResult:
+    weights: pd.Series
+    targets_abs: Dict[str, Dict[Union[int, str], float]]
+    iterations: int
+    converged: bool
+    max_rel_change: float
+    checks: Dict[str, pd.DataFrame]
+
+
+def _parse_w_vars(
+    w_vars: Iterable[Tuple[str, Union[int, str], float]]
+) -> Dict[str, Dict[Union[int, str], float]]:
     """
-    Raking (IPF) por margens 1D.
-    
-    df: DataFrame com colunas das variáveis de margem
-    weight_col: nome da coluna de peso a ajustar
-    margins: dict {var: {categoria: total_pop}}
-             ex.: {"sexo": {"M": 5200, "F": 4800}, "idade": {"18-34": 3000, ...}}
-    control: dict com "maxit" e "epsilon"
+    Converte lista de triplas (var, code, quota) em:
+    {var: {code: quota, ...}, ...}
     """
-    if control is None:
-        control = {"maxit": 100, "epsilon": 1e-10}
+    out: Dict[str, Dict[Union[int, str], float]] = {}
+    for var, code, quota in w_vars:
+        if var not in out:
+            out[var] = {}
+        if code in out[var]:
+            raise ValueError(f"Categoria duplicada: var='{var}', code='{code}'.")
+        if quota is None or not np.isfinite(quota):
+            raise ValueError(f"Quota inválida para var='{var}', code='{code}': {quota}")
+        if quota < 0:
+            raise ValueError(f"Quota negativa para var='{var}', code='{code}': {quota}")
+        out[var][code] = float(quota)
+    if not out:
+        raise ValueError("w_vars vazio. Informe ao menos uma variável/categoria/quota.")
+    return out
 
-    w = df[weight_col].to_numpy(dtype=float)
 
-    # Checagens básicas (missing em variáveis de margem quebra o algoritmo)
-    for var in margins.keys():
+def _normalize_quotas(quotas_by_var: Dict[str, Dict[Union[int, str], float]]) -> Dict[str, Dict[Union[int, str], float]]:
+    """
+    Normaliza as quotas de cada variável para somarem 1.
+    (Replicando o comentário da macro SPSS: se quotas não somarem 1, ela reescala.)
+    """
+    normed: Dict[str, Dict[Union[int, str], float]] = {}
+    for var, qdict in quotas_by_var.items():
+        s = sum(qdict.values())
+        if s <= 0:
+            raise ValueError(f"Soma das quotas da variável '{var}' é <= 0. Não é possível normalizar.")
+        normed[var] = {code: q / s for code, q in qdict.items()}
+    return normed
+
+
+def _make_targets_abs(
+    N: float,
+    quotas_normed: Dict[str, Dict[Union[int, str], float]]
+) -> Dict[str, Dict[Union[int, str], float]]:
+    """
+    Converte quota -> total-alvo absoluto: target = N * quota
+    """
+    return {var: {code: N * q for code, q in qdict.items()} for var, qdict in quotas_normed.items()}
+
+
+def rake_by_quota_spss_style(
+    df: pd.DataFrame,
+    *,
+    N: float,
+    w_vars: Iterable[Tuple[str, Union[int, str], float]],
+    weight_col: str = "weight",
+    maxit: int = 200,
+    epsilon: float = 1e-10,
+    clip: Optional[Tuple[float, float]] = None,
+    verbose: bool = False,
+) -> RakeResult:
+    """
+    Replica o comportamento essencial da macro SPSS (rake por quotas):
+    - Inicializa peso = 1
+    - Normaliza quotas por variável (se não somarem 1)
+    - Converte quotas para targets absolutos: N * quota
+    - Ajusta iterativamente alternando variáveis
+    - (Opcional) aplica corte de pesos (clip) se você quiser evitar extremos
+
+    Parâmetros:
+      df: DataFrame com colunas das variáveis (ex.: 'TIPO_NIV', 'TIPO_REG')
+      N: total final desejado (soma dos pesos)
+      w_vars: lista de triplas (var, code, quota) como no SPSS
+      weight_col: nome da coluna de peso a ser criada/atualizada
+      maxit: iterações máximas
+      epsilon: tolerância de convergência (maior variação relativa do peso)
+      clip: (min, max) para truncar pesos se necessário (opcional)
+      verbose: imprime progresso
+
+    Retorna:
+      RakeResult com pesos, targets e tabelas de checagem.
+    """
+    if N is None or not np.isfinite(N) or N <= 0:
+        raise ValueError(f"N inválido: {N}. Deve ser > 0.")
+
+    quotas_by_var = _parse_w_vars(w_vars)
+    quotas_normed = _normalize_quotas(quotas_by_var)
+    targets_abs = _make_targets_abs(float(N), quotas_normed)
+
+    # checagens de presença de colunas e categorias
+    for var, tdict in targets_abs.items():
+        if var not in df.columns:
+            raise KeyError(f"Coluna '{var}' não existe no df.")
+        # missing
         if df[var].isna().any():
-            raise ValueError(f"Há missing na variável de margem '{var}'. Trate antes de rakear.")
-
-    for it in range(control["maxit"]):
-        w_old = w.copy()
-        max_rel_change = 0.0
-
-        # Ajusta uma margem por vez
-        for var, pop_totals in margins.items():
-            # Totais atuais por categoria (ponderados)
-            current = (
-                pd.DataFrame({var: df[var].values, "_w": w})
-                .groupby(var)["_w"].sum()
-                .to_dict()
+            raise ValueError(f"Há missing (NaN) na coluna '{var}'. Trate antes de ponderar.")
+        # categorias alvo precisam existir na amostra (senão divisão por zero)
+        present = set(df[var].unique().tolist())
+        missing_cats = [c for c in tdict.keys() if c not in present]
+        if missing_cats:
+            raise ValueError(
+                f"Categorias {missing_cats} de '{var}' não aparecem na amostra. "
+                "Rake por margens 1D não consegue ajustar quando a categoria está ausente."
             )
 
-            # Aplica fator categoria-a-categoria
-            for cat, pop_total in pop_totals.items():
-                cur_total = current.get(cat, 0.0)
+    # inicializa pesos = 1 (como a macro)
+    w = np.ones(len(df), dtype=float)
 
-                # Se a categoria não aparece na amostra, não dá para ajustar (divisão por zero)
-                if cur_total <= 0:
+    # ordem das variáveis (como a macro percorre cada critério)
+    var_order = list(targets_abs.keys())
+
+    converged = False
+    max_rel_change = np.inf
+    it_done = 0
+
+    for it in range(1, maxit + 1):
+        w_old = w.copy()
+
+        for var in var_order:
+            # total ponderado atual por categoria
+            cur = (
+                pd.DataFrame({var: df[var].values, "_w": w})
+                .groupby(var)["_w"].sum()
+            )
+
+            # aplica fator por categoria: target / current
+            for code, target in targets_abs[var].items():
+                current = float(cur.loc[code])
+                if current <= 0:
                     raise ValueError(
-                        f"Categoria '{cat}' (var='{var}') tem total atual 0 na amostra. "
-                        f"Rake não consegue ajustar: revise categorias/margens/amostra."
+                        f"Total ponderado atual 0 para var='{var}', cat='{code}'. "
+                        "Isso não deveria ocorrer se a categoria existe na amostra."
                     )
+                factor = target / current
+                mask = (df[var].values == code)
+                w[mask] *= factor
 
-                ratio = pop_total / cur_total
-                mask = (df[var].values == cat)
-                w[mask] *= ratio
+        # opcional: truncar pesos
+        if clip is not None:
+            lo, hi = clip
+            if lo <= 0 or hi <= 0 or lo > hi:
+                raise ValueError(f"clip inválido: {clip}. Use (min>0, max>0, min<=max).")
+            w = np.clip(w, lo, hi)
 
-        # Critério de convergência: maior mudança relativa de peso
-        rel_change = np.max(np.abs(w - w_old) / (np.abs(w_old) + 1e-12))
-        max_rel_change = max(max_rel_change, rel_change)
+        # convergência: maior mudança relativa do peso
+        rel = np.max(np.abs(w - w_old) / (np.abs(w_old) + 1e-12))
+        max_rel_change = float(rel)
+        it_done = it
 
-        if max_rel_change < control["epsilon"]:
+        if verbose:
+            print(f"it={it:3d}  max_rel_change={max_rel_change:.3e}  sum_w={w.sum():.6f}")
+
+        if max_rel_change < epsilon:
+            converged = True
             break
 
-    return w
+    # resultados e checagens (estilo SPSS "quota vs weighted")
+    w_series = pd.Series(w, index=df.index, name=weight_col)
+
+    checks: Dict[str, pd.DataFrame] = {}
+    for var in var_order:
+        weighted = (
+            pd.DataFrame({var: df[var].values, "_w": w})
+            .groupby(var)["_w"].sum()
+            .reindex(list(targets_abs[var].keys()))
+        )
+        target = pd.Series(targets_abs[var]).reindex(weighted.index).astype(float)
+
+        # percentuais
+        weighted_pct = weighted / w.sum()
+        target_pct = target / float(N)  # como target = N * quota, isso volta à quota
+
+        checks[var] = pd.DataFrame({
+            "target_abs": target.values,
+            "weighted_abs": weighted.values,
+            "target_pct": target_pct.values,
+            "weighted_pct": weighted_pct.values,
+        }, index=weighted.index)
+
+    return RakeResult(
+        weights=w_series,
+        targets_abs=targets_abs,
+        iterations=it_done,
+        converged=converged,
+        max_rel_change=max_rel_change,
+        checks=checks
+    )
 
 
 with tab2:
+    st.write('')
+    st.write('')
+    st.write('')
     with st.form('sheet_name_fonte_rake'):
         with st.container(border=True):
+            N_universo = st.number_input(
+                label="Digite o total ponderado final desejado (o “universo” do rake)",
+                value=1212,
+                step=1,
+                key="rake_N_universo"
+            )
+        with st.container(border=True):
             nome_sheet_df_rake = st.text_input(
-                label="📝 Digite o nome da aba (sheet) que contém a tabela com os **Totais marginais** das características demográficas importantes para o estudo.", 
+                label="📝 Digite o nome da aba (sheet) que contém a tabela com os **Totais marginais em percentual** das características demográficas importantes para o estudo.", 
                 value="RAKE",
                 # help="A tabela deverá conter duas categorias (Coluna, Linha).",
                 key="pond_nome_sheet_rake"
-                )
+            )
             
-        with st.status("🔍 A seguir, veja uma imagem de exemplo da tabela:"):
-            st.image(image="images/Tabela fonte pond rake.png")
+            with st.status("🔍 A seguir, veja uma imagem de exemplo da tabela:"):
+                st.image(image="images/Tabela fonte pond rake.png")
         input_buttom_submit_DATA_rake = st.form_submit_button("Enviar")
 
     if input_buttom_submit_DATA_rake:
         st.session_state.nome_sheet_df_rake = nome_sheet_df_rake
+        st.session_state.N_universo = int(N_universo)
 
         if not st.session_state.nome_sheet_df_rake:
             st.error("Preencha o nome da aba antes de continuar.", icon="❌")
@@ -262,7 +419,7 @@ with tab2:
     data_file_pond_rake = st.file_uploader(
         "📂 Selecione o banco de dados (em xlsx)", 
         type=["xlsx"], 
-        help="Selecione o arquivo Excel contendo a tabela com os **Totais marginais** das características demográficas.", 
+        help="Selecione o arquivo Excel contendo a tabela com os **Totais marginais em percentual** das características demográficas.", 
         key="ponderacao_rake_uploader"
     )
 
@@ -284,34 +441,53 @@ with tab2:
             )
         st.session_state.df_rake = df_rake
         st.success("Planilha carregada com sucesso!", icon="✅")
+        st.write("")
 
         # ========================================================== #
-        ### Forçar um filtro para apresentar o resultado da Cielo ###
-        df = st.session_state.data.copy()
-        df = df.loc[(df["TRAB_C"] == 1) & (df["ONDA"] == 59)]
+        # Verificar se as colunas existem no df_rake
+        def verif_cols(df_rake, colunas=["Colunas", "Codigo", "% marginal"]):
+            for col in colunas:
+                if col not in df_rake.columns:
+                    return f"Coluna **{col}** não se encontra na tabela do arquivo em excel, favor verificar!"
+            return 0
+        res_verif_cols = verif_cols(st.session_state.df_rake)
+        if isinstance(res_verif_cols, str):
+            st.error(res_verif_cols, icon="❌")
+        else:
+            # Criar o conjunto de alvo (percentual/quota) para cada label das colunas
+            w_vars = []
+            for i, col in enumerate(df_rake["Colunas"]):
+                codigo = int(df_rake.loc[i, "Codigo"])
+                perc = float(df_rake.loc[i, "% marginal"])
+                w_vars.append((col, codigo, perc))
 
-        # df_margins -> margins (dict de dict)
-        margins = (
-            df_rake.dropna(subset=["Total marginais"])
-                .groupby("Colunas")
-                .apply(lambda g: dict(zip(g["Codigo"], g["Total marginais"])), include_groups=False)
-                .to_dict()
-        )
-        print("\n", margins)
+            res = rake_by_quota_spss_style(
+                st.session_state.data,
+                N=st.session_state.N_universo,
+                w_vars=w_vars,
+                weight_col="weight",
+                maxit=200,
+                epsilon=1e-10,
+                clip=None,
+                verbose=True
+            )
 
-        df["w_base"] = 1.0
-        w_raked = rake_weights(df, "w_base", margins, control={"maxit": 5000, "epsilon": 1e-10})
-        df["POND_RAKE"] = w_raked
-        st.write("")
-        COLUNAS = [col for col in df.columns.tolist() if col != "w_base"]
-        with st.expander("📋 Colunas"):
-            # default_cols = st.session_state.data.columns.tolist()
-            colunas = st.multiselect('Selecione as colunas que deseja visualizar:', 
-                                        COLUNAS, 
-                                        default=["ID_EMP", "PF_PJ", "SEG_NOVO_BU", "VREG", "POND", "POND_RAKE"],
-                                        key="pond_rake_colunas")
-        dados_filtrados = df[colunas]
-        st.dataframe(dados_filtrados, hide_index=True, selection_mode=["multi-row", "multi-cell"], use_container_width=True)
+            st.session_state.data["POND_RAKE"] = res.weights
+            
+            COLUNAS = [col for col in st.session_state.data.columns.tolist() if col != "w_base"]
+            with st.spinner("Please wait..."):
+                st.write("")
+                st.write("")
+                with st.expander("📋 Colunas"):
+                    # default_cols = st.session_state.data.columns.tolist()
+                    colunas = st.multiselect('Selecione as colunas que deseja visualizar:', 
+                                                COLUNAS, 
+                                                default=COLUNAS,
+                                                key="pond_rake_colunas"
+                                            )
+                dados_filtrados = st.session_state.data[colunas]
+                st.dataframe(dados_filtrados, hide_index=True, selection_mode=["multi-row", "multi-cell"], use_container_width=True)
+                st.success("Ponderação realizada com sucesso!", icon="✅")
 
 
     

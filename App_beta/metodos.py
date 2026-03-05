@@ -60,7 +60,7 @@ def recode_variavel(data, lista_labels, lista_variaveis, COLUNA_ORIGINAL, NOVA_B
         raise ValueError(f"A coluna '{NOVA_BANDEIRA}' já existe no DataFrame.")
 
     # Criar o mapping (de-para) a partir do dataframe de recode
-    mapping_de_para = dict(zip(dataframe_recode['Codigo'], dataframe_recode['Ordem']))
+    mapping_de_para = dict(zip(dataframe_recode['Codigo'], dataframe_recode['Novo Codigo']))
     mapping_de_para
 
     # Aplicar o mapeamento para criar a nova bandeira
@@ -75,7 +75,7 @@ def recode_variavel(data, lista_labels, lista_variaveis, COLUNA_ORIGINAL, NOVA_B
     # data[NOVA_BANDEIRA] = data[NOVA_BANDEIRA].fillna(90)  # exemplo: 90 = NS/NR
 
     # Criar a mini lista de labels para a nova variável
-    mapping_lista_labels = dict(zip(dataframe_recode['Ordem'], dataframe_recode['Label nova']))
+    mapping_lista_labels = dict(zip(dataframe_recode['Novo Codigo'], dataframe_recode['Label renomeada']))
 
     novo_recode = {
         'Coluna': [],

@@ -12,8 +12,8 @@ if "bandeiras_criadas" not in st.session_state:
 def verifica_label_ordem(df):
     erro = 0
 
-    # 1) Uma mesma Label nova com mais de uma Ordem
-    ordens_por_label = df.groupby('Label nova')['Ordem'].nunique()
+    # 1) Uma mesma Label renomeada com mais de uma Ordem
+    ordens_por_label = df.groupby('Label renomeada')['Novo Codigo'].nunique()
     labels_inconsistentes = ordens_por_label[ordens_por_label > 1]
 
     if not labels_inconsistentes.empty:
@@ -21,8 +21,8 @@ def verifica_label_ordem(df):
         print("Labels com mais de uma ordem:")
         print(labels_inconsistentes)
 
-    # 2) Uma mesma Ordem atribuída a mais de uma Label nova
-    labels_por_ordem = df.groupby('Ordem')['Label nova'].nunique()
+    # 2) Uma mesma Ordem atribuída a mais de uma Label renomeada
+    labels_por_ordem = df.groupby('Novo Codigo')['Label renomeada'].nunique()
     ordens_inconsistentes = labels_por_ordem[labels_por_ordem > 1]
 
     if not ordens_inconsistentes.empty:
@@ -32,7 +32,7 @@ def verifica_label_ordem(df):
 
         # opcional: mostrar as linhas problemáticas
         print("\nLinhas com ordens duplicadas entre labels diferentes:")
-        print(df[df['Ordem'].isin(ordens_inconsistentes.index)].sort_values('Ordem'))
+        print(df[df['Novo Codigo'].isin(ordens_inconsistentes.index)].sort_values('Novo Codigo'))
 
     return erro
 
@@ -96,14 +96,14 @@ if selected_column:
     # labels_sub = st.session_state.lista_labels.loc[st.session_state.lista_labels["Coluna"] == selected_column[0]]
     # dataframe_recode_value_counts["Codigo"] = dataframe_recode_value_counts.index
     # dataframe_recode_value_counts["Label"] = dataframe_recode_value_counts["Codigo"].map(dict(zip(labels_sub["Codigo"], labels_sub["Label"])))
-    # dataframe_recode_value_counts['Label nova'] = None
-    # dataframe_recode_value_counts['Ordem'] = None
-    # dataframe_recode_value_counts = dataframe_recode_value_counts[["Codigo", "Label", "Label nova", "Ordem"]]
+    # dataframe_recode_value_counts['Label renomeada'] = None
+    # dataframe_recode_value_counts['Novo Codigo'] = None
+    # dataframe_recode_value_counts = dataframe_recode_value_counts[["Codigo", "Label", "Label renomeada", "Novo Codigo"]]
 
     dataframe_recode = st.session_state.lista_labels[st.session_state.lista_labels['Coluna'] == selected_column[0]][['Codigo', 'Label']].copy()
     dataframe_recode = dataframe_recode.rename(columns={'Codigo': 'Codigo', 'Label': 'Label'})
-    dataframe_recode['Label nova'] = None
-    dataframe_recode['Ordem'] = None
+    dataframe_recode['Label renomeada'] = None
+    dataframe_recode['Novo Codigo'] = None
 
     # df_merge = dataframe_recode.merge(
     #     dataframe_recode_value_counts,
@@ -112,8 +112,8 @@ if selected_column:
     #     suffixes=("_recode", "_vc")
     # )
     # df_merge["Label"] = df_merge["Label_recode"].combine_first(df_merge["Label_vc"])
-    # df_merge["Label nova"] = df_merge["Label nova_recode"].combine_first(df_merge["Label nova_vc"])
-    # df_merge["Ordem"] = df_merge["Ordem_recode"].combine_first(df_merge["Ordem_vc"])
+    # df_merge["Label renomeada"] = df_merge["Label nova_recode"].combine_first(df_merge["Label nova_vc"])
+    # df_merge["Novo Codigo"] = df_merge["Ordem_recode"].combine_first(df_merge["Ordem_vc"])
 
     # df_merge_recode = df_merge.drop(columns=[
     #     "Label_recode", "Label_vc",
@@ -149,7 +149,7 @@ if selected_column:
         erro_label_ordem = verifica_label_ordem(dataframe_recode_edited)
 
         if erro_label_ordem > 0:
-            st.error("Verificar correspondência entre a **Label nova** e a **ordenação** de cada Label", icon="❌")
+            st.error("Verificar correspondência entre a **Label renomeada** e o **novo Código** de cada Label", icon="❌")
             st.write("")
 
         else:

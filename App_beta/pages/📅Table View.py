@@ -25,8 +25,17 @@ with st.spinner("Please wait..."):
 
 st.write('')
 st.write('')
+
+with st.container(border=True):
+    tipo_freq = st.selectbox(
+        '👇 Escolha o tipo de visualização da tabela de frequência', 
+        ["Simples", "Ponderada"], 
+        key="table_view_tipo_freq"
+    )
+st.write("")
+
 colunas = st.session_state.data.columns.tolist()
-coluna1, coluna2 = st.columns(2)
+coluna1, coluna2= st.columns(2)
 with coluna1:
     with st.container(border=True):
         selected_column = st.selectbox('👇 Selecione a coluna desejada:', 
@@ -64,8 +73,25 @@ def fmt_pct_ptbr(x, casas=2):
     return s + "%"
 
 
-if st.button('Visualizar frequência', key="btn_table_view") and selected_column:
-    freq = st.session_state.data[selected_column].value_counts(dropna=False).rename("Frequência").to_frame()
+if st.button('Visualizar frequência', key="btn_table_view") and selected_column and tipo_freq:
+    if tipo_freq == "Simples":
+        freq = (
+            st.session_state.data[selected_column]
+            .value_counts(dropna=False)
+            .rename("Frequência")
+            .to_frame()
+        )
+    else:
+        if "POND" in st.session_state.data.columns:
+            # >>> soma da ponderação por código (inclui NaN do código se houver)
+            freq = (
+                st.session_state.data.groupby(selected_column, dropna=False)["POND"]
+                .sum()
+                .rename("Frequência")
+                .to_frame()
+            )
+        else:
+            st.warning("Necessário criar a coluna de **Ponderação (POND)** para trazer a frequência ponderada", icon="⚠️")
     freq["%"] = ( freq["Frequência"] / freq["Frequência"].sum() * 100)
     total_line = round(pd.DataFrame(freq.sum()).T)
     total_line.index = ['Total']

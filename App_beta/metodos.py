@@ -88,7 +88,9 @@ def recode_variavel(data, lista_labels, lista_variaveis, COLUNA_ORIGINAL, NOVA_B
         novo_recode['Codigo'].append(codigo)
         novo_recode['Label'].append(label)
 
-    lista_labels = pd.concat([lista_labels, pd.DataFrame(novo_recode)], axis=0, ignore_index=True)
+    df_novo_recode = pd.DataFrame(novo_recode)
+    df_novo_recode = df_novo_recode[df_novo_recode["Codigo"].notna()]
+    lista_labels = pd.concat([lista_labels, df_novo_recode], axis=0, ignore_index=True)
 
     ROTULO = lista_variaveis.loc[lista_variaveis["Coluna"] == COLUNA_ORIGINAL, "Rotulo"].iloc[0]
     lista_variaveis.loc[len(lista_variaveis)] = [NOVA_BANDEIRA, ROTULO]

@@ -149,8 +149,6 @@ with st.spinner("Please wait..."):
 
     st.write('')
     st.write('')
-    # st.write('Preencha os parâmetros solicitados abaixo para gerar a sua tabela de dados processada')
-    # st.write('')
 
     Colunas = st.session_state.data.columns
     with st.form('parametros_processamento_formulario'):
@@ -176,7 +174,6 @@ with st.spinner("Please wait..."):
         st.divider()
         st.write("")
 
-        # selected_columns_SIMPLES = []
 
         for tipo, desc in dict_tipo_tabela.items():
             if tipo == "SIMPLES":
@@ -268,37 +265,6 @@ with st.spinner("Please wait..."):
                         qtd_nps = len(selected_columns_NPS)
                         TipoTabela_NPS = [tipo] * qtd_nps
 
-        # st.write("")
-        # st.divider()
-        # st.write("")
-        
-        # coluna5, coluna6, coluna7 = st.columns(3)
-        # with coluna5:
-        #     with st.container(border=True):
-        #         NS_NR = st.selectbox(
-        #             label="📝 Deseja que a tabela contabilize os casos de **NS/NR (Não sabe / Não respondeu)**?", 
-        #             options=["NAO", "SIM"], 
-        #             key="processamento_ns_nr",
-        #             help="ℹ️ Escolha a opção desejada se a tabela retornará os percentuais de NS/NR ou não."
-        #         )
-
-        # with coluna6:
-        #     with st.container(border=True):
-        #         Var_ID = st.selectbox(
-        #             label="📝 Informe qual a **variável/coluna identificadora**, utilizada para identificar a entrevista como única", 
-        #             options=Colunas, 
-        #             key="processamento_unico_var_id",
-        #             help="ℹ️ Essa é a variável/coluna que identifica o respondente e não pode ter código repetido. Ex.: 'codigo_entrevistado'."
-        #         )
-        
-        # with coluna7:
-        #     with st.container(border=True):
-        #         Var_Pond = st.selectbox(
-        #             label="📝 Informe qual a **variável/coluna de ponderação**", 
-        #             options=Colunas, 
-        #             key="processamento_unico_var_pond",
-        #             help="ℹ️ Observação: se o projeto não tiver ponderação, é necessário criar uma coluna no banco de dados do projeto para representar a variável POND e preencher os campos com o nº 1."
-        #         )
         st.write("")          
     
         input_buttom_submit_processamento = st.form_submit_button("Enviar parâmetros", icon=":material/done_outline:")
@@ -306,7 +272,6 @@ with st.spinner("Please wait..."):
     if input_buttom_submit_processamento:
         st.session_state.params_fase1_ok = True
         st.session_state.renderizar_sintaxe = False
-        # st.session_state.input_buttom_submit_processamento = input_buttom_submit_processamento
         st.session_state.selected_columns_bandeiras = selected_columns_bandeiras
         st.session_state.selected_columns_Cabecalho = selected_columns_Cabecalho
         selected_columns = selected_columns_SIMPLES + selected_columns_IPA_5 + selected_columns_IPA_10 + selected_columns_NPS
@@ -323,9 +288,7 @@ with st.spinner("Please wait..."):
             st.session_state.TipoTabela += TipoTabela_IPA_10
         if selected_columns_NPS:
             st.session_state.TipoTabela += TipoTabela_NPS
-        # st.session_state.TipoTabela = TipoTabela_SIMPLES + TipoTabela_IPA_5 + TipoTabela_IPA_10 + TipoTabela_NPS
-        # st.write("Resultado:")
-        # st.write(st.session_state.selected_columns)
+
         st.success("Bandeiras e Variáveis referente as linhas de cada tabela foram salvas com sucesso!", icon="✅")
 
     st.divider()
@@ -364,9 +327,6 @@ with st.spinner("Please wait..."):
                     st.session_state.multipla_grupos[i]["cols"] = cols
                     st.session_state.multipla_grupos[i]["name"] = name
 
-                    # st.write("Colunas: ", st.session_state.multipla_grupos[i]["cols"])
-                    # st.write("Name: ", st.session_state.multipla_grupos[i]["name"])
-
                     nome = st.session_state.multipla_grupos[i]["name"]
                     if nome:  # só cria entrada se tiver nome
                         dict_tabela_multipla[nome] = st.session_state.multipla_grupos[i]["cols"]
@@ -385,11 +345,6 @@ with st.spinner("Please wait..."):
                     for grp in st.session_state.multipla_grupos
                     if grp["name"]
                 ]
-
-                # if nome in dict_tabela_multipla:
-                #     st.warning(f"O nome '{nome}' já foi usado. Escolha outro.")
-                # else:
-                #     dict_tabela_multipla[nome] = cols
 
                 qtd_multipla = len(st.session_state.multipla_grupos)
                 TipoTabela_MULTIPLA = [tipo] * qtd_multipla
@@ -420,13 +375,10 @@ with st.spinner("Please wait..."):
         st.session_state.Cabecalho = len(st.session_state.selected_columns) * [st.session_state.selected_columns_Cabecalho]
         st.session_state.dict_tabela_multipla = dict_tabela_multipla
         st.session_state.Fecha_100 = Fecha_100
-        # st.write(st.session_state.dict_tabela_multipla)
         st.success("Variáveis múltiplas cadastradas com sucesso!", icon="✅")
 
     st.divider()
     st.write("")
-
-    # button_gerar_sintaxe = st.button("Gerar Sintaxe", icon=":material/done_outline:", key="Processamento_gerar_sintaxe")
 
     with st.form('parametros_processamento_formulario_gerar_sintaxe'):
         coluna5, coluna6, coluna7 = st.columns(3)
@@ -458,12 +410,6 @@ with st.spinner("Please wait..."):
                 )
         st.write("")
 
-        # Titulo = st.text_input(
-        #     label="📝 Informe qual deverá ser o **título** da tabela processada.",
-        #     placeholder="Título da tabela",
-        #     key="processamento_unico_titulo",
-        #     help="ℹ️"
-        # )
         input_buttom_submit_gerar_sintaxe = st.form_submit_button("Gerar Sintaxe", icon=":material/done_outline:")
     if input_buttom_submit_gerar_sintaxe:
         st.session_state.input_buttom_submit_gerar_sintaxe = True

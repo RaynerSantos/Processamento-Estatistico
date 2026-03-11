@@ -301,15 +301,19 @@ with st.spinner("Please wait..."):
         #         )
         st.write("")          
     
-        input_buttom_submit_processamento = st.form_submit_button("Enviar", icon=":material/done_outline:")
+        input_buttom_submit_processamento = st.form_submit_button("Enviar parâmetros", icon=":material/done_outline:")
 
     if input_buttom_submit_processamento:
         st.session_state.params_fase1_ok = True
+        st.session_state.renderizar_sintaxe = False
         # st.session_state.input_buttom_submit_processamento = input_buttom_submit_processamento
         st.session_state.selected_columns_bandeiras = selected_columns_bandeiras
         st.session_state.selected_columns_Cabecalho = selected_columns_Cabecalho
         selected_columns = selected_columns_SIMPLES + selected_columns_IPA_5 + selected_columns_IPA_10 + selected_columns_NPS
         st.session_state.selected_columns = selected_columns
+        st.session_state.Bandeiras = len(st.session_state.selected_columns) * [st.session_state.selected_columns_bandeiras]
+        st.session_state.Bandeiras = [", ".join(valor) for valor in st.session_state.Bandeiras]
+        st.session_state.Cabecalho = len(st.session_state.selected_columns) * [st.session_state.selected_columns_Cabecalho]
         st.session_state.TipoTabela = []
         if selected_columns_SIMPLES:
             st.session_state.TipoTabela += TipoTabela_SIMPLES
@@ -320,7 +324,6 @@ with st.spinner("Please wait..."):
         if selected_columns_NPS:
             st.session_state.TipoTabela += TipoTabela_NPS
         # st.session_state.TipoTabela = TipoTabela_SIMPLES + TipoTabela_IPA_5 + TipoTabela_IPA_10 + TipoTabela_NPS
-        st.write("")
         # st.write("Resultado:")
         # st.write(st.session_state.selected_columns)
         st.success("Bandeiras e Variáveis referente as linhas de cada tabela foram salvas com sucesso!", icon="✅")
@@ -409,6 +412,7 @@ with st.spinner("Please wait..."):
         button_salvar_multiplas = st.button("Salvar informações", icon=":material/done_outline:", key="Processamento_salvar_info_multipla")
     if button_salvar_multiplas:
         st.session_state.button_salvar_multiplas = button_salvar_multiplas
+        st.session_state.renderizar_sintaxe = False
         st.session_state.selected_columns = st.session_state.selected_columns + selected_columns_MULTIPLA
         st.session_state.TipoTabela = st.session_state.TipoTabela + TipoTabela_MULTIPLA
         st.session_state.Bandeiras = len(st.session_state.selected_columns) * [st.session_state.selected_columns_bandeiras]
@@ -416,11 +420,9 @@ with st.spinner("Please wait..."):
         st.session_state.Cabecalho = len(st.session_state.selected_columns) * [st.session_state.selected_columns_Cabecalho]
         st.session_state.dict_tabela_multipla = dict_tabela_multipla
         st.session_state.Fecha_100 = Fecha_100
-        st.write("")
         # st.write(st.session_state.dict_tabela_multipla)
         st.success("Variáveis múltiplas cadastradas com sucesso!", icon="✅")
 
-    st.write("")
     st.divider()
     st.write("")
 
@@ -467,7 +469,7 @@ with st.spinner("Please wait..."):
         st.session_state.input_buttom_submit_gerar_sintaxe = True
         st.session_state.renderizar_sintaxe = True
 
-    if st.session_state.input_buttom_submit_gerar_sintaxe:
+    if st.session_state.input_buttom_submit_gerar_sintaxe and st.session_state.renderizar_sintaxe:
         st.session_state.NS_NR = [NS_NR] * len(st.session_state.selected_columns)
         st.session_state.Var_ID = [Var_ID] * len(st.session_state.selected_columns)
         st.session_state.Var_Pond = [Var_Pond] * len(st.session_state.selected_columns)
@@ -488,7 +490,6 @@ with st.spinner("Please wait..."):
         print("Tamanho: ", len(st.session_state.Var_Pond))
 
         # cria sintaxe SOMENTE se ainda não existir
-        # if "sintaxe" not in st.session_state:
         sintaxe = pd.DataFrame({
             "TipoTabela": st.session_state.TipoTabela,
             "Bandeiras": st.session_state.Bandeiras,
@@ -531,6 +532,7 @@ with st.spinner("Please wait..."):
 
         st.session_state.sintaxe.loc[mask, "Titulo"] = primeiras.map(mapping_de_para_lista_variaveis).fillna(st.session_state.sintaxe.loc[mask, "Var_linha"])
 
+        
         st.write("")
         st.subheader("Parâmetros para a criação das tabelas:")
         st.write("Cada linha é uma tabela que será processada de acordo com os parâmetros fornecidos")
@@ -542,7 +544,6 @@ with st.spinner("Please wait..."):
         )
 
         st.session_state.sintaxe_edited = sintaxe_edited
-        st.session_state.renderizar_sintaxe = False
 
         st.divider()
         st.write("")
@@ -586,5 +587,4 @@ st.divider()
 st.write('')
 st.image(image="images/Expertise_Marca_VerdeEscuro_mini.jpg") # Expertise_Marca_VerdeEscuro_mini.jpg
             
-
 

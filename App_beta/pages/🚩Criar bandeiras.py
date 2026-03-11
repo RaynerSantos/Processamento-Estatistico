@@ -51,6 +51,8 @@ if selected_columns:
         rotulo = st.session_state.lista_variaveis.loc[st.session_state.lista_variaveis["Coluna"] == selected_columns[1], "Rotulo"].iloc[0]
         st.write(f'**{selected_columns[1]}**: {rotulo}')
         st.success("Duas colunas selecionadas com sucesso!", icon="✅")
+        st.write("")
+        st.write("")
         coluna1, coluna2 = st.columns(2)
         for i, col in enumerate(selected_columns):
             if i % 2 == 0:

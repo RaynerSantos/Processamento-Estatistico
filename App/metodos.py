@@ -685,7 +685,7 @@ def processar_tabela(bd_dados: pd.DataFrame, lista_labels: pd.DataFrame,
         valores_gerais_pond = pd.pivot_table(df, values=Var_Pond, index=Var_linha, aggfunc='sum', observed=False)
         print(f'\nValores GERAL:\n{valores_gerais_pond}')
         percentual_geral = valores_gerais_pond.div(valores_gerais_pond.sum()).sort_index()
-        print(f'\PERCENTUAL GERAL:\n{percentual_geral}')
+        print(f'\\PERCENTUAL GERAL:\n{percentual_geral}')
 
         if 'var_agrupada' in df.columns:
             aux_tabelas_pond = pd.concat(aux_tabelas_pond, axis=1)

@@ -143,7 +143,7 @@ if selected_column:
                     icon="❌")
             
 
-    if st.button('Realizar recode', key="btn_recode") and nome_bandeira_recode:
+    if st.button('Realizar recode', key="btn_recode", icon=":material/done_outline:") and nome_bandeira_recode:
         # st.dataframe(dataframe_recode_edited, hide_index=True)
 
         erro_label_ordem = verifica_label_ordem(dataframe_recode_edited)

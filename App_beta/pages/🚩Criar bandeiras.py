@@ -78,7 +78,7 @@ if selected_columns:
     else:
         if qtd_colunas == 2:
             # lógica para criar a nova bandeira com base nas colunas selecionadas
-            if st.button('Criar bandeira', key="btn_criar_bandeira") and selected_columns and nome_bandeira:
+            if st.button('Criar bandeira', key="btn_criar_bandeira", icon=":material/done_outline:") and selected_columns and nome_bandeira:
                 # Criação de uma nova coluna "Bandeira" com base nas colunas selecionadas
                 data, lista_labels = criar_bandeira(st.session_state.data, 
                                                     st.session_state.lista_labels,

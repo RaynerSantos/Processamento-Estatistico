@@ -265,7 +265,7 @@ with tab1:
                 help="ℹ️"
             )
             
-        input_buttom_submit_processamento_unico = st.form_submit_button("Enviar")
+        input_buttom_submit_processamento_unico = st.form_submit_button("Enviar", icon=":material/done_outline:")
 
     if input_buttom_submit_processamento_unico:
         kwargs = dict(
@@ -450,7 +450,7 @@ with tab2:
                 )
             with st.status("🔍 A seguir, veja uma imagem de exemplo da **Sintaxe**:"):
                 st.image(image="images/Sintaxe.png")
-            input_buttom_submit_sintaxe = st.form_submit_button("Enviar")
+            input_buttom_submit_sintaxe = st.form_submit_button("Enviar", icon=":material/done_outline:")
 
         if input_buttom_submit_sintaxe:
             st.success("Nome da aba (sheet) da planilha de **Sintaxe** foi enviado com sucesso", icon="✅")

@@ -69,7 +69,7 @@ with tab1:
             elif qtd_dimensao == 4:
                 st.write("4 dimensões:")
                 st.image(image="images/Tabela fonte universo_4dim.png")
-        input_buttom_submit_DATA = st.form_submit_button("Enviar")
+        input_buttom_submit_DATA = st.form_submit_button("Enviar", icon=":material/done_outline:")
 
     if input_buttom_submit_DATA:
         st.session_state.nome_sheet_df_universo = nome_sheet_df_universo
@@ -403,7 +403,7 @@ with tab2:
             
             with st.status("🔍 A seguir, veja uma imagem de exemplo da tabela:"):
                 st.image(image="images/Tabela fonte pond rake.png")
-        input_buttom_submit_DATA_rake = st.form_submit_button("Enviar")
+        input_buttom_submit_DATA_rake = st.form_submit_button("Enviar", icon=":material/done_outline:")
 
     if input_buttom_submit_DATA_rake:
         st.session_state.nome_sheet_df_rake = nome_sheet_df_rake

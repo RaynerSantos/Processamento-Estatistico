@@ -86,7 +86,7 @@ if data_file is not None:
                 )
                 with st.status("🔍 A seguir, veja uma imagem de exemplo com a **Lista de variáveis**:"):
                     st.image(image="images/Lista de variaveis.png")
-        input_buttom_submit_DATA = st.form_submit_button("Enviar")
+        input_buttom_submit_DATA = st.form_submit_button("Enviar", icon=":material/done_outline:")
 
     if input_buttom_submit_DATA:
         # Salvar os nomes das abas

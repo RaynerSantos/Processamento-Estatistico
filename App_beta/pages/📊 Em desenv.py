@@ -105,8 +105,10 @@ def salvar_excel_aba_unica(todas_tabelas_gerais, bd_processamento):
 
 if "params_fase1_ok" not in st.session_state:
     st.session_state.params_fase1_ok = False
-if "params_fase3_ok" not in st.session_state:
-    st.session_state.params_fase3_ok = False
+if "button_salvar_multiplas" not in st.session_state:
+    st.session_state.button_salvar_multiplas = False
+if "input_buttom_submit_gerar_sintaxe" not in st.session_state:
+    st.session_state.input_buttom_submit_gerar_sintaxe = False
 
 
 dict_tipo_tabela = {
@@ -163,7 +165,6 @@ with st.spinner("Please wait..."):
                 key="Processamento_Bandeiras"
             )
         st.write("")
-        st.write("")
         
         with st.container(border=True):
             selected_columns_Cabecalho = st.text_input(
@@ -172,7 +173,6 @@ with st.spinner("Please wait..."):
                 key="processamento_cabecalho",
                 help="ℹ️ O cabeçalho é o nome ideal das colunas que você deseja que apareça na tabela processada. Ex.: nome da coluna: **Q3** → nome do cabeçalho para esta coluna: **Setor de atividade**."
                 )
-        st.write("")
         st.divider()
         st.write("")
 
@@ -188,7 +188,6 @@ with st.spinner("Please wait..."):
                     if selected_columns_SIMPLES:
                         qtd_simples = len(selected_columns_SIMPLES)
                         TipoTabela_SIMPLES = [tipo] * qtd_simples
-                st.write("")
                 st.divider()
                 st.write("")
 
@@ -223,7 +222,6 @@ with st.spinner("Please wait..."):
                             help="ℹ️ Agrupamento de notas altas."
                         )
                         st.session_state.valores_TTB_IPA_5 = valores_TTB_IPA_5
-                st.write("")
                 st.divider()
                 st.write("")
 
@@ -257,7 +255,6 @@ with st.spinner("Please wait..."):
                             help="ℹ️ Agrupamento de notas altas."
                         )
                         st.session_state.valores_TTB_IPA_10 = valores_TTB_IPA_10
-                st.write("")
                 st.divider()
                 st.write("")
 
@@ -270,9 +267,41 @@ with st.spinner("Please wait..."):
                     if selected_columns_NPS:
                         qtd_nps = len(selected_columns_NPS)
                         TipoTabela_NPS = [tipo] * qtd_nps
-                st.write("")            
+
+        # st.write("")
+        # st.divider()
+        # st.write("")
+        
+        # coluna5, coluna6, coluna7 = st.columns(3)
+        # with coluna5:
+        #     with st.container(border=True):
+        #         NS_NR = st.selectbox(
+        #             label="📝 Deseja que a tabela contabilize os casos de **NS/NR (Não sabe / Não respondeu)**?", 
+        #             options=["NAO", "SIM"], 
+        #             key="processamento_ns_nr",
+        #             help="ℹ️ Escolha a opção desejada se a tabela retornará os percentuais de NS/NR ou não."
+        #         )
+
+        # with coluna6:
+        #     with st.container(border=True):
+        #         Var_ID = st.selectbox(
+        #             label="📝 Informe qual a **variável/coluna identificadora**, utilizada para identificar a entrevista como única", 
+        #             options=Colunas, 
+        #             key="processamento_unico_var_id",
+        #             help="ℹ️ Essa é a variável/coluna que identifica o respondente e não pode ter código repetido. Ex.: 'codigo_entrevistado'."
+        #         )
+        
+        # with coluna7:
+        #     with st.container(border=True):
+        #         Var_Pond = st.selectbox(
+        #             label="📝 Informe qual a **variável/coluna de ponderação**", 
+        #             options=Colunas, 
+        #             key="processamento_unico_var_pond",
+        #             help="ℹ️ Observação: se o projeto não tiver ponderação, é necessário criar uma coluna no banco de dados do projeto para representar a variável POND e preencher os campos com o nº 1."
+        #         )
+        st.write("")          
     
-        input_buttom_submit_processamento = st.form_submit_button("Enviar")
+        input_buttom_submit_processamento = st.form_submit_button("Enviar", icon=":material/done_outline:")
 
     if input_buttom_submit_processamento:
         st.session_state.params_fase1_ok = True
@@ -281,13 +310,21 @@ with st.spinner("Please wait..."):
         st.session_state.selected_columns_Cabecalho = selected_columns_Cabecalho
         selected_columns = selected_columns_SIMPLES + selected_columns_IPA_5 + selected_columns_IPA_10 + selected_columns_NPS
         st.session_state.selected_columns = selected_columns
-        st.session_state.TipoTabela = TipoTabela_SIMPLES + TipoTabela_IPA_5 + TipoTabela_IPA_10 + TipoTabela_NPS
+        st.session_state.TipoTabela = []
+        if selected_columns_SIMPLES:
+            st.session_state.TipoTabela += TipoTabela_SIMPLES
+        if selected_columns_IPA_5:
+            st.session_state.TipoTabela += TipoTabela_IPA_5
+        if selected_columns_IPA_10:
+            st.session_state.TipoTabela += TipoTabela_IPA_10
+        if selected_columns_NPS:
+            st.session_state.TipoTabela += TipoTabela_NPS
+        # st.session_state.TipoTabela = TipoTabela_SIMPLES + TipoTabela_IPA_5 + TipoTabela_IPA_10 + TipoTabela_NPS
         st.write("")
         # st.write("Resultado:")
         # st.write(st.session_state.selected_columns)
         st.success("Bandeiras e Variáveis referente as linhas de cada tabela foram salvas com sucesso!", icon="✅")
 
-    st.write("")
     st.divider()
     st.write("")
     container = st.container(border=True)
@@ -302,7 +339,7 @@ with st.spinner("Please wait..."):
                     st.session_state.multipla_grupos = []  # lista de dicts: [{"cols": [...], "name": "Q8"}, ...]
                 
                 # Botão para adicionar um novo grupo
-                if st.button("➕ Adicionar pergunta múltipla"):
+                if st.button(" Adicionar pergunta múltipla", icon=":material/add:"):
                     st.session_state.multipla_grupos.append({"cols": [], "name": ""})
 
                 # Renderiza cada grupo já adicionado
@@ -369,26 +406,27 @@ with st.spinner("Please wait..."):
                 )
         
         st.write("")
+        button_salvar_multiplas = st.button("Salvar informações", icon=":material/done_outline:", key="Processamento_salvar_info_multipla")
+    if button_salvar_multiplas:
+        st.session_state.button_salvar_multiplas = button_salvar_multiplas
+        st.session_state.selected_columns = st.session_state.selected_columns + selected_columns_MULTIPLA
+        st.session_state.TipoTabela = st.session_state.TipoTabela + TipoTabela_MULTIPLA
+        st.session_state.Bandeiras = len(st.session_state.selected_columns) * [st.session_state.selected_columns_bandeiras]
+        st.session_state.Bandeiras = [", ".join(valor) for valor in st.session_state.Bandeiras]
+        st.session_state.Cabecalho = len(st.session_state.selected_columns) * [st.session_state.selected_columns_Cabecalho]
+        st.session_state.dict_tabela_multipla = dict_tabela_multipla
+        st.session_state.Fecha_100 = Fecha_100
         st.write("")
-        if st.button("Salvar informações", icon="✔️", key="Processamento_salvar_info_multipla"):
-            st.write("")
-            st.write(selected_columns_MULTIPLA)
-            st.session_state.selected_columns = st.session_state.selected_columns + selected_columns_MULTIPLA
-            st.session_state.TipoTabela = st.session_state.TipoTabela + TipoTabela_MULTIPLA
-            st.session_state.Bandeiras = len(st.session_state.selected_columns) * [st.session_state.selected_columns_bandeiras]
-            st.session_state.Bandeiras = [", ".join(valor) for valor in st.session_state.Bandeiras]
-            st.session_state.Cabecalho = len(st.session_state.selected_columns) * [st.session_state.selected_columns_Cabecalho]
-            st.session_state.dict_tabela_multipla = dict_tabela_multipla
-            st.session_state.Fecha_100 = Fecha_100
-            st.write("")
-            # st.write(st.session_state.dict_tabela_multipla)
-            st.success("Variáveis múltiplas cadastradas com sucesso!", icon="✅")
+        # st.write(st.session_state.dict_tabela_multipla)
+        st.success("Variáveis múltiplas cadastradas com sucesso!", icon="✅")
 
     st.write("")
     st.divider()
     st.write("")
-    
-    with st.form('parametros_processamento_formulario_third_fase'):
+
+    # button_gerar_sintaxe = st.button("Gerar Sintaxe", icon=":material/done_outline:", key="Processamento_gerar_sintaxe")
+
+    with st.form('parametros_processamento_formulario_gerar_sintaxe'):
         coluna5, coluna6, coluna7 = st.columns(3)
         with coluna5:
             with st.container(border=True):
@@ -424,26 +462,42 @@ with st.spinner("Please wait..."):
         #     key="processamento_unico_titulo",
         #     help="ℹ️"
         # )
-        input_buttom_submit_processamento_third_fase = st.form_submit_button("Enviar")
+        input_buttom_submit_gerar_sintaxe = st.form_submit_button("Gerar Sintaxe", icon=":material/done_outline:")
+    if input_buttom_submit_gerar_sintaxe:
+        st.session_state.input_buttom_submit_gerar_sintaxe = True
+        st.session_state.renderizar_sintaxe = True
 
-    if input_buttom_submit_processamento_third_fase:
-        st.session_state.params_fase3_ok = True
-
-    if st.session_state.params_fase1_ok and st.session_state.params_fase3_ok:
+    if st.session_state.input_buttom_submit_gerar_sintaxe:
         st.session_state.NS_NR = [NS_NR] * len(st.session_state.selected_columns)
         st.session_state.Var_ID = [Var_ID] * len(st.session_state.selected_columns)
         st.session_state.Var_Pond = [Var_Pond] * len(st.session_state.selected_columns)
+        print("\n", "#", "="*100, "#")
+        print("\nTipoTabela: ", st.session_state.TipoTabela)
+        print("Tamanho: ", len(st.session_state.TipoTabela))
+        print("\nBandeiras: ", st.session_state.Bandeiras)
+        print("Tamanho: ", len(st.session_state.Bandeiras))
+        print("\nCabecalho: ", st.session_state.Cabecalho)
+        print("Tamanho: ", len(st.session_state.Cabecalho))
+        print("\nVar_linha: ", st.session_state.selected_columns)
+        print("Tamanho: ", len(st.session_state.selected_columns))
+        print("\nNS_NR: ", st.session_state.NS_NR)
+        print("Tamanho: ", len(st.session_state.NS_NR))
+        print("\nVar_ID: ", st.session_state.Var_ID)
+        print("Tamanho: ", len(st.session_state.Var_ID))
+        print("\nVar_Pond: ", st.session_state.Var_Pond)
+        print("Tamanho: ", len(st.session_state.Var_Pond))
 
         # cria sintaxe SOMENTE se ainda não existir
-        if "sintaxe" not in st.session_state:
-            sintaxe = pd.DataFrame({
-                "TipoTabela": st.session_state.TipoTabela,
-                "Bandeiras": st.session_state.Bandeiras,
-                "Cabecalho": st.session_state.Cabecalho,
-                "Var_linha": st.session_state.selected_columns,
-                "Contabiliza_NS/NR": st.session_state.NS_NR
-            })
-            st.session_state.sintaxe = sintaxe
+        # if "sintaxe" not in st.session_state:
+        sintaxe = pd.DataFrame({
+            "TipoTabela": st.session_state.TipoTabela,
+            "Bandeiras": st.session_state.Bandeiras,
+            "Cabecalho": st.session_state.Cabecalho,
+            "Var_linha": st.session_state.selected_columns,
+            "Contabiliza_NS/NR": st.session_state.NS_NR
+        })
+        st.session_state.sintaxe = sintaxe
+        print("\n", st.session_state.sintaxe)
 
         st.session_state.BTB = np.where(st.session_state.sintaxe["TipoTabela"] == "IPA_5", st.session_state.valores_BTB_IPA_5, 
                                         np.where(st.session_state.sintaxe["TipoTabela"] == "IPA_10", st.session_state.valores_BTB_IPA_10,
@@ -488,8 +542,8 @@ with st.spinner("Please wait..."):
         )
 
         st.session_state.sintaxe_edited = sintaxe_edited
+        st.session_state.renderizar_sintaxe = False
 
-        st.write("")
         st.divider()
         st.write("")
 
@@ -497,7 +551,7 @@ with st.spinner("Please wait..."):
         with st.form(key='output_excel_processamento'):
             tipo_output = st.selectbox(label='Formato do output', options=['Única aba', 'Várias abas'])
             excel_name = st.text_input(label='Nome do arquivo')
-            processar_dados = st.form_submit_button("Processar Dados")
+            processar_dados = st.form_submit_button("Processar Dados", icon=":material/done_outline:")
 
         if processar_dados:
             st.session_state.sintaxe_edited = sintaxe_edited
@@ -532,6 +586,5 @@ st.divider()
 st.write('')
 st.image(image="images/Expertise_Marca_VerdeEscuro_mini.jpg") # Expertise_Marca_VerdeEscuro_mini.jpg
             
-
 
 

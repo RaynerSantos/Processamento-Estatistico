@@ -161,7 +161,7 @@ with st.spinner("Please wait..."):
         dados_filtrados = st.session_state.data[colunas]
         st.dataframe(dados_filtrados, hide_index=True, selection_mode=["multi-row", "multi-cell"], use_container_width=True)
 
-        excel_data = to_excel(st.session_state.data, st.session_state.lista_labels)
+        excel_data = to_excel(st.session_state.data, st.session_state.lista_labels, st.session_state.lista_variaveis)
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         st.download_button(
             label="📥 Baixar arquivo Excel",

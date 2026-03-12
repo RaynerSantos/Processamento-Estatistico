@@ -6,12 +6,84 @@ import streamlit as st
 from utils import ordenar_labels, ordenar_labels_multipla, ordenar_valores, classificar_nps, funcao_agrupamento, classificar_satis
 
 # Função para converter DataFrame em arquivo Excel para download
-def to_excel(df: pd.DataFrame, lista_de_labels: pd.DataFrame) -> bytes:
+# def to_excel(df: pd.DataFrame, lista_de_labels: pd.DataFrame) -> bytes:
+#     output = BytesIO()
+#     with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+#         df.to_excel(writer, index=False, sheet_name="BD_CODIGOS")
+#         lista_de_labels.to_excel(writer, index=False, sheet_name="LISTA_LABELS")
+#     output.seek(0)  # volta pro início do buffer
+#     return output.getvalue()
+
+
+def to_excel(df: pd.DataFrame, lista_de_labels: pd.DataFrame, lista_variaveis: pd.DataFrame) -> bytes:
     output = BytesIO()
+
     with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
         df.to_excel(writer, index=False, sheet_name="BD_CODIGOS")
-        lista_de_labels.to_excel(writer, index=False, sheet_name="Lista de Labels")
-    output.seek(0)  # volta pro início do buffer
+
+        # LISTA_LABELS começando na linha 2 do Excel
+        # (startrow=1 porque o xlsxwriter usa índice baseado em 0)
+        lista_de_labels.to_excel(
+            writer,
+            index=False,
+            sheet_name="LISTA_LABELS",
+            startrow=1
+        )
+
+        workbook = writer.book
+        worksheet = writer.sheets["LISTA_LABELS"]
+
+        # Formato do título mesclado
+        merge_format = workbook.add_format({
+            "bold": True,
+            "align": "center",
+            "valign": "vcenter",
+            "border": 1
+        })
+
+        # Formato do cabeçalho, se quiser
+        header_format = workbook.add_format({
+            "bold": True,
+            "border": 1,
+            "align": "center"
+        })
+
+        # Número de colunas do dataframe
+        ncols = lista_de_labels.shape[1]
+
+        # Mescla a linha acima do cabeçalho
+        # Linha 0, da coluna 0 até a última coluna do dataframe
+        worksheet.merge_range(0, 0, 0, ncols - 1, "Variable Values", merge_format)
+
+        # Reaplica formatação no cabeçalho (linha 1 no xlsxwriter = linha 2 no Excel)
+        for col_num, value in enumerate(lista_de_labels.columns):
+            worksheet.write(1, col_num, value, header_format)
+
+
+        # LISTA_VARIAVEIS começando na linha 2 do Excel
+        # (startrow=1 porque o xlsxwriter usa índice baseado em 0)
+        lista_variaveis.to_excel(
+            writer,
+            index=False,
+            sheet_name="LISTA_VARIAVEIS",
+            startrow=1
+        )
+
+        workbook = writer.book
+        worksheet = writer.sheets["LISTA_VARIAVEIS"]
+
+        # Número de colunas do dataframe
+        ncols = lista_variaveis.shape[1]
+
+        # Mescla a linha acima do cabeçalho
+        # Linha 0, da coluna 0 até a última coluna do dataframe
+        worksheet.merge_range(0, 0, 0, ncols - 1, "Variable Information", merge_format)
+
+        # Reaplica formatação no cabeçalho (linha 1 no xlsxwriter = linha 2 no Excel)
+        for col_num, value in enumerate(lista_variaveis.columns):
+            worksheet.write(1, col_num, value, header_format)
+
+    output.seek(0)
     return output.getvalue()
 
 def mensagem_sucesso():

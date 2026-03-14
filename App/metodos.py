@@ -1313,13 +1313,16 @@ def processamento(data, bd_processamento, lista_labels):
 
                 
                 # Gerar Tabelas Sem Ponderação
-                tabela = pd.crosstab(df[Var_linha], df[col], dropna=True)
+                tabela = pd.crosstab(df[Var_linha], df[col], dropna=False)
                 tabela = tabela.fillna(0)
                 if len(tabela) == 0:
                     tabela = pd.DataFrame(0, 
                                           index=df[Var_linha][pd.notna(df[Var_linha])].unique(), 
                                           columns=df[col][pd.notna(df[col])].unique()
                                           )
+                    
+                # garante todas as labels no índice
+                # tabela = tabela.reindex(labels_var_linha, fill_value=0)
                 tabelas_sem_pond.append(tabela)
 
                 # Gerar Tabelas para valores agrupados
@@ -1336,8 +1339,11 @@ def processamento(data, bd_processamento, lista_labels):
                     aux_tabelas_sem_pond.append(tabela)
                 
             tabela_geral = pd.concat(tabelas_pond, axis=1)
+            print(f'\ntabela_geral (Tabela Ponderada de frequência relativa):\n{tabela_geral}')
             tabelas_pond_freq_abs = pd.concat(tabelas_pond_freq_abs, axis=1)
             tabelas_sem_pond = pd.concat(tabelas_sem_pond, axis=1)
+            tabelas_sem_pond = tabelas_sem_pond[tabelas_sem_pond.index.notna()]
+            print(f'\ntabelas_sem_pond (Tabela de frequência absoluta):\n{tabelas_sem_pond}')
 
             # Trazendo a coluna de valores gerais
             valores_gerais_pond = pd.pivot_table(df, values=Var_Pond, index=Var_linha, aggfunc='sum')
@@ -1413,8 +1419,9 @@ def processamento(data, bd_processamento, lista_labels):
             valores_gerais = df[Var_linha].value_counts().sort_index()
             base_sem_ponderar = pd.Series(valores_gerais.sum())
             base_sem_ponderar = pd.concat([base_sem_ponderar, soma_colunas])
-            print(f'{base_sem_ponderar.index}\n')
-            print(f'{tabela_geral.columns}\n')
+            print(f'base_sem_ponderar.index:\n{base_sem_ponderar.index}\n')
+            print(f'tabela_geral.columns:\n{tabela_geral.columns}\n')
+            print(f'tabelas_sem_pond.columns:\n{tabelas_sem_pond.columns}\n')
             base_sem_ponderar.index = tabela_geral.columns
             tabela_geral.loc['Base Sem Ponderar'] = base_sem_ponderar
 
@@ -1428,7 +1435,6 @@ def processamento(data, bd_processamento, lista_labels):
         print(f'\ntabela_geral.columns:\n{tabela_geral.columns}')
         for col in tabela_geral.columns:
             valor = col.split(sep=' - ')[0]
-            print(f'\nvalor: {valor}')
             header_above.append(valor)
         print(f'\nheader_above:\n{header_above}')
 

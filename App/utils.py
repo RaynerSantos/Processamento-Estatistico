@@ -2,63 +2,57 @@ import pandas as pd
 import numpy as np
 
 def ordenar_labels(df, lista_labels, Variavel):
-    print(f"\n#== VARIÁVEL SENDO PROCESSADA: {Variavel} ==#")
-    # print(f"df_tratamento[Variavel] (antes de ordenar):\n{df[Variavel].head(10)}")
-    print(df[Variavel].value_counts(), '\n')
-    print(df[Variavel].value_counts(normalize=True))
-    # lista_labels = lista_labels.iloc[1:, :].copy()
-    # lista_labels.columns = ['Coluna', 'Codigo', 'Label']
-    # lista_labels["Coluna"] = lista_labels["Coluna"].ffill().str.strip()
+    # print(f"\n#== VARIÁVEL SENDO PROCESSADA: {Variavel} ==#")
+    # print(df[Variavel].value_counts(), '\n')
+    # print(df[Variavel].value_counts(normalize=True))
 
     # Normalizar "Codigo" para numérico (trocando vírgula por ponto)
     lista_labels["Codigo"] = (lista_labels["Codigo"].astype(str).str.strip().str.replace(',', '.', regex=False))
     lista_labels["Codigo"] = pd.to_numeric(lista_labels["Codigo"], errors="coerce")
-    # print(lista_labels.head(6))
 
     # Filtrar apenas os labels da coluna alvo
     labels_sub = lista_labels.loc[lista_labels["Coluna"] == Variavel, ["Codigo", "Label"]].dropna(subset=["Codigo"])
     labels_sub["Codigo"] = (labels_sub["Codigo"].astype(str).str.strip().str.replace(",", ".", regex=False))
     labels_sub["Codigo"] = pd.to_numeric(labels_sub["Codigo"], errors="coerce")
     labels_sub["Codigo"] = labels_sub["Codigo"].round().astype("Int64")
-    print("\nLabels filtrados para a coluna alvo:\n", labels_sub)
+    # print("\nLabels filtrados para a coluna alvo:\n", labels_sub)
 
     # df[Variavel] = df[Variavel].replace('NS/NR', np.nan)
     df[Variavel] = pd.to_numeric(df[Variavel], errors='coerce')  # converter para numérico, tratando erros como NaN
     df[Variavel] = df[Variavel].round().astype("Int64")
 
     # --- Descobrir a ordem numérica presente nos dados ---
-    print(f"\ndf[Variavel] (antes de ordenar):\n{df[Variavel].head(10)}")
+    # print(f"\ndf[Variavel] (antes de ordenar):\n{df[Variavel].head(10)}")
     codigos_ordenados = (
         pd.Series(df[Variavel].dropna().unique(), dtype="Int64")
         .sort_values()
         .to_frame(name="Codigo")
     )
 
-    print("\nOrdem numérica encontrada:", codigos_ordenados["Codigo"].tolist())
+    # print("\nOrdem numérica encontrada:", codigos_ordenados["Codigo"].tolist())
 
     # --- Mapear códigos -> labels via merge (evita problemas de tipo) ---
     ordem_mapeada = codigos_ordenados.merge(labels_sub, on="Codigo", how="left")
-    print("\nOrdem mapeada com labels:\n", ordem_mapeada)
+    # print("\nOrdem mapeada com labels:\n", ordem_mapeada)
 
     # Categorias finais na ordem desejada
     ord_labels = ordem_mapeada["Label"].tolist()
     ord_labels = [label for label in ord_labels if pd.notna(label)]
     ord_labels = list(dict.fromkeys(ord_labels))  # Remove duplicates while preserving order
-    print("\nOrdem final com labels:", ord_labels)
+    # print("\nOrdem final com labels:", ord_labels)
 
     # Merge na base para criar uma coluna label
     Variavel_labels = df.merge(ordem_mapeada.rename(columns={"Label": f"{Variavel}_LABEL"}),
                 left_on=Variavel, right_on="Codigo", how="left")[f"{Variavel}_LABEL"]
-    # print(f"Coluna de labels adicionada ao DataFrame:\n{df.head(10)}")
 
     # Define categórica ordenada com as categorias encontradas
     Variavel_labels = pd.Categorical(Variavel_labels,
                                             categories=ord_labels,
                                             ordered=True)
-    print(f"\nColuna categórica ordenada criada: {Variavel_labels[0:10]}")
+    # print(f"\nColuna categórica ordenada criada: {Variavel_labels[0:10]}")
     bd_teste = pd.DataFrame({Variavel: Variavel_labels})
-    print(bd_teste[Variavel].value_counts(), '\n')
-    print(bd_teste[Variavel].value_counts(normalize=True))
+    # print(bd_teste[Variavel].value_counts(), '\n')
+    # print(bd_teste[Variavel].value_counts(normalize=True))
 
     return Variavel_labels, ord_labels
 

@@ -1,3 +1,5 @@
+from cProfile import label
+
 import pandas as pd
 import numpy as np
 from io import BytesIO
@@ -417,6 +419,7 @@ class Criar_Pond():
 
 
 
+#========================================#
 # FUNÇÃO PARA PROCESSAR UMA ÚNICA TABELA
 def processar_tabela(bd_dados: pd.DataFrame, lista_labels: pd.DataFrame, 
                      TipoTabela: str, Var_linha: str, Colunas: list, Cabecalho: str, NS_NR: str, Var_ID: str, Var_Pond: str, Titulo: str,
@@ -892,9 +895,9 @@ def processar_tabela(bd_dados: pd.DataFrame, lista_labels: pd.DataFrame,
 
 
 
-########################################
-#======= Tratamento das tabelas =======#
-########################################
+######################################################################
+#======= Tratamento das tabelas - Processar diversas tabelas =======#
+######################################################################
 
 def processamento(data, bd_processamento, lista_labels):
     # Função para aplicar a classificação do nps
@@ -937,19 +940,7 @@ def processamento(data, bd_processamento, lista_labels):
         else:
             return ''
         
-    # # Função para realizar o agrupamento
-    # def funcao_agrupamento(variavel, BTB, TTB):
-    #     nova_var = []
-    #     for v in variavel:
-    #         if np.isnan(v):  # Verifica se o valor é NaN
-    #             nova_var.append(np.nan)
-    #         elif int(v) in BTB:  # Converte v para inteiro antes da comparação, se necessário
-    #             nova_var.append('BTB')
-    #         elif int(v) in TTB:  # Converte v para inteiro antes da comparação, se necessário
-    #             nova_var.append('TTB')
-    #         else:
-    #             nova_var.append('Neutro')
-    #     return nova_var
+    # Função para realizar o agrupamento
     def funcao_agrupamento(variavel, BTB, TTB):
         nova_var = []
         for v in variavel:
@@ -958,7 +949,7 @@ def processamento(data, bd_processamento, lista_labels):
                 nova_var.append(np.nan)
                 continue
 
-            # garante que dá pra comparar com suas listas de inteiros
+            # garante que dá pra comparar com listas de inteiros
             try:
                 iv = int(v)
             except (TypeError, ValueError):
@@ -1004,6 +995,11 @@ def processamento(data, bd_processamento, lista_labels):
 
         df = data.copy()
 
+        ########################################################################
+        #===== Etapas de ETL para as colunas principais serem utilizadas =====#
+        ########################################################################
+
+        print("\n#", "="*100, "#")
         print(f'\n#===== VAR_LINHA =====#\n{Var_linha}\n')
         # Variáveis para as colunas da tabela (bandeiras)
         Colunas = Colunas.split(sep=', ')
@@ -1016,10 +1012,40 @@ def processamento(data, bd_processamento, lista_labels):
                 dict_ord_labels[col] = ord_labels
                 print(f"Coluna ordenada: {df[col].unique()}")
 
+        # Pega as informações das labels que não deverão não ser contabilizadas    
+        NS_NR = 'NS/NR' # Com (None) e ('') deu certo - tomar cuidado com (np.nan)
+        if isinstance(NS_NR, str):
+            NS_NR = NS_NR.split(", ")
+            NS_NR_codigo = []
+            for label in NS_NR:
+                if label in lista_labels.loc[lista_labels["Coluna"] == Var_linha, "Label"].tolist():
+                    codigo_NS_NR = lista_labels.loc[(lista_labels["Coluna"] == Var_linha) & (lista_labels["Label"] == label), "Codigo"].iloc[0]
+                    NS_NR_codigo.append(codigo_NS_NR)
+
+        # Criando a lista de códigos da Var_Linha que realmente serão utilizados para processar a tabela
+        if len(NS_NR_codigo) != 0:
+            cod_var_linha = (
+                lista_labels.loc[(lista_labels["Coluna"] == Var_linha), "Codigo"]
+                .dropna()
+                .tolist()
+            )
+            label_var_linha_set = []
+            for cod in cod_var_linha:
+                if cod not in NS_NR_codigo:
+                    label = lista_labels.loc[(lista_labels["Coluna"] == Var_linha) & (lista_labels["Codigo"] == cod), "Label"].iloc[0]
+                    if TipoTabela == "NPS" or TipoTabela == "IPA_10":
+                        label_var_linha_set.append(int(label))
+                    else:
+                        label_var_linha_set.append(label)
+        else:
+            label_var_linha_set = lista_labels.loc[(lista_labels["Coluna"] == Var_linha), "Label"].dropna().tolist()
+        print("\nlabel_var_linha_set: ", label_var_linha_set)
+
         # Transformação na variável para a linha da tabela
         if TipoTabela == 'SIMPLES':
-            if NS_NR == 'NAO':
-                df[Var_linha] = df[Var_linha].replace('NS/NR', np.nan)
+            if NS_NR_codigo:
+                for codigo in NS_NR_codigo:
+                    df[Var_linha] = df[Var_linha].replace(codigo, np.nan)
                 df[Var_linha], ord_labels = ordenar_labels(df=data, lista_labels=lista_labels, Variavel=Var_linha)
                 # df[Var_linha] = pd.Categorical(df[Var_linha], categories=df[Var_linha][pd.notna(df[Var_linha])].unique(), ordered=True)
             else:
@@ -1027,19 +1053,22 @@ def processamento(data, bd_processamento, lista_labels):
                 # df[Var_linha] = pd.Categorical(df[Var_linha], categories=df[Var_linha][pd.notna(df[Var_linha])].unique(), ordered=True)
             
         elif (TipoTabela == 'NPS') | (TipoTabela == 'IPA_10'):
-            if NS_NR == 'NAO':
-                df[Var_linha] = df[Var_linha].replace('NS/NR', np.nan)
-                df[Var_linha] = df[Var_linha].replace('ns/nr', np.nan)
-                df[Var_linha] = df[Var_linha].replace('90', np.nan)
-                df[Var_linha] = df[Var_linha].replace('99', np.nan)
-                df[Var_linha] = df[Var_linha].replace('999', np.nan)
-                df[Var_linha] = df[Var_linha].replace('9999', np.nan)
-                df[Var_linha] = df[Var_linha].replace(90, np.nan)
-                df[Var_linha] = df[Var_linha].replace(99, np.nan)
-                df[Var_linha] = df[Var_linha].replace(999, np.nan)
-                df[Var_linha] = df[Var_linha].replace(9999, np.nan)
+            if NS_NR_codigo:
+                for codigo in NS_NR_codigo:
+                    df[Var_linha] = df[Var_linha].replace(codigo, np.nan)
+                # df[Var_linha] = df[Var_linha].replace('NS/NR', np.nan)
+                # df[Var_linha] = df[Var_linha].replace('ns/nr', np.nan)
+                # df[Var_linha] = df[Var_linha].replace('90', np.nan)
+                # df[Var_linha] = df[Var_linha].replace('99', np.nan)
+                # df[Var_linha] = df[Var_linha].replace('999', np.nan)
+                # df[Var_linha] = df[Var_linha].replace('9999', np.nan)
+                # df[Var_linha] = df[Var_linha].replace(90, np.nan)
+                # df[Var_linha] = df[Var_linha].replace(99, np.nan)
+                # df[Var_linha] = df[Var_linha].replace(999, np.nan)
+                # df[Var_linha] = df[Var_linha].replace(9999, np.nan)
                 df[Var_linha] = pd.to_numeric(df[Var_linha], errors='coerce', downcast='integer')
                 df[Var_linha] = pd.Categorical(df[Var_linha], categories=ordenar_valores(df[Var_linha]), ordered=True)
+                print("\nVerificar o índice da Var_Linha para o NPS:\n", df[Var_linha].value_counts())
 
                 if TipoTabela == 'NPS':
                     df['var_agrupada'] = df[Var_linha].apply(classificar_nps)
@@ -1050,10 +1079,6 @@ def processamento(data, bd_processamento, lista_labels):
                     df['var_agrupada'] = funcao_agrupamento(df[Var_linha], valores_BTB, valores_TTB)
 
             else:
-                # df[Var_linha] = df[Var_linha].replace('90', np.nan)
-                # df[Var_linha] = df[Var_linha].replace('99', np.nan)
-                # df[Var_linha] = df[Var_linha].replace('999', np.nan)
-                # df[Var_linha] = df[Var_linha].replace('9999', np.nan)
                 df[Var_linha] = pd.to_numeric(df[Var_linha], errors='coerce', downcast='integer')
                 df[Var_linha] = pd.Categorical(df[Var_linha], categories=ordenar_valores(df[Var_linha]), ordered=True)
 
@@ -1066,17 +1091,19 @@ def processamento(data, bd_processamento, lista_labels):
                     df['var_agrupada'] = funcao_agrupamento(df[Var_linha], valores_BTB, valores_TTB)
             
         elif TipoTabela == 'IPA_5':
-            if NS_NR == 'NAO':
-                df[Var_linha] = df[Var_linha].replace('NS/NR', np.nan)
-                df[Var_linha] = df[Var_linha].replace('ns/nr', np.nan)
-                df[Var_linha] = df[Var_linha].replace('90', np.nan)
-                df[Var_linha] = df[Var_linha].replace('99', np.nan)
-                df[Var_linha] = df[Var_linha].replace('999', np.nan)
-                df[Var_linha] = df[Var_linha].replace('9999', np.nan)
-                df[Var_linha] = df[Var_linha].replace(90, np.nan)
-                df[Var_linha] = df[Var_linha].replace(99, np.nan)
-                df[Var_linha] = df[Var_linha].replace(999, np.nan)
-                df[Var_linha] = df[Var_linha].replace(9999, np.nan)
+            if NS_NR_codigo:
+                for codigo in NS_NR_codigo:
+                    df[Var_linha] = df[Var_linha].replace(codigo, np.nan)
+                # df[Var_linha] = df[Var_linha].replace('NS/NR', np.nan)
+                # df[Var_linha] = df[Var_linha].replace('ns/nr', np.nan)
+                # df[Var_linha] = df[Var_linha].replace('90', np.nan)
+                # df[Var_linha] = df[Var_linha].replace('99', np.nan)
+                # df[Var_linha] = df[Var_linha].replace('999', np.nan)
+                # df[Var_linha] = df[Var_linha].replace('9999', np.nan)
+                # df[Var_linha] = df[Var_linha].replace(90, np.nan)
+                # df[Var_linha] = df[Var_linha].replace(99, np.nan)
+                # df[Var_linha] = df[Var_linha].replace(999, np.nan)
+                # df[Var_linha] = df[Var_linha].replace(9999, np.nan)
                 valores_BTB = [int(v) for v in valores_BTB.split(sep=', ')]
                 valores_TTB = [int(v) for v in valores_TTB.split(sep=', ')]
                 df['var_agrupada'] = funcao_agrupamento(df[Var_linha], valores_BTB, valores_TTB)
@@ -1092,7 +1119,7 @@ def processamento(data, bd_processamento, lista_labels):
                 # df[Var_linha] = pd.Categorical(df[Var_linha], categories=Valores_Agrup, ordered=True)
 
         elif TipoTabela == 'MULTIPLA':
-            if NS_NR == 'NAO':
+            if NS_NR_codigo:
                 df_NS_NR = df.copy()
                 
                 Valores_Agrup = Valores_Agrup.split(sep=', ')
@@ -1107,14 +1134,16 @@ def processamento(data, bd_processamento, lista_labels):
                             value_vars=Valores_Agrup, 
                             var_name='Valores', 
                             value_name=Var_linha)
-                bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('90', np.nan)
-                bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('99', np.nan)
-                bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('999', np.nan)
-                bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('9999', np.nan)
-                bd_motivo[Var_linha] = bd_motivo[Var_linha].replace(90, np.nan)
-                bd_motivo[Var_linha] = bd_motivo[Var_linha].replace(99, np.nan)
-                bd_motivo[Var_linha] = bd_motivo[Var_linha].replace(999, np.nan)
-                bd_motivo[Var_linha] = bd_motivo[Var_linha].replace(9999, np.nan)
+                for codigo in NS_NR_codigo:
+                    bd_motivo[Var_linha] = bd_motivo[Var_linha].replace(codigo, np.nan)
+                # bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('90', np.nan)
+                # bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('99', np.nan)
+                # bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('999', np.nan)
+                # bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('9999', np.nan)
+                # bd_motivo[Var_linha] = bd_motivo[Var_linha].replace(90, np.nan)
+                # bd_motivo[Var_linha] = bd_motivo[Var_linha].replace(99, np.nan)
+                # bd_motivo[Var_linha] = bd_motivo[Var_linha].replace(999, np.nan)
+                # bd_motivo[Var_linha] = bd_motivo[Var_linha].replace(9999, np.nan)
                 bd_motivo = bd_motivo.dropna(subset=[Var_linha])
                 bd_motivo = ordenar_labels_multipla(df=bd_motivo, lista_labels=lista_labels, Variavel=Var_linha, 
                                                     Var_Valores_Agrup=Valores_Agrup[0])
@@ -1159,7 +1188,9 @@ def processamento(data, bd_processamento, lista_labels):
 
 
 
+        ##########################################
         #======= Criação da Tabela Geral =======#
+        ##########################################
         tabela_geral = []
         tabelas_pond = []
         tabelas_pond_freq_abs = []
@@ -1171,8 +1202,7 @@ def processamento(data, bd_processamento, lista_labels):
         tbl_sem_pond_respondentes = []
 
         tbl_pond_freq_abs_respostas_NS_NR = []
-        tbl_pond_freq_abs_respondentes_NS_NR = []
-
+        tbl_pond_freq_abs_respondentes_NS_NR = []                     
 
         if TipoTabela == 'MULTIPLA':
 
@@ -1320,9 +1350,12 @@ def processamento(data, bd_processamento, lista_labels):
                                           index=df[Var_linha][pd.notna(df[Var_linha])].unique(), 
                                           columns=df[col][pd.notna(df[col])].unique()
                                           )
-                    
+                print("\nÍndice da tabela:\n", tabela.index)
+                print("\nTipo do index:\t", type(tabela.index))
+                print("\nTabela Sem Pond ANTES de garantir todas as labels:\n", tabela)
                 # garante todas as labels no índice
-                # tabela = tabela.reindex(labels_var_linha, fill_value=0)
+                tabela = tabela.reindex(label_var_linha_set, fill_value=0)
+                print("\nTabela Sem Pond APÓS garantir todas as labels:\n", tabela)
                 tabelas_sem_pond.append(tabela)
 
                 # Gerar Tabelas para valores agrupados
@@ -1516,9 +1549,11 @@ def verif_Var_linha(df, Var_linha, TipoTabela):
                return 1
      return 0
 
-def verif_NS_NR(NS_NR):
-        if NS_NR not in ["NAO", "SIM"]:
-            return 1
+def verif_NS_NR(NS_NR, Var_linha, lista_labels):
+        labels = lista_labels.loc[lista_labels["Coluna"] == Var_linha, "Label"].tolist()
+        print("Labels: ", labels)
+        if NS_NR not in labels:
+            return labels
         return 0
 
 def verif_Fecha_100(TipoTabela, Fecha_100):
@@ -1583,9 +1618,9 @@ class verificar_incosistencias_iniciais:
             if res_Var_linha == 1:
                  return f"❌ Verificar incosistência: na linha {line+2}, a variável/coluna informada que representa o **nível da linha** da tabela não consta no Banco de dados."
             
-            res_NS_NR = verif_NS_NR(NS_NR)
-            if res_NS_NR == 1:
-                 return f"❌ Verificar incosistência: o valor informado na linha {line+2} da coluna **Contabiliza_NS/NR** não corresponde com as opções válidas: [NAO, SIM]"
+            # res_NS_NR = verif_NS_NR(NS_NR, Var_linha, self.lista_labels)
+            # if res_NS_NR != 0:
+            #      return f"❌ Verificar incosistência: o valor informado na linha {line+2} da coluna **Contabiliza_NS/NR** não corresponde com as opções válidas: {res_NS_NR}"
             
             res_Fecha_100 = verif_Fecha_100(TipoTabela, Fecha_100)
             if res_Fecha_100 == 1:

@@ -25,4 +25,4 @@ ENV STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
 
 # Comando para rodar a aplicação
 WORKDIR /app/App
-CMD ["streamlit", "run", "🏠Home.py"]
+CMD ["streamlit", "run", "1🏠Home.py"]

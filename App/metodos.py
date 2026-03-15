@@ -924,8 +924,9 @@ def processamento(data, bd_processamento, lista_labels):
         
 
     # Função para criar os índices corretos e ordenados das tabelas (esse novo índice entrará na função stat_test())
-    def ordenar_valores(variavel):
-        valores_unicos = variavel.unique()
+    def ordenar_valores(variavel, label_var_linha_set):
+        # valores_unicos = variavel.unique()
+        valores_unicos = label_var_linha_set
         valores_ordenados = pd.Series(valores_unicos).sort_values()
 
         if valores_ordenados.isna().iloc[-1]:
@@ -1067,7 +1068,7 @@ def processamento(data, bd_processamento, lista_labels):
                 # df[Var_linha] = df[Var_linha].replace(999, np.nan)
                 # df[Var_linha] = df[Var_linha].replace(9999, np.nan)
                 df[Var_linha] = pd.to_numeric(df[Var_linha], errors='coerce', downcast='integer')
-                df[Var_linha] = pd.Categorical(df[Var_linha], categories=ordenar_valores(df[Var_linha]), ordered=True)
+                df[Var_linha] = pd.Categorical(df[Var_linha], categories=ordenar_valores(df[Var_linha], label_var_linha_set), ordered=True)
                 print("\nVerificar o índice da Var_Linha para o NPS:\n", df[Var_linha].value_counts())
 
                 if TipoTabela == 'NPS':
@@ -1080,7 +1081,7 @@ def processamento(data, bd_processamento, lista_labels):
 
             else:
                 df[Var_linha] = pd.to_numeric(df[Var_linha], errors='coerce', downcast='integer')
-                df[Var_linha] = pd.Categorical(df[Var_linha], categories=ordenar_valores(df[Var_linha]), ordered=True)
+                df[Var_linha] = pd.Categorical(df[Var_linha], categories=ordenar_valores(df[Var_linha], label_var_linha_set), ordered=True)
 
                 if TipoTabela == 'NPS':
                     df['var_agrupada'] = df[Var_linha].apply(classificar_nps)
@@ -1338,6 +1339,10 @@ def processamento(data, bd_processamento, lista_labels):
                 # Gerar Tabelas Ponderadas de frequência relativa
                 tabela = tabela.div(tabela.sum())
                 tabela = tabela.fillna(0)
+
+                # garante todas as labels no índice
+                tabela = tabela.reindex(label_var_linha_set, fill_value=0)
+
                 tabelas_pond.append(tabela)
                 print(f'{tabela}\n')
 
@@ -1351,7 +1356,6 @@ def processamento(data, bd_processamento, lista_labels):
                                           columns=df[col][pd.notna(df[col])].unique()
                                           )
                 print("\nÍndice da tabela:\n", tabela.index)
-                print("\nTipo do index:\t", type(tabela.index))
                 print("\nTabela Sem Pond ANTES de garantir todas as labels:\n", tabela)
                 # garante todas as labels no índice
                 tabela = tabela.reindex(label_var_linha_set, fill_value=0)

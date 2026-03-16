@@ -183,11 +183,12 @@ class Criar_Pond():
         
     """
     
-    def __init__(self, df_universo: pd.DataFrame, df_coletado: pd.DataFrame, bd_codigo: pd.DataFrame, lista_labels: pd.DataFrame):
+    def __init__(self, df_universo: pd.DataFrame, df_coletado: pd.DataFrame, bd_codigo: pd.DataFrame, lista_labels: pd.DataFrame, nome_pond: str):
         self.df_universo = df_universo
         self.df_coletado = df_coletado
         self.bd_codigo = bd_codigo
         self.lista_labels = lista_labels
+        self.nome_pond = nome_pond
 
     def n_niveis_colunas(self):
         cols = self.df_universo.columns
@@ -319,8 +320,8 @@ class Criar_Pond():
         )
 
         # Criar a nova coluna de PONDERAÇÃO de acordo com o df_pond
-        if "POND_nova" not in self.bd_codigo.columns:
-            self.bd_codigo["POND_nova"] = np.nan
+        if self.nome_pond not in self.bd_codigo.columns:
+            self.bd_codigo[self.nome_pond] = np.nan
         label_to_codigo = self.lista_labels.set_index("Label")["Codigo"].astype(int).to_dict()
 
         if self.cols_nlevels == 2:
@@ -342,7 +343,7 @@ class Criar_Pond():
 
                             pond = df_pond.loc[valor_label_linha, valor_label_coluna]
                             self.bd_codigo.loc[((self.bd_codigo[self.lista_de_colunas_indice[0]] == codigo_coluna) & 
-                                            (self.bd_codigo[self.lista_de_colunas_indice[1]] == codigo_linha)), "POND_nova"] = pond
+                                            (self.bd_codigo[self.lista_de_colunas_indice[1]] == codigo_linha)), self.nome_pond] = pond
                             
 
         elif self.cols_nlevels == 3:
@@ -373,7 +374,7 @@ class Criar_Pond():
                                     pond = df_pond.loc[valor_label_linha, (valor_label_cabecalho, valor_label_coluna)]
                                     self.bd_codigo.loc[((self.bd_codigo[self.lista_de_colunas_indice[0]] == codigo_cabecalho) & 
                                                     (self.bd_codigo[self.lista_de_colunas_indice[1]] == codigo_coluna) & 
-                                                    (self.bd_codigo[self.lista_de_colunas_indice[2]] == codigo_linha)), "POND_nova"] = pond
+                                                    (self.bd_codigo[self.lista_de_colunas_indice[2]] == codigo_linha)), self.nome_pond] = pond
 
 
         elif self.cols_nlevels == 4:
@@ -413,8 +414,62 @@ class Criar_Pond():
                                             self.bd_codigo.loc[((self.bd_codigo[self.lista_de_colunas_indice[0]] == codigo_cabecalho_greater) & 
                                                             (self.bd_codigo[self.lista_de_colunas_indice[1]] == codigo_cabecalho) & 
                                                             (self.bd_codigo[self.lista_de_colunas_indice[2]] == codigo_coluna) & 
-                                                            (self.bd_codigo[self.lista_de_colunas_indice[3]] == codigo_linha)), "POND_nova"] = pond
+                                                            (self.bd_codigo[self.lista_de_colunas_indice[3]] == codigo_linha)), self.nome_pond] = pond
         
+
+        elif self.cols_nlevels == 5:
+            for label_cabecalho_greater_greater in pd.Series(sorted(self.bd_codigo[self.lista_de_colunas_indice[0]].astype(int).unique())).map(self.mapping_lvls[self.lista_de_colunas_indice[0]]):
+                if label_cabecalho_greater_greater in [v[0].split(": ")[1] for v in df_pond.columns]:
+                    s = self.lista_labels.loc[self.lista_labels["Label"] == label_cabecalho_greater_greater, "Codigo"]
+                    if s.empty:
+                        raise KeyError(f"Label não encontrado: {label_cabecalho_greater_greater}")
+                    codigo_cabecalho_greater_greater = label_to_codigo[label_cabecalho_greater_greater]
+                    valor_label_cabecalho_greater_greater = self.lista_de_colunas_indice[0] + ": " + label_cabecalho_greater_greater
+
+                    for label_cabecalho_greater in pd.Series(sorted(self.bd_codigo[self.lista_de_colunas_indice[1]].astype(int).unique())).map(self.mapping_lvls[self.lista_de_colunas_indice[1]]):
+                        if label_cabecalho_greater in [v[1].split(": ")[1] for v in df_pond.columns]:
+                            s = self.lista_labels.loc[self.lista_labels["Label"] == label_cabecalho_greater, "Codigo"]
+                            if s.empty:
+                                raise KeyError(f"Label não encontrado: {label_cabecalho_greater}")
+                            codigo_cabecalho_greater = label_to_codigo[label_cabecalho_greater]
+                            valor_label_cabecalho_greater = self.lista_de_colunas_indice[1] + ": " + label_cabecalho_greater
+
+                            for label_cabecalho in pd.Series(sorted(self.bd_codigo[self.lista_de_colunas_indice[2]].astype(int).unique())).map(self.mapping_lvls[self.lista_de_colunas_indice[2]]):
+                                if label_cabecalho in [v[2].split(": ")[1] for v in df_pond.columns]:
+                                    s = self.lista_labels.loc[self.lista_labels["Label"] == label_cabecalho, "Codigo"]
+                                    if s.empty:
+                                        raise KeyError(f"Label não encontrado: {label_cabecalho}")
+                                    codigo_cabecalho = label_to_codigo[label_cabecalho]
+                                    valor_label_cabecalho = self.lista_de_colunas_indice[2] + ": " + label_cabecalho
+
+                                    for label_coluna in pd.Series(sorted(self.bd_codigo[self.lista_de_colunas_indice[3]].astype(int).unique())).map(self.mapping_lvls[self.lista_de_colunas_indice[3]]):
+                                        if label_coluna in [v[3].split(": ")[1] for v in df_pond.columns]:
+                                            s = self.lista_labels.loc[self.lista_labels["Label"] == label_coluna, "Codigo"]
+                                            if s.empty:
+                                                raise KeyError(f"Label não encontrado: {label_coluna}")
+                                            codigo_coluna = label_to_codigo[label_coluna]
+                                            valor_label_coluna = self.lista_de_colunas_indice[3] + ": " + label_coluna
+
+
+                                            for label_linha in pd.Series(sorted(self.bd_codigo[self.lista_de_colunas_indice[4]].astype(int).unique())).map(self.mapping_lvls[self.lista_de_colunas_indice[4]]):
+                                                if label_linha in [ i.split(": ")[1] for i in df_pond.index]:
+                                                    s = self.lista_labels.loc[self.lista_labels["Label"] == label_linha, "Codigo"]
+                                                    if s.empty:
+                                                        raise KeyError(f"Label não encontrado: {label_linha}")
+                                                    codigo_linha = label_to_codigo[label_linha]
+                                                    valor_label_linha = self.lista_de_colunas_indice[4] + ": " + label_linha
+
+                                                    pond = df_pond.loc[valor_label_linha, (valor_label_cabecalho_greater_greater, valor_label_cabecalho_greater, valor_label_cabecalho, valor_label_coluna)]
+                                                    self.bd_codigo.loc[
+                                                        (
+                                                            (self.bd_codigo[self.lista_de_colunas_indice[0]] == codigo_cabecalho_greater_greater) & 
+                                                            (self.bd_codigo[self.lista_de_colunas_indice[1]] == codigo_cabecalho_greater) & 
+                                                            (self.bd_codigo[self.lista_de_colunas_indice[2]] == codigo_cabecalho) & 
+                                                            (self.bd_codigo[self.lista_de_colunas_indice[3]] == codigo_coluna) & 
+                                                            (self.bd_codigo[self.lista_de_colunas_indice[4]] == codigo_linha)
+                                                        ), 
+                                                        self.nome_pond] = pond
+                                            
         return self.bd_codigo, self.lista_de_colunas_indice
 
 
@@ -900,6 +955,48 @@ def processar_tabela(bd_dados: pd.DataFrame, lista_labels: pd.DataFrame,
 ######################################################################
 
 def processamento(data, bd_processamento, lista_labels):
+
+    # Função para pegar as informações das labels que não deverão ser contabilizadas 
+    def labels_nao_contabilizadas(TipoTabela, NS_NR, Var_linha, Valores_Agrup, lista_labels):
+        if TipoTabela == "MULTIPLA":
+            Valores_Agrup = Valores_Agrup.split(sep=', ')
+            col_linha = Valores_Agrup[0]
+        else:
+            col_linha = Var_linha
+
+        print("\nNS_NR: ", NS_NR)
+        NS_NR_codigo = []
+        if isinstance(NS_NR, str):
+            NS_NR = NS_NR.split(", ")
+            for label in NS_NR:
+                print("label in NS_NR: ", label)
+                if label in lista_labels.loc[lista_labels["Coluna"] == col_linha, "Label"].tolist():
+                    codigo_NS_NR = lista_labels.loc[(lista_labels["Coluna"] == col_linha) & (lista_labels["Label"] == label), "Codigo"].iloc[0]
+                    print("codigo_NS_NR: ", codigo_NS_NR)
+                    NS_NR_codigo.append(codigo_NS_NR)
+
+        # Criando a lista de códigos da Var_Linha que realmente serão utilizados para processar a tabela
+        print("NS_NR_codigo: ", NS_NR_codigo)
+        if len(NS_NR_codigo) != 0:
+            cod_var_linha = (
+                lista_labels.loc[(lista_labels["Coluna"] == col_linha), "Codigo"]
+                .dropna()
+                .tolist()
+            )
+            label_var_linha_set = []
+            for cod in cod_var_linha:
+                if cod not in NS_NR_codigo:
+                    label = lista_labels.loc[(lista_labels["Coluna"] == col_linha) & (lista_labels["Codigo"] == cod), "Label"].iloc[0]
+                    if TipoTabela == "NPS" or TipoTabela == "IPA_10":
+                        label_var_linha_set.append(int(label))
+                    else:
+                        label_var_linha_set.append(label)
+        else:
+            label_var_linha_set = lista_labels.loc[(lista_labels["Coluna"] == Var_linha), "Label"].dropna().tolist()
+
+        return label_var_linha_set, NS_NR_codigo
+        
+
     # Função para aplicar a classificação do nps
     def classificar_nps(valor):
         if np.isnan(valor):
@@ -1013,34 +1110,8 @@ def processamento(data, bd_processamento, lista_labels):
                 dict_ord_labels[col] = ord_labels
                 print(f"Coluna ordenada: {df[col].unique()}")
 
-        # Pega as informações das labels que não deverão não ser contabilizadas    
-        NS_NR = 'NS/NR' # Com (None) e ('') deu certo - tomar cuidado com (np.nan)
-        if isinstance(NS_NR, str):
-            NS_NR = NS_NR.split(", ")
-            NS_NR_codigo = []
-            for label in NS_NR:
-                if label in lista_labels.loc[lista_labels["Coluna"] == Var_linha, "Label"].tolist():
-                    codigo_NS_NR = lista_labels.loc[(lista_labels["Coluna"] == Var_linha) & (lista_labels["Label"] == label), "Codigo"].iloc[0]
-                    NS_NR_codigo.append(codigo_NS_NR)
-
-        # Criando a lista de códigos da Var_Linha que realmente serão utilizados para processar a tabela
-        if len(NS_NR_codigo) != 0:
-            cod_var_linha = (
-                lista_labels.loc[(lista_labels["Coluna"] == Var_linha), "Codigo"]
-                .dropna()
-                .tolist()
-            )
-            label_var_linha_set = []
-            for cod in cod_var_linha:
-                if cod not in NS_NR_codigo:
-                    label = lista_labels.loc[(lista_labels["Coluna"] == Var_linha) & (lista_labels["Codigo"] == cod), "Label"].iloc[0]
-                    if TipoTabela == "NPS" or TipoTabela == "IPA_10":
-                        label_var_linha_set.append(int(label))
-                    else:
-                        label_var_linha_set.append(label)
-        else:
-            label_var_linha_set = lista_labels.loc[(lista_labels["Coluna"] == Var_linha), "Label"].dropna().tolist()
-        print("\nlabel_var_linha_set: ", label_var_linha_set)
+        label_var_linha_set, NS_NR_codigo = labels_nao_contabilizadas(TipoTabela, NS_NR, Var_linha, Valores_Agrup, lista_labels)
+        print("label_var_linha_set: ", label_var_linha_set)
 
         # Transformação na variável para a linha da tabela
         if TipoTabela == 'SIMPLES':
@@ -1120,21 +1191,16 @@ def processamento(data, bd_processamento, lista_labels):
                 # df[Var_linha] = pd.Categorical(df[Var_linha], categories=Valores_Agrup, ordered=True)
 
         elif TipoTabela == 'MULTIPLA':
+            Valores_Agrup = Valores_Agrup.split(sep=', ')
+            bd_motivo = pd.melt(df, 
+                        id_vars=Colunas + [Var_Pond] + [Var_ID],
+                        value_vars=Valores_Agrup, 
+                        var_name='Valores', 
+                        value_name=Var_linha)
+            
             if NS_NR_codigo:
                 df_NS_NR = df.copy()
                 
-                Valores_Agrup = Valores_Agrup.split(sep=', ')
-
-                # Converte as colunas de motivos para string, preservando NaN
-                # for c in Valores_Agrup:
-                #     df[c] = df[c].astype("object").where(df[c].isna(), df[c].astype(str))
-                #     df_NS_NR[c] = df_NS_NR[c].astype("object").where(df_NS_NR[c].isna(), df_NS_NR[c].astype(str))
-
-                bd_motivo = pd.melt(df, 
-                            id_vars=Colunas + [Var_Pond] + [Var_ID],
-                            value_vars=Valores_Agrup, 
-                            var_name='Valores', 
-                            value_name=Var_linha)
                 for codigo in NS_NR_codigo:
                     bd_motivo[Var_linha] = bd_motivo[Var_linha].replace(codigo, np.nan)
                 # bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('90', np.nan)
@@ -1172,12 +1238,6 @@ def processamento(data, bd_processamento, lista_labels):
                 df_NS_NR_unico = df_NS_NR_limpo.drop_duplicates(subset=Var_ID, keep='first')    
                 
             else:
-                Valores_Agrup = Valores_Agrup.split(sep=', ')
-                bd_motivo = pd.melt(df, 
-                            id_vars=Colunas + [Var_Pond] + [Var_ID],
-                            value_vars=Valores_Agrup, 
-                            var_name='Valores', 
-                            value_name=Var_linha)
                 bd_motivo = bd_motivo.dropna(subset=[Var_linha])
                 bd_motivo = ordenar_labels_multipla(df=bd_motivo, lista_labels=lista_labels, Variavel=Var_linha, 
                                                     Var_Valores_Agrup=Valores_Agrup[0])
@@ -1207,12 +1267,12 @@ def processamento(data, bd_processamento, lista_labels):
 
         if TipoTabela == 'MULTIPLA':
 
-            if NS_NR == 'NAO':
+            if isinstance(NS_NR, str):
                 banco = df_NS_NR_unico
             else:
                 banco = df_unico
 
-            if NS_NR == 'NAO':
+            if isinstance(NS_NR, str):
                 banco_pivotado = bd_motivo_NS_NR
             else:
                 banco_pivotado = bd_motivo

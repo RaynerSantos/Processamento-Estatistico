@@ -48,16 +48,18 @@ with tab1:
                     help="A tabela deverá conter duas categorias (Coluna, Linha).",
                     key="pond_nome_sheet_df_coletado"
                     )
+                
         with c3:
             with st.container(border=True):
                 qtd_dimensao = st.number_input(
                     label="📝 Digite a quantidade de **dimensões** da sua tabela, ou seja, quantas variáveis serão combinadas para criar a ponderação.",
                     value=3,
                     min_value=2,
-                    max_value=4,
+                    max_value=5,
                     key="pond_qtd_dimensao",
                     # help="Informe a quantidade de **dimensões** da sua tabela, ou seja, quantas variáveis serão combinadas para criar a ponderação."
-                )
+                )            
+
 
         with st.status("🔍 A seguir, veja uma imagem de exemplo da tabela:"):
             if qtd_dimensao == 2:
@@ -69,12 +71,25 @@ with tab1:
             elif qtd_dimensao == 4:
                 st.write("4 dimensões:")
                 st.image(image="images/Tabela fonte universo_4dim.png")
+            elif qtd_dimensao == 5:
+                st.write("5 dimensões:")
+                st.image(image="images/Tabela fonte universo_5dim.png")
+
+        with st.container(border=True):
+                nome_pond = st.text_input(
+                    label="📝 Digite o nome da coluna de **Ponderação** desejado.",
+                    value="POND",
+                    key="pond_nome_pond",
+                    help="Nome da coluna de Ponderação a ser construída com os dados da FONTE."
+                )
+
         input_buttom_submit_DATA = st.form_submit_button("Enviar", icon=":material/done_outline:")
 
     if input_buttom_submit_DATA:
         st.session_state.nome_sheet_df_universo = nome_sheet_df_universo
         st.session_state.nome_sheet_df_coletado = nome_sheet_df_coletado
         st.session_state.qtd_dimensao = qtd_dimensao
+        st.session_state.nome_pond = nome_pond
 
         if not st.session_state.nome_sheet_df_universo or not st.session_state.nome_sheet_df_coletado:
             st.error("Preencha os dois nomes de abas antes de continuar.", icon="❌")
@@ -115,12 +130,12 @@ with tab1:
                 data_file_pond, 
                 sheet_name=nome_sheet_df_universo,
                 index_col=0
-                )
+            )
             df_coletado = pd.read_excel(
                 data_file_pond, 
                 sheet_name=nome_sheet_df_coletado,
                 index_col=0
-                )
+            )
             
         elif st.session_state.qtd_dimensao == 3:
             df_universo = pd.read_excel(
@@ -128,13 +143,13 @@ with tab1:
                 sheet_name=nome_sheet_df_universo,
                 header=[0, 1],
                 index_col=0 
-                )
+            )
             df_coletado = pd.read_excel(
                 data_file_pond, 
                 sheet_name=nome_sheet_df_coletado,
                 header=[0, 1],
                 index_col=0 
-                )
+            )
         
         elif st.session_state.qtd_dimensao == 4:
             df_universo = pd.read_excel(
@@ -142,13 +157,27 @@ with tab1:
                 sheet_name=nome_sheet_df_universo,
                 header=[0, 1, 2],
                 index_col=0 
-                )
+            )
             df_coletado = pd.read_excel(
                 data_file_pond, 
                 sheet_name=nome_sheet_df_coletado,
                 header=[0, 1, 2],
                 index_col=0 
-                )
+            )
+            
+        elif st.session_state.qtd_dimensao == 5:
+            df_universo = pd.read_excel(
+                data_file_pond, 
+                sheet_name=nome_sheet_df_universo,
+                header=[0, 1, 2, 3],
+                index_col=0 
+            )
+            df_coletado = pd.read_excel(
+                data_file_pond, 
+                sheet_name=nome_sheet_df_coletado,
+                header=[0, 1, 2, 3],
+                index_col=0 
+            )
 
         st.session_state.df_universo = df_universo
         st.session_state.df_coletado = df_coletado
@@ -163,8 +192,9 @@ with tab1:
             df_universo=st.session_state.df_universo, 
             df_coletado=st.session_state.df_coletado, 
             bd_codigo=st.session_state.data, 
-            lista_labels=st.session_state.lista_labels
-            )
+            lista_labels=st.session_state.lista_labels,
+            nome_pond=st.session_state.nome_pond
+        )
         Criar_ponderacao.n_niveis_colunas()
         result = Criar_ponderacao.verificar_cols_multiindex()
         if isinstance(result, str):
@@ -177,7 +207,7 @@ with tab1:
                     # default_cols = st.session_state.data.columns.tolist()
                     colunas = st.multiselect('Selecione as colunas que deseja visualizar:', 
                                                 st.session_state.data.columns.tolist(), 
-                                                default=lista_de_colunas_indice + ["POND", "POND_nova"],
+                                                default=lista_de_colunas_indice + [st.session_state.nome_pond],
                                                 key="pond_colunas")
                 dados_filtrados = st.session_state.data[colunas]
                 st.dataframe(dados_filtrados, hide_index=True, selection_mode=["multi-row", "multi-cell"], use_container_width=True)
@@ -498,7 +528,6 @@ st.divider()
 st.write('')
 st.write('')
 st.image(image="images/Expertise_Marca_VerdeEscuro_mini.jpg")
-
 
 
 

@@ -900,6 +900,48 @@ def processar_tabela(bd_dados: pd.DataFrame, lista_labels: pd.DataFrame,
 ######################################################################
 
 def processamento(data, bd_processamento, lista_labels):
+
+    # Função para pegar as informações das labels que não deverão ser contabilizadas 
+    def labels_nao_contabilizadas(TipoTabela, NS_NR, Var_linha, Valores_Agrup, lista_labels):
+        if TipoTabela == "MULTIPLA":
+            Valores_Agrup = Valores_Agrup.split(sep=', ')
+            col_linha = Valores_Agrup[0]
+        else:
+            col_linha = Var_linha
+
+        print("\nNS_NR: ", NS_NR)
+        NS_NR_codigo = []
+        if isinstance(NS_NR, str):
+            NS_NR = NS_NR.split(", ")
+            for label in NS_NR:
+                print("label in NS_NR: ", label)
+                if label in lista_labels.loc[lista_labels["Coluna"] == col_linha, "Label"].tolist():
+                    codigo_NS_NR = lista_labels.loc[(lista_labels["Coluna"] == col_linha) & (lista_labels["Label"] == label), "Codigo"].iloc[0]
+                    print("codigo_NS_NR: ", codigo_NS_NR)
+                    NS_NR_codigo.append(codigo_NS_NR)
+
+        # Criando a lista de códigos da Var_Linha que realmente serão utilizados para processar a tabela
+        print("NS_NR_codigo: ", NS_NR_codigo)
+        if len(NS_NR_codigo) != 0:
+            cod_var_linha = (
+                lista_labels.loc[(lista_labels["Coluna"] == col_linha), "Codigo"]
+                .dropna()
+                .tolist()
+            )
+            label_var_linha_set = []
+            for cod in cod_var_linha:
+                if cod not in NS_NR_codigo:
+                    label = lista_labels.loc[(lista_labels["Coluna"] == col_linha) & (lista_labels["Codigo"] == cod), "Label"].iloc[0]
+                    if TipoTabela == "NPS" or TipoTabela == "IPA_10":
+                        label_var_linha_set.append(int(label))
+                    else:
+                        label_var_linha_set.append(label)
+        else:
+            label_var_linha_set = lista_labels.loc[(lista_labels["Coluna"] == Var_linha), "Label"].dropna().tolist()
+
+        return label_var_linha_set, NS_NR_codigo
+        
+
     # Função para aplicar a classificação do nps
     def classificar_nps(valor):
         if np.isnan(valor):
@@ -1013,34 +1055,8 @@ def processamento(data, bd_processamento, lista_labels):
                 dict_ord_labels[col] = ord_labels
                 print(f"Coluna ordenada: {df[col].unique()}")
 
-        # Pega as informações das labels que não deverão não ser contabilizadas    
-        NS_NR = 'NS/NR' # Com (None) e ('') deu certo - tomar cuidado com (np.nan)
-        if isinstance(NS_NR, str):
-            NS_NR = NS_NR.split(", ")
-            NS_NR_codigo = []
-            for label in NS_NR:
-                if label in lista_labels.loc[lista_labels["Coluna"] == Var_linha, "Label"].tolist():
-                    codigo_NS_NR = lista_labels.loc[(lista_labels["Coluna"] == Var_linha) & (lista_labels["Label"] == label), "Codigo"].iloc[0]
-                    NS_NR_codigo.append(codigo_NS_NR)
-
-        # Criando a lista de códigos da Var_Linha que realmente serão utilizados para processar a tabela
-        if len(NS_NR_codigo) != 0:
-            cod_var_linha = (
-                lista_labels.loc[(lista_labels["Coluna"] == Var_linha), "Codigo"]
-                .dropna()
-                .tolist()
-            )
-            label_var_linha_set = []
-            for cod in cod_var_linha:
-                if cod not in NS_NR_codigo:
-                    label = lista_labels.loc[(lista_labels["Coluna"] == Var_linha) & (lista_labels["Codigo"] == cod), "Label"].iloc[0]
-                    if TipoTabela == "NPS" or TipoTabela == "IPA_10":
-                        label_var_linha_set.append(int(label))
-                    else:
-                        label_var_linha_set.append(label)
-        else:
-            label_var_linha_set = lista_labels.loc[(lista_labels["Coluna"] == Var_linha), "Label"].dropna().tolist()
-        print("\nlabel_var_linha_set: ", label_var_linha_set)
+        label_var_linha_set, NS_NR_codigo = labels_nao_contabilizadas(TipoTabela, NS_NR, Var_linha, Valores_Agrup, lista_labels)
+        print("label_var_linha_set: ", label_var_linha_set)
 
         # Transformação na variável para a linha da tabela
         if TipoTabela == 'SIMPLES':
@@ -1120,21 +1136,16 @@ def processamento(data, bd_processamento, lista_labels):
                 # df[Var_linha] = pd.Categorical(df[Var_linha], categories=Valores_Agrup, ordered=True)
 
         elif TipoTabela == 'MULTIPLA':
+            Valores_Agrup = Valores_Agrup.split(sep=', ')
+            bd_motivo = pd.melt(df, 
+                        id_vars=Colunas + [Var_Pond] + [Var_ID],
+                        value_vars=Valores_Agrup, 
+                        var_name='Valores', 
+                        value_name=Var_linha)
+            
             if NS_NR_codigo:
                 df_NS_NR = df.copy()
                 
-                Valores_Agrup = Valores_Agrup.split(sep=', ')
-
-                # Converte as colunas de motivos para string, preservando NaN
-                # for c in Valores_Agrup:
-                #     df[c] = df[c].astype("object").where(df[c].isna(), df[c].astype(str))
-                #     df_NS_NR[c] = df_NS_NR[c].astype("object").where(df_NS_NR[c].isna(), df_NS_NR[c].astype(str))
-
-                bd_motivo = pd.melt(df, 
-                            id_vars=Colunas + [Var_Pond] + [Var_ID],
-                            value_vars=Valores_Agrup, 
-                            var_name='Valores', 
-                            value_name=Var_linha)
                 for codigo in NS_NR_codigo:
                     bd_motivo[Var_linha] = bd_motivo[Var_linha].replace(codigo, np.nan)
                 # bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('90', np.nan)
@@ -1172,12 +1183,6 @@ def processamento(data, bd_processamento, lista_labels):
                 df_NS_NR_unico = df_NS_NR_limpo.drop_duplicates(subset=Var_ID, keep='first')    
                 
             else:
-                Valores_Agrup = Valores_Agrup.split(sep=', ')
-                bd_motivo = pd.melt(df, 
-                            id_vars=Colunas + [Var_Pond] + [Var_ID],
-                            value_vars=Valores_Agrup, 
-                            var_name='Valores', 
-                            value_name=Var_linha)
                 bd_motivo = bd_motivo.dropna(subset=[Var_linha])
                 bd_motivo = ordenar_labels_multipla(df=bd_motivo, lista_labels=lista_labels, Variavel=Var_linha, 
                                                     Var_Valores_Agrup=Valores_Agrup[0])
@@ -1207,12 +1212,12 @@ def processamento(data, bd_processamento, lista_labels):
 
         if TipoTabela == 'MULTIPLA':
 
-            if NS_NR == 'NAO':
+            if isinstance(NS_NR, str):
                 banco = df_NS_NR_unico
             else:
                 banco = df_unico
 
-            if NS_NR == 'NAO':
+            if isinstance(NS_NR, str):
                 banco_pivotado = bd_motivo_NS_NR
             else:
                 banco_pivotado = bd_motivo

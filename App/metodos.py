@@ -183,11 +183,12 @@ class Criar_Pond():
         
     """
     
-    def __init__(self, df_universo: pd.DataFrame, df_coletado: pd.DataFrame, bd_codigo: pd.DataFrame, lista_labels: pd.DataFrame):
+    def __init__(self, df_universo: pd.DataFrame, df_coletado: pd.DataFrame, bd_codigo: pd.DataFrame, lista_labels: pd.DataFrame, nome_pond: str):
         self.df_universo = df_universo
         self.df_coletado = df_coletado
         self.bd_codigo = bd_codigo
         self.lista_labels = lista_labels
+        self.nome_pond = nome_pond
 
     def n_niveis_colunas(self):
         cols = self.df_universo.columns
@@ -319,8 +320,8 @@ class Criar_Pond():
         )
 
         # Criar a nova coluna de PONDERAÇÃO de acordo com o df_pond
-        if "POND_nova" not in self.bd_codigo.columns:
-            self.bd_codigo["POND_nova"] = np.nan
+        if self.nome_pond not in self.bd_codigo.columns:
+            self.bd_codigo[self.nome_pond] = np.nan
         label_to_codigo = self.lista_labels.set_index("Label")["Codigo"].astype(int).to_dict()
 
         if self.cols_nlevels == 2:
@@ -342,7 +343,7 @@ class Criar_Pond():
 
                             pond = df_pond.loc[valor_label_linha, valor_label_coluna]
                             self.bd_codigo.loc[((self.bd_codigo[self.lista_de_colunas_indice[0]] == codigo_coluna) & 
-                                            (self.bd_codigo[self.lista_de_colunas_indice[1]] == codigo_linha)), "POND_nova"] = pond
+                                            (self.bd_codigo[self.lista_de_colunas_indice[1]] == codigo_linha)), self.nome_pond] = pond
                             
 
         elif self.cols_nlevels == 3:
@@ -373,7 +374,7 @@ class Criar_Pond():
                                     pond = df_pond.loc[valor_label_linha, (valor_label_cabecalho, valor_label_coluna)]
                                     self.bd_codigo.loc[((self.bd_codigo[self.lista_de_colunas_indice[0]] == codigo_cabecalho) & 
                                                     (self.bd_codigo[self.lista_de_colunas_indice[1]] == codigo_coluna) & 
-                                                    (self.bd_codigo[self.lista_de_colunas_indice[2]] == codigo_linha)), "POND_nova"] = pond
+                                                    (self.bd_codigo[self.lista_de_colunas_indice[2]] == codigo_linha)), self.nome_pond] = pond
 
 
         elif self.cols_nlevels == 4:
@@ -413,8 +414,62 @@ class Criar_Pond():
                                             self.bd_codigo.loc[((self.bd_codigo[self.lista_de_colunas_indice[0]] == codigo_cabecalho_greater) & 
                                                             (self.bd_codigo[self.lista_de_colunas_indice[1]] == codigo_cabecalho) & 
                                                             (self.bd_codigo[self.lista_de_colunas_indice[2]] == codigo_coluna) & 
-                                                            (self.bd_codigo[self.lista_de_colunas_indice[3]] == codigo_linha)), "POND_nova"] = pond
+                                                            (self.bd_codigo[self.lista_de_colunas_indice[3]] == codigo_linha)), self.nome_pond] = pond
         
+
+        elif self.cols_nlevels == 5:
+            for label_cabecalho_greater_greater in pd.Series(sorted(self.bd_codigo[self.lista_de_colunas_indice[0]].astype(int).unique())).map(self.mapping_lvls[self.lista_de_colunas_indice[0]]):
+                if label_cabecalho_greater_greater in [v[0].split(": ")[1] for v in df_pond.columns]:
+                    s = self.lista_labels.loc[self.lista_labels["Label"] == label_cabecalho_greater_greater, "Codigo"]
+                    if s.empty:
+                        raise KeyError(f"Label não encontrado: {label_cabecalho_greater_greater}")
+                    codigo_cabecalho_greater_greater = label_to_codigo[label_cabecalho_greater_greater]
+                    valor_label_cabecalho_greater_greater = self.lista_de_colunas_indice[0] + ": " + label_cabecalho_greater_greater
+
+                    for label_cabecalho_greater in pd.Series(sorted(self.bd_codigo[self.lista_de_colunas_indice[1]].astype(int).unique())).map(self.mapping_lvls[self.lista_de_colunas_indice[1]]):
+                        if label_cabecalho_greater in [v[1].split(": ")[1] for v in df_pond.columns]:
+                            s = self.lista_labels.loc[self.lista_labels["Label"] == label_cabecalho_greater, "Codigo"]
+                            if s.empty:
+                                raise KeyError(f"Label não encontrado: {label_cabecalho_greater}")
+                            codigo_cabecalho_greater = label_to_codigo[label_cabecalho_greater]
+                            valor_label_cabecalho_greater = self.lista_de_colunas_indice[1] + ": " + label_cabecalho_greater
+
+                            for label_cabecalho in pd.Series(sorted(self.bd_codigo[self.lista_de_colunas_indice[2]].astype(int).unique())).map(self.mapping_lvls[self.lista_de_colunas_indice[2]]):
+                                if label_cabecalho in [v[2].split(": ")[1] for v in df_pond.columns]:
+                                    s = self.lista_labels.loc[self.lista_labels["Label"] == label_cabecalho, "Codigo"]
+                                    if s.empty:
+                                        raise KeyError(f"Label não encontrado: {label_cabecalho}")
+                                    codigo_cabecalho = label_to_codigo[label_cabecalho]
+                                    valor_label_cabecalho = self.lista_de_colunas_indice[2] + ": " + label_cabecalho
+
+                                    for label_coluna in pd.Series(sorted(self.bd_codigo[self.lista_de_colunas_indice[3]].astype(int).unique())).map(self.mapping_lvls[self.lista_de_colunas_indice[3]]):
+                                        if label_coluna in [v[3].split(": ")[1] for v in df_pond.columns]:
+                                            s = self.lista_labels.loc[self.lista_labels["Label"] == label_coluna, "Codigo"]
+                                            if s.empty:
+                                                raise KeyError(f"Label não encontrado: {label_coluna}")
+                                            codigo_coluna = label_to_codigo[label_coluna]
+                                            valor_label_coluna = self.lista_de_colunas_indice[3] + ": " + label_coluna
+
+
+                                            for label_linha in pd.Series(sorted(self.bd_codigo[self.lista_de_colunas_indice[4]].astype(int).unique())).map(self.mapping_lvls[self.lista_de_colunas_indice[4]]):
+                                                if label_linha in [ i.split(": ")[1] for i in df_pond.index]:
+                                                    s = self.lista_labels.loc[self.lista_labels["Label"] == label_linha, "Codigo"]
+                                                    if s.empty:
+                                                        raise KeyError(f"Label não encontrado: {label_linha}")
+                                                    codigo_linha = label_to_codigo[label_linha]
+                                                    valor_label_linha = self.lista_de_colunas_indice[4] + ": " + label_linha
+
+                                                    pond = df_pond.loc[valor_label_linha, (valor_label_cabecalho_greater_greater, valor_label_cabecalho_greater, valor_label_cabecalho, valor_label_coluna)]
+                                                    self.bd_codigo.loc[
+                                                        (
+                                                            (self.bd_codigo[self.lista_de_colunas_indice[0]] == codigo_cabecalho_greater_greater) & 
+                                                            (self.bd_codigo[self.lista_de_colunas_indice[1]] == codigo_cabecalho_greater) & 
+                                                            (self.bd_codigo[self.lista_de_colunas_indice[2]] == codigo_cabecalho) & 
+                                                            (self.bd_codigo[self.lista_de_colunas_indice[3]] == codigo_coluna) & 
+                                                            (self.bd_codigo[self.lista_de_colunas_indice[4]] == codigo_linha)
+                                                        ), 
+                                                        self.nome_pond] = pond
+                                            
         return self.bd_codigo, self.lista_de_colunas_indice
 
 

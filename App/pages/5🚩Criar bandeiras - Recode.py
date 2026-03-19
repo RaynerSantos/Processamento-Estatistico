@@ -85,6 +85,7 @@ st.write('')
 colunas = st.session_state.data.columns.tolist()
 selected_column = st.multiselect('Selecione a(s) coluna(s) que será(ão) recodificada(s):', colunas, key="recode_selected_column")
 
+sufixo = '_xx'
 if selected_column:
     for col in selected_column:
         rotulo = st.session_state.lista_variaveis.loc[st.session_state.lista_variaveis["Coluna"] == col, "Rotulo"].iloc[0]
@@ -129,10 +130,22 @@ if selected_column:
                                              use_container_width=True
                                              )
     st.write("")
+    st.write("")
+
+    # sufixo = st.text_input(
+    #     label="📝 Digite o sufixo desejado para os nomes das bandeiras recodificadas", 
+    #     placeholder="_x", 
+    #     key="recode_sufixo"
+    # )
+
+    name_new_bandeiras = ''
+    for col in selected_column:
+        name_new_bandeiras += col + sufixo + ', '
     
     nome_bandeira_recode = st.text_input(
         label="📝 Digite o(s) nome(s) da(s) nova(s) bandeira(s) recodificada(s) utilizando **vírgula e um espaço (, )**", 
-        placeholder="nome da nova bandeira recodificada", 
+        # placeholder="nome da nova bandeira recodificada", 
+        value=name_new_bandeiras,
         key="recode_nome_bandeira"
     )
 

@@ -183,9 +183,8 @@ class Criar_Pond():
         
     """
     
-    def __init__(self, df_universo: pd.DataFrame, df_coletado: pd.DataFrame, bd_codigo: pd.DataFrame, lista_labels: pd.DataFrame, nome_pond: str):
+    def __init__(self, df_universo: pd.DataFrame, bd_codigo: pd.DataFrame, lista_labels: pd.DataFrame, nome_pond: str):
         self.df_universo = df_universo
-        self.df_coletado = df_coletado
         self.bd_codigo = bd_codigo
         self.lista_labels = lista_labels
         self.nome_pond = nome_pond
@@ -290,9 +289,75 @@ class Criar_Pond():
         
         self.qtd_cols_index = qtd_cols_index
         self.lista_de_colunas_indice = lista_de_colunas_indice
+        self.lista_de_labels_fonte = lista_de_labels_fonte
         self.mapping_lvls = mapping_lvls
                 
         return qtd_cols_index
+
+
+    def criar_df_coletado(self):
+        # Buscando os nomes das colunas e índices
+        dict_col_label = {}
+        dict_col_cod = {}
+        for col in self.lista_de_colunas_indice:
+            dict_col_label[col] = []
+            dict_col_cod[col] = []
+
+        if isinstance(self.df_universo.columns, pd.MultiIndex):
+            for col in self.df_universo.columns:
+                for item in col:
+                    item_coluna = item.split(": ")[0]
+                    item_label = item.split(": ")[1]
+                    if item_label not in dict_col_label[item_coluna]:
+                        dict_col_label[item_coluna].append(item_label)
+                        codigo = self.lista_labels.loc[(self.lista_labels["Coluna"] == item_coluna) & (self.lista_labels["Label"]== item_label), "Codigo"].iloc[0]
+                        dict_col_cod[item_coluna].append(codigo)
+
+        else:
+            for item in self.df_universo.columns:
+                item_coluna = item.split(": ")[0]
+                item_label = item.split(": ")[1]
+                if item_label not in dict_col_label[item_coluna]:
+                    dict_col_label[item_coluna].append(item_label)
+                    codigo = self.lista_labels.loc[(self.lista_labels["Coluna"] == item_coluna) & (self.lista_labels["Label"]== item_label), "Codigo"].iloc[0]
+                    dict_col_cod[item_coluna].append(codigo)
+
+        for index in self.df_universo.index:
+            index_linha = index.split(": ")[0]
+            index_linha_label = index.split(": ")[1]
+            if index_linha_label not in dict_col_label[index_linha]:
+                dict_col_label[index_linha].append(index_linha_label)
+                codigo = self.lista_labels.loc[(self.lista_labels["Coluna"] == index_linha) & (self.lista_labels["Label"]== index_linha_label), "Codigo"].iloc[0]
+                dict_col_cod[index_linha].append(codigo)
+
+        df_tabela = self.bd_codigo.copy()
+        for key, value in dict_col_cod.items():
+            df_tabela = df_tabela[df_tabela[key].isin(value)]
+
+        # monta a tabela MultiIndex
+        tabela = (
+            df_tabela.pivot_table(
+                index=self.lista_de_colunas_indice[-1],
+                columns=self.lista_de_colunas_indice[:-1],
+                aggfunc='size',     # conta quantas linhas existem em cada combinação
+                fill_value=0
+            )
+            .sort_index()
+        )
+
+        # monta todas as combinações esperadas para as colunas
+        colunas_completas = pd.MultiIndex.from_product(
+            [dict_col_cod[c] for c in self.lista_de_colunas_indice[:-1]],
+            names=self.lista_de_colunas_indice[:-1]
+        )
+
+        # força a existência de todas as colunas, preenchendo ausentes com 0
+        df_coletado = tabela.reindex(columns=colunas_completas, fill_value=0)
+        df_coletado.columns = self.df_universo.columns
+        df_coletado.index = self.df_universo.index
+        self.df_coletado = df_coletado
+        
+        return self.df_coletado
 
 
     def criar_pond(self):

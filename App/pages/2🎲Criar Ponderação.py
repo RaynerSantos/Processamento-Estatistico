@@ -18,6 +18,9 @@ if "data" not in st.session_state or st.session_state.data is None:
     st.warning("Antes de tudo, carregue o banco de dados com os códigos e lista de labels na página Home.", icon="⚠️")
     st.stop()
 
+if "button_gerar_pond_bool" not in st.session_state:
+    st.session_state.button_gerar_pond_bool = False
+
 st.title('Pré-Processamento de Dados Estatísticos')
 st.divider()
 st.subheader('Aqui você pode criar a coluna de Ponderação')
@@ -26,7 +29,7 @@ st.write('')
 tab1, tab2 = st.tabs(["Ponderação", "RAKE (IPF)"])
 
 with tab1:
-    c1, c2, c3 = st.columns(3, vertical_alignment="bottom")
+    c1, c2 = st.columns(2, vertical_alignment="bottom")
 
     with st.form('sheet_name_DFuniverso_DFcoletado'):
         with c1:
@@ -41,15 +44,6 @@ with tab1:
                     key="pond_nome_sheet_df_universo"
                     )
         with c2:
-            with st.container(border=True):
-                nome_sheet_df_coletado = st.text_input(
-                    label="📝 Digite o nome da aba (sheet) que contém a tabela com a **quantidade coletada do projeto**.", 
-                    value="COLETADO",
-                    help="A tabela deverá conter duas categorias (Coluna, Linha).",
-                    key="pond_nome_sheet_df_coletado"
-                    )
-                
-        with c3:
             with st.container(border=True):
                 qtd_dimensao = st.number_input(
                     label="📝 Digite a quantidade de **dimensões** da sua tabela, ou seja, quantas variáveis serão combinadas para criar a ponderação.",
@@ -87,15 +81,15 @@ with tab1:
 
     if input_buttom_submit_DATA:
         st.session_state.nome_sheet_df_universo = nome_sheet_df_universo
-        st.session_state.nome_sheet_df_coletado = nome_sheet_df_coletado
         st.session_state.qtd_dimensao = qtd_dimensao
         st.session_state.nome_pond = nome_pond
 
-        if not st.session_state.nome_sheet_df_universo or not st.session_state.nome_sheet_df_coletado:
-            st.error("Preencha os dois nomes de abas antes de continuar.", icon="❌")
+        if not st.session_state.nome_sheet_df_universo:
+            st.error("Preencha o nome da aba antes de continuar.", icon="❌")
         else:
-            st.success("Nome das abas (sheets) enviado com sucesso", icon="✅")
+            st.success("Nome da aba (sheet) enviado com sucesso", icon="✅")
 
+    st.write('')
     st.write('')
     data_file_pond = st.file_uploader(
         "📂 Selecione o banco de dados (em xlsx)", 
@@ -110,20 +104,12 @@ with tab1:
         st.caption(f"Abas encontradas no arquivo: {',  '.join(xls.sheet_names)}")
 
         sheet_univ = st.session_state.get("nome_sheet_df_universo", "")
-        sheet_col = st.session_state.get("nome_sheet_df_coletado", "")
 
         # Validações antes de ler
-        if not sheet_univ or not sheet_col:
-            st.warning("Envie (submit) os nomes das abas acima antes de carregar as tabelas.", icon="⚠️")
-            st.stop()
-
         if sheet_univ not in xls.sheet_names:
             st.error(f"A aba do universo '{sheet_univ}' não existe no arquivo.", icon="❌")
             st.stop()
 
-        if sheet_col not in xls.sheet_names:
-            st.error(f"A aba do coletado '{sheet_col}' não existe no arquivo.", icon="❌")
-            st.stop()
 
         if st.session_state.qtd_dimensao == 2:
             df_universo = pd.read_excel(
@@ -131,22 +117,11 @@ with tab1:
                 sheet_name=nome_sheet_df_universo,
                 index_col=0
             )
-            df_coletado = pd.read_excel(
-                data_file_pond, 
-                sheet_name=nome_sheet_df_coletado,
-                index_col=0
-            )
             
         elif st.session_state.qtd_dimensao == 3:
             df_universo = pd.read_excel(
                 data_file_pond, 
                 sheet_name=nome_sheet_df_universo,
-                header=[0, 1],
-                index_col=0 
-            )
-            df_coletado = pd.read_excel(
-                data_file_pond, 
-                sheet_name=nome_sheet_df_coletado,
                 header=[0, 1],
                 index_col=0 
             )
@@ -158,12 +133,6 @@ with tab1:
                 header=[0, 1, 2],
                 index_col=0 
             )
-            df_coletado = pd.read_excel(
-                data_file_pond, 
-                sheet_name=nome_sheet_df_coletado,
-                header=[0, 1, 2],
-                index_col=0 
-            )
             
         elif st.session_state.qtd_dimensao == 5:
             df_universo = pd.read_excel(
@@ -172,25 +141,15 @@ with tab1:
                 header=[0, 1, 2, 3],
                 index_col=0 
             )
-            df_coletado = pd.read_excel(
-                data_file_pond, 
-                sheet_name=nome_sheet_df_coletado,
-                header=[0, 1, 2, 3],
-                index_col=0 
-            )
 
         st.session_state.df_universo = df_universo
-        st.session_state.df_coletado = df_coletado
+        # st.session_state.df_coletado = df_coletado
         
         st.success("Planilha carregada com sucesso!", icon="✅")
 
-        st.write('')
-        st.write('')
-        st.write('')
 
         Criar_ponderacao = Criar_Pond(
             df_universo=st.session_state.df_universo, 
-            df_coletado=st.session_state.df_coletado, 
             bd_codigo=st.session_state.data, 
             lista_labels=st.session_state.lista_labels,
             nome_pond=st.session_state.nome_pond
@@ -200,18 +159,32 @@ with tab1:
         if isinstance(result, str):
             st.error(result, icon="❌")
         else:
-            st.session_state.data, lista_de_colunas_indice = Criar_ponderacao.criar_pond()
+            df_coletado = Criar_ponderacao.criar_df_coletado()
+            st.divider()
+            st.write("Visualização da amostra coletada para cada dimensão: ")
+            st.dataframe(df_coletado, hide_index=False, selection_mode=["multi-row", "multi-cell"], use_container_width=True)
+            total_coletado = df_coletado.sum().sum()
+            st.write(f"Total da amostra coletada: ", total_coletado)
 
-            with st.spinner("Please wait..."):
-                with st.expander("📋 Colunas"):
-                    # default_cols = st.session_state.data.columns.tolist()
-                    colunas = st.multiselect('Selecione as colunas que deseja visualizar:', 
-                                                st.session_state.data.columns.tolist(), 
-                                                default=lista_de_colunas_indice + [st.session_state.nome_pond],
-                                                key="pond_colunas")
-                dados_filtrados = st.session_state.data[colunas]
-                st.dataframe(dados_filtrados, hide_index=True, selection_mode=["multi-row", "multi-cell"], use_container_width=True)
-                st.success("Ponderação realizada com sucesso!", icon="✅")
+            st.write("")
+            st.write("")
+            if st.button(label="Gerar Ponderação", key="button_gerar_pond", icon=":material/done_outline:"):
+                st.session_state.button_gerar_pond_bool = True
+
+            if st.session_state.button_gerar_pond_bool:
+                st.session_state.data, lista_de_colunas_indice = Criar_ponderacao.criar_pond()
+                st.write("")
+
+                with st.spinner("Please wait..."):
+                    with st.expander("📋 Colunas"):
+                        # default_cols = st.session_state.data.columns.tolist()
+                        colunas = st.multiselect('Selecione as colunas que deseja visualizar:', 
+                                                    st.session_state.data.columns.tolist(), 
+                                                    default=lista_de_colunas_indice + [st.session_state.nome_pond],
+                                                    key="pond_colunas")
+                    dados_filtrados = st.session_state.data[colunas]
+                    st.dataframe(dados_filtrados, hide_index=True, selection_mode=["multi-row", "multi-cell"], use_container_width=True)
+                    st.success("Ponderação realizada com sucesso!", icon="✅")
 
 
 

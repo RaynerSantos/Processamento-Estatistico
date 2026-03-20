@@ -85,45 +85,32 @@ st.write('')
 colunas = st.session_state.data.columns.tolist()
 selected_column = st.multiselect('Selecione a(s) coluna(s) que será(ão) recodificada(s):', colunas, key="recode_selected_column")
 
-sufixo = '_xx'
-st.session_state.name_new_bandeiras = ''
+sufixo = "_xx"
+
+if "recode_nome_bandeira" not in st.session_state:
+    st.session_state.recode_nome_bandeira = ""
+
+if "ultima_selecao_recode" not in st.session_state:
+    st.session_state.ultima_selecao_recode = []
+
 if selected_column:
     for col in selected_column:
-        st.session_state.name_new_bandeiras += col + sufixo + ', '
         rotulo = st.session_state.lista_variaveis.loc[st.session_state.lista_variaveis["Coluna"] == col, "Rotulo"].iloc[0]
-        st.write(f'**{col}**: {rotulo}')
-    st.session_state.name_new_bandeiras = st.session_state.name_new_bandeiras[:-2]
-    st.write("")
-    st.write("")
+        st.write(f"**{col}**: {rotulo}")
 
-    # dataframe_recode_value_counts = pd.DataFrame(st.session_state.data[selected_column[0]].value_counts(dropna=False))
-    # labels_sub = st.session_state.lista_labels.loc[st.session_state.lista_labels["Coluna"] == selected_column[0]]
-    # dataframe_recode_value_counts["Codigo"] = dataframe_recode_value_counts.index
-    # dataframe_recode_value_counts["Label"] = dataframe_recode_value_counts["Codigo"].map(dict(zip(labels_sub["Codigo"], labels_sub["Label"])))
-    # dataframe_recode_value_counts['Label renomeada'] = None
-    # dataframe_recode_value_counts['Novo Codigo'] = None
-    # dataframe_recode_value_counts = dataframe_recode_value_counts[["Codigo", "Label", "Label renomeada", "Novo Codigo"]]
+    nomes_sugeridos = ", ".join(f"{col}{sufixo}" for col in selected_column)
+
+    # atualiza o text_input somente quando a seleção mudar
+    if selected_column != st.session_state.ultima_selecao_recode:
+        st.session_state.recode_nome_bandeira = nomes_sugeridos
+        st.session_state.ultima_selecao_recode = selected_column.copy()
+    st.write("")
+    st.write("")
 
     dataframe_recode = st.session_state.lista_labels[st.session_state.lista_labels['Coluna'] == selected_column[0]][['Codigo', 'Label']].copy()
     dataframe_recode = dataframe_recode.rename(columns={'Codigo': 'Codigo', 'Label': 'Label'})
     dataframe_recode['Label renomeada'] = None
     dataframe_recode['Novo Codigo'] = None
-
-    # df_merge = dataframe_recode.merge(
-    #     dataframe_recode_value_counts,
-    #     on="Codigo",
-    #     how="outer",
-    #     suffixes=("_recode", "_vc")
-    # )
-    # df_merge["Label"] = df_merge["Label_recode"].combine_first(df_merge["Label_vc"])
-    # df_merge["Label renomeada"] = df_merge["Label nova_recode"].combine_first(df_merge["Label nova_vc"])
-    # df_merge["Novo Codigo"] = df_merge["Ordem_recode"].combine_first(df_merge["Ordem_vc"])
-
-    # df_merge_recode = df_merge.drop(columns=[
-    #     "Label_recode", "Label_vc",
-    #     "Label nova_recode", "Label nova_vc",
-    #     "Ordem_recode", "Ordem_vc"
-    # ])
     
     dataframe_recode_edited = st.data_editor(dataframe_recode, 
                                              num_rows="fixed", 
@@ -135,21 +122,12 @@ if selected_column:
     st.write("")
     st.write("")
 
-    # sufixo = st.text_input(
-    #     label="📝 Digite o sufixo desejado para os nomes das bandeiras recodificadas", 
-    #     placeholder="_x", 
-    #     key="recode_sufixo"
-    # )
-
-
     nome_bandeira_recode = st.text_input(
-        label="📝 Digite o(s) nome(s) da(s) nova(s) bandeira(s) recodificada(s) utilizando **vírgula e um espaço (, )**", 
-        # placeholder="nome da nova bandeira recodificada", 
-        value=st.session_state.name_new_bandeiras,
-        key="recode_nome_bandeira"
-    )
+    label="📝 Digite o(s) nome(s) da(s) nova(s) bandeira(s) recodificada(s) utilizando **vírgula e um espaço (, )**",
+    key="recode_nome_bandeira"
+)
 
-    nome_bandeira_recode = nome_bandeira_recode.split(", ")
+    nome_bandeira_recode = [x.strip() for x in nome_bandeira_recode.split(",") if x.strip()]
     for nome in nome_bandeira_recode:
         if nome in st.session_state.data.columns:
             st.error(f"A coluna '{nome}' já existe no DataFrame. Por favor, escolha outro nome.", 

@@ -1,18 +1,18 @@
-version: '3.8'
-
 services:
   processamento-estatistico:
     build:
       context: .
       dockerfile: Dockerfile
+      # Necessário para build em Mac Apple Silicon (arm64) gerando imagem para servidor amd64
+      platforms:
+        - linux/amd64
+    platform: linux/amd64
     container_name: expertise-processamento
     ports:
       - "8501:8501"
     volumes:
-      # Volume para desenvolvimento - permite editar código sem rebuild
       - ./App:/app/App
-      # Volume para persistir dados (opcional)
-      - ./data:/app/data
+      - ./App/.streamlit/secrets.toml:/app/App/.streamlit/secrets.toml:ro
     environment:
       - STREAMLIT_SERVER_PORT=8501
       - STREAMLIT_SERVER_ADDRESS=0.0.0.0
@@ -24,4 +24,4 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 60s

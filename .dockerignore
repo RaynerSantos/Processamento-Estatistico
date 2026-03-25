@@ -1,3 +1,6 @@
+# Credenciais — nunca entrar na imagem
+App/.streamlit/secrets.toml
+
 # Python
 __pycache__/
 *.py[cod]

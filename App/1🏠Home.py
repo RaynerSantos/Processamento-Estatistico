@@ -82,7 +82,7 @@ if data_file is not None:
                 #     value="BD_CODIGOS"
                 #     )
                 nome_sheet_lista_labels = st.selectbox(
-                    label="ðŸ“ Informe o nome da aba (sheet) que contÃ©m a **Lista de Labels**.",
+                    label="📝 Informe o nome da aba (sheet) que contÃ©m a **Lista de Labels**.",
                     options=xls.sheet_names,
                     key="home_nome_sheet_lista_labels"
                 )

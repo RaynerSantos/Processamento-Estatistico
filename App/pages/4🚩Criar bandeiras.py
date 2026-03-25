@@ -130,6 +130,10 @@ if selected_columns:
                 df_bandeira_unica = st.session_state.lista_labels.loc[st.session_state.lista_labels["Coluna"]==selected_columns[0]].copy()
                 df_bandeira_unica["Coluna"] = st.session_state.ultima_bandeira
                 st.session_state.lista_labels = pd.concat([st.session_state.lista_labels, df_bandeira_unica], axis=0)
+                st.session_state.lista_variaveis.loc[len(st.session_state.lista_variaveis)] = [
+                    st.session_state.ultima_bandeira, 
+                    ROTULO_BANDEIRA
+                ]
 
                 dict_codigo_label = st.session_state.lista_labels.loc[st.session_state.lista_labels["Coluna"]==st.session_state.ultima_bandeira].set_index("Codigo")["Label"]
                 freq["Código"] = freq.index

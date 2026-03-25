@@ -1,3 +1,9 @@
 /BASES PARA PROCESSAMENTO
 Documentacao_Processamento.docx
+<<<<<<< HEAD
 .venv/
+=======
+
+secrets.toml
+.venv
+>>>>>>> app-beta

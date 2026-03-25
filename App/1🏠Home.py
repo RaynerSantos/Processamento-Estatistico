@@ -1,17 +1,33 @@
-import pandas as pd
+﻿import pandas as pd
 import numpy as np
 import streamlit as st
 import time
 from io import BytesIO
 from datetime import datetime, date
 from metodos import criar_bandeira, to_excel, mensagem_sucesso
+from auth import login_gate, logout, change_password_gate, open_change_password
 
 st.set_page_config(layout='wide', page_title='Processamento de Dados', 
                    page_icon='images/Logo_Expertise.png')
 
 st.logo(image="images/ExpertiseAI.svg", size="large") # Expertise_Marca_OffWhite_mini.jpg
 
+# Bloqueia a app até o usuário autenticar
+login_gate()
+change_password_gate()
 
+# Barra simples no topo
+col1, col2, col3 = st.columns([15, 3, 2], vertical_alignment='center')
+with col1:
+    st.caption(f"Usuário logado: {st.session_state.user['NOME']}")
+with col2:
+    st.button("Alterar Senha", icon="🔒", on_click=open_change_password)
+with col3:
+    st.button("Sair", on_click=logout)
+
+
+st.write("")
+st.write("")
 st.title('Processamento de Dados Estatísticos')
 
 st.write("")
@@ -36,7 +52,7 @@ data_file = st.file_uploader("📂 Selecione o banco de dados (em xlsx)",
                              key="home_uploader")
 
 if data_file is not None:
-    # Lista as abas disponíveis (ajuda muito a evitar erro)
+    # Lista as abas disponÃ­veis (ajuda muito a evitar erro)
     xls = pd.ExcelFile(data_file)
     st.caption(f"Abas encontradas no arquivo: {',  '.join(xls.sheet_names)}")
     st.success("Planilha carregada com sucesso!", icon="✅")
@@ -48,7 +64,7 @@ if data_file is not None:
         with coluna1:
             with st.container(border=True):
                 # nome_sheet_DATA = st.text_input(
-                #     label="📝 Informe o nome da aba (sheet) que contém o banco de dados com os **CÓDIGOS**.", 
+                #     label="ðŸ“ Informe o nome da aba (sheet) que contÃ©m o banco de dados com os **CÃ“DIGOS**.", 
                 #     value="BD_CODIGOS"
                 #     )
                 nome_sheet_DATA = st.selectbox(
@@ -61,12 +77,12 @@ if data_file is not None:
 
         with coluna2:
             with st.container(border=True):
-                # nome_sheet_lista_labels = st.text_input(
-                #     label="📝 Informe o nome da aba (sheet) que contém a **Lista de Labels**.", 
-                #     value="LISTA_LABELS"
+                # nome_sheet_DATA = st.text_input(
+                #     label="📝 Informe o nome da aba (sheet) que contém o banco de dados com os **CÓDIGOS**.", 
+                #     value="BD_CODIGOS"
                 #     )
                 nome_sheet_lista_labels = st.selectbox(
-                    label="📝 Informe o nome da aba (sheet) que contém a **Lista de Labels**.",
+                    label="ðŸ“ Informe o nome da aba (sheet) que contÃ©m a **Lista de Labels**.",
                     options=xls.sheet_names,
                     key="home_nome_sheet_lista_labels"
                 )
@@ -103,7 +119,7 @@ if data_file is not None:
         nome_sheet_lista_labels = st.session_state.get("nome_sheet_lista_labels", "")
         nome_sheet_lista_variaveis = st.session_state.get("nome_sheet_lista_variaveis", "")
 
-        # Validações antes de ler
+        # ValidaÃ§Ãµes antes de ler
         if not nome_sheet_DATA or not nome_sheet_lista_labels or not nome_sheet_lista_variaveis:
             st.warning("Envie (submit) os nomes das abas acima antes de carregar as tabelas.", icon="⚠️")
             st.stop()

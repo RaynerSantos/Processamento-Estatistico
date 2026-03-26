@@ -162,7 +162,7 @@ with tab1:
             df_coletado = Criar_ponderacao.criar_df_coletado()
             st.divider()
             st.write("Visualização da amostra coletada para cada dimensão: ")
-            st.dataframe(df_coletado, hide_index=False, selection_mode=["multi-row", "multi-cell"], use_container_width=True)
+            st.dataframe(df_coletado, hide_index=False, selection_mode=["multi-row", "multi-cell"], width='stretch')
             total_coletado = df_coletado.sum().sum()
             st.write(f"Total da amostra coletada: ", total_coletado)
 
@@ -183,7 +183,7 @@ with tab1:
                                                     default=lista_de_colunas_indice + [st.session_state.nome_pond],
                                                     key="pond_colunas")
                     dados_filtrados = st.session_state.data[colunas]
-                    st.dataframe(dados_filtrados, hide_index=True, selection_mode=["multi-row", "multi-cell"], use_container_width=True)
+                    st.dataframe(dados_filtrados, hide_index=True, selection_mode=["multi-row", "multi-cell"], width='stretch')
                     st.success("Ponderação realizada com sucesso!", icon="✅")
 
 
@@ -489,7 +489,7 @@ with tab2:
                                                 key="pond_rake_colunas"
                                             )
                 dados_filtrados = st.session_state.data[colunas]
-                st.dataframe(dados_filtrados, hide_index=True, selection_mode=["multi-row", "multi-cell"], use_container_width=True)
+                st.dataframe(dados_filtrados, hide_index=True, selection_mode=["multi-row", "multi-cell"], width='stretch')
                 st.success("Ponderação realizada com sucesso!", icon="✅")
 
 

@@ -25,7 +25,7 @@ with tab1:
 
     with st.spinner("Please wait..."):
         with st.expander("📅 Dicionário de variáveis:"):
-            st.dataframe(st.session_state.lista_variaveis, hide_index=True, selection_mode=["multi-row", "multi-cell"], use_container_width=True)
+            st.dataframe(st.session_state.lista_variaveis, hide_index=True, selection_mode=["multi-row", "multi-cell"], width='stretch')
 
     st.write('')
     st.write('')
@@ -111,7 +111,7 @@ with tab1:
         #     freq[["Código", "Label", "Frequência", "%"]], 
         #     hide_index=True, 
         #     column_config={"%": st.column_config.NumberColumn("%", format=f"%.{casas_decimais}f%%")},
-        #     use_container_width=True
+        #     width='stretch'
         #     )
         
         # >>> Colunas formatadas para exibição (pt-BR)
@@ -123,7 +123,7 @@ with tab1:
                 columns={"Frequência_fmt": "Frequência", "%_fmt": "%"}
             ),
             hide_index=True,
-            use_container_width=True
+            width='stretch'
         )
 
 with tab2:
@@ -131,8 +131,13 @@ with tab2:
     st.write('')
 
     with st.spinner("Please wait..."):
-        with st.expander("📅 Dicionário de variáveis:"):
-            st.dataframe(st.session_state.lista_variaveis, hide_index=True, selection_mode=["multi-row", "multi-cell"], use_container_width=True)
+        with st.expander("📅 Dicionário de variáveis **(com Rótulos Editáveis)**:"):
+            lista_variaveis_edited = st.data_editor(
+                st.session_state.lista_variaveis, 
+                disabled=["Coluna"],  # essa coluna não poderá ser editada
+                hide_index=True
+            )
+        st.session_state.lista_variaveis = lista_variaveis_edited
 
     st.write('')
     st.write('')
@@ -158,6 +163,9 @@ st.write("")
 st.write("")
 st.write("")
 st.divider()
+if st.button("Recarregar página", icon="🔄"):
+    st.rerun()
 st.write('')
 st.write('')
-st.image(image="images/Expertise_Marca_VerdeEscuro_mini.jpg")
+st.write('')
+st.image(image="images/Expertise_Marca_VerdeEscuro_mini.jpg") # Expertise_Marca_VerdeEscuro_mini.jpg

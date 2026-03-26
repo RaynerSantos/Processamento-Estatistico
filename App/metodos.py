@@ -123,9 +123,10 @@ def criar_bandeira(data, lista_labels, lista_variaveis, COLUNAS_SELECIONADAS, CO
         codigo_map = {valor: i + 1 for i, valor in enumerate(sorted(data[COL_NAME].unique()))}
         data[COL_NAME] = data[COL_NAME].map(codigo_map)
 
+        # Adicionar a nova coluna com seu respectivo rótulo à lista_variaveis
         lista_variaveis.loc[len(lista_variaveis)] = [COL_NAME, ROTULO]
 
-        return data, lista_labels
+        return data, lista_labels, lista_variaveis
     
 
 # Criar uma função para fazer um recode simples baseado em uma coluna e um mapeamento fornecido
@@ -1635,7 +1636,7 @@ if __name__ == "__main__":
     lista_labels.columns = ['Coluna', 'Codigo', 'Label']
     lista_labels["Coluna"] = lista_labels["Coluna"].ffill().str.strip()
 
-    # data, lista_labels = criar_bandeira(data, lista_labels)
+    # data, lista_labels, lista_variaveis = criar_bandeira(data, lista_labels, lista_variaveis)
 
     # print(data[['SEXO', 'REG_POND', 'SEXO_REG']].head(), "\n")
     # print(data['SEXO_REG'].value_counts(), "\n")

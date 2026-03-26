@@ -1,10 +1,6 @@
 ﻿import pandas as pd
 import numpy as np
 import streamlit as st
-import time
-from io import BytesIO
-from datetime import datetime, date
-from metodos import criar_bandeira, to_excel, mensagem_sucesso
 from auth import login_gate, logout, change_password_gate, open_change_password
 
 st.set_page_config(layout='wide', page_title='Processamento de Dados', 
@@ -119,7 +115,7 @@ if data_file is not None:
         nome_sheet_lista_labels = st.session_state.get("nome_sheet_lista_labels", "")
         nome_sheet_lista_variaveis = st.session_state.get("nome_sheet_lista_variaveis", "")
 
-        # ValidaÃ§Ãµes antes de ler
+        # Validação antes de ler
         if not nome_sheet_DATA or not nome_sheet_lista_labels or not nome_sheet_lista_variaveis:
             st.warning("Envie (submit) os nomes das abas acima antes de carregar as tabelas.", icon="⚠️")
             st.stop()
@@ -166,7 +162,7 @@ with st.spinner("Please wait..."):
                 st.session_state.lista_variaveis, 
                 hide_index=True, 
                 selection_mode=["multi-row", "multi-cell"], 
-                use_container_width=True
+                width='stretch'
                 )
         with st.expander("📋 Colunas"):
             # default_cols = [c for c in st.session_state.data.columns if c != 'POND']
@@ -175,17 +171,17 @@ with st.spinner("Please wait..."):
                                     default=st.session_state.data.columns.tolist(),
                                     key="home_colunas")
         dados_filtrados = st.session_state.data[colunas]
-        st.dataframe(dados_filtrados, hide_index=True, selection_mode=["multi-row", "multi-cell"], use_container_width=True)
+        st.dataframe(dados_filtrados, hide_index=True, selection_mode=["multi-row", "multi-cell"], width='stretch')
 
-        excel_data = to_excel(st.session_state.data, st.session_state.lista_labels, st.session_state.lista_variaveis)
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        st.download_button(
-            label="📥 Baixar arquivo Excel",
-            data=excel_data,
-            file_name=f'Base de dados atualizada - {now}.xlsx',
-            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            on_click=mensagem_sucesso
-        )
+        # excel_data = to_excel(st.session_state.data, st.session_state.lista_labels, st.session_state.lista_variaveis)
+        # now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        # st.download_button(
+        #     label="📥 Baixar arquivo Excel",
+        #     data=excel_data,
+        #     file_name=f'Base de dados atualizada - {now}.xlsx',
+        #     mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        #     on_click=mensagem_sucesso
+        # )
 
 
 st.write('')

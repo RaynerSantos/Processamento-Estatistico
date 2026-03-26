@@ -97,7 +97,7 @@ with tab1:
             st.dataframe(
                 st.session_state.lista_variaveis, hide_index=True, 
                 selection_mode=["multi-row", "multi-cell"], 
-                use_container_width=True
+                width='stretch'
                 )
 
     st.write('')
@@ -307,7 +307,7 @@ with tab1:
                 kwargs["Fecha_100"] = st.session_state.get("processamento_unico_fecha_100", "SIM")
 
             tabela_processada, tabela_processada_front = processar_tabela(**kwargs)
-            st.dataframe(tabela_processada_front, hide_index=False, use_container_width=True)
+            st.dataframe(tabela_processada_front, hide_index=False, width='stretch')
 
             st.write("")
             # Salvar em Excel com formatação
@@ -444,7 +444,7 @@ with tab2:
                 st.session_state.lista_variaveis, 
                 hide_index=True, 
                 selection_mode=["multi-row", "multi-cell"],
-                use_container_width=True                
+                width='stretch'                
                 )
     
         st.write("")

@@ -78,7 +78,7 @@ st.write('')
 
 with st.spinner("Please wait..."):
     with st.expander("📅 Dicionário de variáveis:"):
-        st.dataframe(st.session_state.lista_variaveis, hide_index=True, selection_mode=["multi-row", "multi-cell"], use_container_width=True)
+        st.dataframe(st.session_state.lista_variaveis, hide_index=True, selection_mode=["multi-row", "multi-cell"], width='stretch')
 
 st.write('')
 
@@ -114,24 +114,24 @@ if selected_column:
     
     dataframe_recode_edited = st.data_editor(dataframe_recode, 
                                              num_rows="fixed", 
-                                            #  use_container_width=True, 
                                              key="dataframe_recode_editor", 
                                              hide_index=True,
-                                             use_container_width=True
-                                             )
+                                             width='stretch'
+                                            )
     st.write("")
     st.write("")
 
     nome_bandeira_recode = st.text_input(
-    label="📝 Digite o(s) nome(s) da(s) nova(s) bandeira(s) recodificada(s) utilizando **vírgula e um espaço (, )**",
-    key="recode_nome_bandeira"
-)
+        label="📝 Digite o(s) nome(s) da(s) nova(s) bandeira(s) recodificada(s) utilizando **vírgula e um espaço (, )**",
+        key="recode_nome_bandeira"
+        )
 
     nome_bandeira_recode = [x.strip() for x in nome_bandeira_recode.split(",") if x.strip()]
     for nome in nome_bandeira_recode:
         if nome in st.session_state.data.columns:
             st.error(f"A coluna '{nome}' já existe no DataFrame. Por favor, escolha outro nome.", 
-                    icon="❌")
+                     icon="❌"
+                     )
             
 
     if st.button('Realizar recode', key="btn_recode", icon=":material/done_outline:") and nome_bandeira_recode:
@@ -202,7 +202,7 @@ if selected_column:
                             columns={"Frequência_fmt": "Frequência", "%_fmt": "%"}
                         ),
                         hide_index=True,
-                        use_container_width=True
+                        width='stretch'
                     )
 
 

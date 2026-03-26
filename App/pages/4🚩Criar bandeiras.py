@@ -25,7 +25,10 @@ st.write('')
 
 with st.spinner("Please wait..."):
     with st.expander("📅 Dicionário de variáveis:"):
-        st.dataframe(st.session_state.lista_variaveis, hide_index=True, selection_mode=["multi-row", "multi-cell"], use_container_width=True)
+        st.dataframe(st.session_state.lista_variaveis, 
+                     hide_index=True, 
+                     selection_mode=["multi-row", "multi-cell"], 
+                     width='stretch')
 
 st.write('')
 
@@ -59,12 +62,12 @@ if selected_columns:
                 with coluna1:
                     st.write(f'Labels da coluna **{col}**:')
                     labels_col = st.session_state.lista_labels[st.session_state.lista_labels['Coluna'] == col][['Codigo', 'Label']]
-                    st.dataframe(labels_col, hide_index=True, use_container_width=True)
+                    st.dataframe(labels_col, hide_index=True, width='stretch')
             else:
                 with coluna2:
                     st.write(f'Labels da coluna **{col}**:')
                     labels_col = st.session_state.lista_labels[st.session_state.lista_labels['Coluna'] == col][['Codigo', 'Label']]
-                    st.dataframe(labels_col, hide_index=True, use_container_width=True)
+                    st.dataframe(labels_col, hide_index=True, width='stretch')
 
     nome_bandeira = st.text_input(label="📝 Digite o nome da nova bandeira", 
                                   placeholder="nome da nova bandeira", 
@@ -82,12 +85,16 @@ if selected_columns:
             # lógica para criar a nova bandeira com base nas colunas selecionadas
             if st.button('Criar bandeira', key="btn_criar_bandeira", icon=":material/done_outline:") and selected_columns and nome_bandeira:
                 # Criação de uma nova coluna "Bandeira" com base nas colunas selecionadas
-                data, lista_labels = criar_bandeira(st.session_state.data, 
-                                                    st.session_state.lista_labels,
-                                                    st.session_state.lista_variaveis, 
-                                                    selected_columns, nome_bandeira, ROTULO_BANDEIRA)
+                data, lista_labels, lista_variaveis = criar_bandeira(st.session_state.data, 
+                                                                     st.session_state.lista_labels,
+                                                                     st.session_state.lista_variaveis, 
+                                                                     selected_columns, 
+                                                                     nome_bandeira, 
+                                                                     ROTULO_BANDEIRA
+                                                                 )
                 st.session_state.data = data
                 st.session_state.lista_labels = lista_labels
+                st.session_state.lista_variaveis = lista_variaveis
                 st.session_state.ultima_bandeira = nome_bandeira
                 st.write('')
                 st.success('Bandeira criada com sucesso!', icon="✅")
@@ -102,7 +109,7 @@ if selected_columns:
                         st.dataframe(
                             st.session_state.lista_labels[st.session_state.lista_labels["Coluna"] == ultima][["Codigo", "Label"]],
                             hide_index=True,
-                            use_container_width=True
+                            width='stretch'
                         )
                 with coluna2:
                     freq = st.session_state.data[ultima].value_counts(dropna=False).rename("Frequência").to_frame()
@@ -113,7 +120,7 @@ if selected_columns:
                     freq["Código"] = freq.index
                     st.dataframe(freq[["Código", "Frequência", "%"]], hide_index=True,
                                  column_config={"%": st.column_config.NumberColumn("%", format="percent")},
-                                 use_container_width=True)
+                                 width='stretch')
 
         elif qtd_colunas == 1:
             if st.button('Criar bandeira', key="btn_criar_bandeira_uma_bandeira") and selected_columns and nome_bandeira:
@@ -142,7 +149,7 @@ if selected_columns:
 
                 st.dataframe(freq[["Código", "Label", "Frequência", "%"]], hide_index=True, 
                             column_config={"%": st.column_config.NumberColumn("%", format="percent")},
-                            use_container_width=True)
+                            width='stretch')
 
 st.write('')
 st.divider()

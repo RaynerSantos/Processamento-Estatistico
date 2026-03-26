@@ -93,6 +93,16 @@ def mensagem_sucesso():
     time.sleep(5)
     sucesso.empty()
 
+def mensagem_login_sucesso():
+    sucesso = st.success("Login realizado com sucesso!", icon="✅")
+    time.sleep(1)
+    sucesso.empty()
+
+def mensagem_senha_sucesso():
+    sucesso = st.success("Senha alterada com sucesso!", icon="✅")
+    time.sleep(1)
+    sucesso.empty()
+
 COLUNAS_SELECIONADAS = ['SEXO', 'REG_POND']
 COL_NAME = 'SEXO_REG'
 def criar_bandeira(data, lista_labels, lista_variaveis, COLUNAS_SELECIONADAS, COL_NAME, ROTULO):

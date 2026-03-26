@@ -7,6 +7,7 @@ from urllib.parse import quote_plus
 import pandas as pd
 import secrets
 from datetime import datetime
+from metodos import mensagem_login_sucesso, mensagem_senha_sucesso
 
 @st.cache_resource
 def get_connection():
@@ -103,7 +104,11 @@ def change_password_gate():
     with st.form("form_alterar_senha", clear_on_submit=False):
         nova_senha = st.text_input("Digite a nova senha", type="password")
         confirmar_senha = st.text_input("Digite a nova senha novamente", type="password")
-        submitted_alterar_senha = st.form_submit_button("Alterar senha", icon=":material/done_outline:")
+        submitted_alterar_senha = st.form_submit_button(
+            "Alterar senha", 
+            icon=":material/done_outline:", 
+            on_click=mensagem_senha_sucesso
+        )
 
     col1, col2 = st.columns([2, 8])
     with col1:
@@ -172,7 +177,7 @@ def login_gate():
     with st.form("form_login", clear_on_submit=False):
         login = st.text_input("Login")
         password = st.text_input("Senha", type="password")
-        submitted = st.form_submit_button("Entrar")
+        submitted = st.form_submit_button("Entrar", on_click=mensagem_login_sucesso)
 
     if submitted:
         login = login.strip()

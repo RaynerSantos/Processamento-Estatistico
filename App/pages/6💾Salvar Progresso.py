@@ -23,21 +23,21 @@ st.write('')
 with st.spinner("Please wait..."):
     if "data" in st.session_state and "lista_labels" in st.session_state and "lista_variaveis" in st.session_state:
         st.write('')
-        with st.expander("📅 Dicionário de variáveis:"):
-            st.dataframe(
-                st.session_state.lista_variaveis, 
-                hide_index=True, 
-                selection_mode=["multi-row", "multi-cell"], 
-                width='stretch'
-                )
-        with st.expander("📋 Colunas"):
-            # default_cols = [c for c in st.session_state.data.columns if c != 'POND']
-            colunas = st.multiselect('Selecione as colunas que deseja visualizar:', 
-                                    st.session_state.data.columns.tolist(), 
-                                    default=st.session_state.data.columns.tolist(),
-                                    key="home_colunas")
-        dados_filtrados = st.session_state.data[colunas]
-        st.dataframe(dados_filtrados, hide_index=True, selection_mode=["multi-row", "multi-cell"], width='stretch')
+        # with st.expander("📅 Dicionário de variáveis:"):
+        #     st.dataframe(
+        #         st.session_state.lista_variaveis, 
+        #         hide_index=True, 
+        #         selection_mode=["multi-row", "multi-cell"], 
+        #         width='stretch'
+        #         )
+        # with st.expander("📋 Colunas"):
+        #     # default_cols = [c for c in st.session_state.data.columns if c != 'POND']
+        #     colunas = st.multiselect('Selecione as colunas que deseja visualizar:', 
+        #                             st.session_state.data.columns.tolist(), 
+        #                             default=st.session_state.data.columns.tolist(),
+        #                             key="home_colunas")
+        # dados_filtrados = st.session_state.data[colunas]
+        # st.dataframe(dados_filtrados, hide_index=True, selection_mode=["multi-row", "multi-cell"], width='stretch')
 
         excel_data = to_excel(st.session_state.data, st.session_state.lista_labels, st.session_state.lista_variaveis)
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")

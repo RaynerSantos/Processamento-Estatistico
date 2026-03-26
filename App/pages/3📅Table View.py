@@ -137,7 +137,9 @@ with tab2:
                 disabled=["Coluna"],  # essa coluna não poderá ser editada
                 hide_index=True
             )
-        st.session_state.lista_variaveis = lista_variaveis_edited
+            st.write("")
+            if st.button('Salvar alterações', key="btn_lista_variaveis_edited", icon=":material/done_outline:"):
+                st.session_state.lista_variaveis = lista_variaveis_edited
 
     st.write('')
     st.write('')
@@ -147,17 +149,16 @@ with tab2:
                                     colunas, 
                                     key="deletar_coluna_selected_columns_trash")
     
-    if selected_columns_trash:
-        if st.button("Deletar", key="deletar_colunas", icon="🗑️"):
-            colunas_desejadas = [col for col in colunas if col not in selected_columns_trash]
-            st.session_state.data = st.session_state.data[colunas_desejadas]
+    # if selected_columns_trash:
+    if st.button("Deletar", key="deletar_colunas", icon="🗑️"):
+        colunas_desejadas = [col for col in colunas if col not in selected_columns_trash]
+        st.session_state.data = st.session_state.data[colunas_desejadas]
 
-            for col in selected_columns_trash:
-                print(f"\n{col}")
-                st.session_state.lista_labels = st.session_state.lista_labels.loc[st.session_state.lista_labels["Coluna"] != col]
-                st.session_state.lista_variaveis = st.session_state.lista_variaveis.loc[st.session_state.lista_variaveis["Coluna"] != col]
+        for col in selected_columns_trash:
+            st.session_state.lista_labels = st.session_state.lista_labels.loc[st.session_state.lista_labels["Coluna"] != col]
+            st.session_state.lista_variaveis = st.session_state.lista_variaveis.loc[st.session_state.lista_variaveis["Coluna"] != col]
 
-            st.success("Colunas removidas com sucesso!", icon="✅")
+        st.success("Colunas removidas com sucesso!", icon="✅")
     
 st.write("")
 st.write("")

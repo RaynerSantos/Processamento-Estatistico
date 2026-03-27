@@ -60,47 +60,47 @@ if all(k in st.session_state for k in ["data", "lista_labels", "lista_variaveis"
     st.write("")
     st.write("")
 
-    # 3) Pré-visualizações leves e opcionais
-    with st.expander("📅 Dicionário de variáveis"):
-        st.dataframe(
-            lista_variaveis,
-            hide_index=True,
-            width="stretch"
-        )
+    # # 3) Pré-visualizações leves e opcionais
+    # with st.expander("📅 Dicionário de variáveis"):
+    #     st.dataframe(
+    #         lista_variaveis,
+    #         hide_index=True,
+    #         width="stretch"
+    #     )
 
-    with st.expander("👀 Pré-visualizar base de dados"):
-        with st.form("preview_form"):
-            colunas_disponiveis = data.columns.tolist()
-            default_cols = colunas_disponiveis[:10]  # evita carregar tudo de cara
+    # with st.expander("👀 Pré-visualizar base de dados"):
+    #     with st.form("preview_form"):
+    #         colunas_disponiveis = data.columns.tolist()
+    #         default_cols = colunas_disponiveis[:10]  # evita carregar tudo de cara
 
-            colunas = st.multiselect(
-                "Selecione as colunas que deseja visualizar:",
-                colunas_disponiveis,
-                default=default_cols,
-                key="download_preview_cols"
-            )
+    #         colunas = st.multiselect(
+    #             "Selecione as colunas que deseja visualizar:",
+    #             colunas_disponiveis,
+    #             default=default_cols,
+    #             key="download_preview_cols"
+    #         )
 
-            qtd_linhas = st.number_input(
-                "Quantidade de linhas para pré-visualizar:",
-                min_value=10,
-                max_value=5000,
-                value=200,
-                step=50,
-                key="download_preview_rows"
-            )
+    #         qtd_linhas = st.number_input(
+    #             "Quantidade de linhas para pré-visualizar:",
+    #             min_value=10,
+    #             max_value=5000,
+    #             value=200,
+    #             step=50,
+    #             key="download_preview_rows"
+    #         )
 
-            ver_preview = st.form_submit_button("Atualizar visualização")
+    #         ver_preview = st.form_submit_button("Atualizar visualização")
 
-        # mostra preview mesmo após reruns, sem precisar clicar toda hora
-        cols_escolhidas = st.session_state.get("download_preview_cols", default_cols)
-        linhas_escolhidas = st.session_state.get("download_preview_rows", 200)
+    #     # mostra preview mesmo após reruns, sem precisar clicar toda hora
+    #     cols_escolhidas = st.session_state.get("download_preview_cols", default_cols)
+    #     linhas_escolhidas = st.session_state.get("download_preview_rows", 200)
 
-        if cols_escolhidas:
-            st.dataframe(
-                data[cols_escolhidas].head(linhas_escolhidas),
-                hide_index=True,
-                width="stretch"
-            )
+    #     if cols_escolhidas:
+    #         st.dataframe(
+    #             data[cols_escolhidas].head(linhas_escolhidas),
+    #             hide_index=True,
+    #             width="stretch"
+    #         )
 
 
 st.write('')

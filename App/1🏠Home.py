@@ -45,7 +45,7 @@ def obter_abas_excel(file_bytes: bytes):
     return xls.sheet_names
 
 
-@st.cache_data(show_spinner="Carregando e tratando planilhas...")
+@st.cache_data(show_spinner="Carregando arquivos...")
 def carregar_planilhas(
     file_bytes: bytes,
     nome_sheet_data: str,

@@ -6,6 +6,21 @@ from io import BytesIO
 from datetime import datetime, date
 from metodos import criar_bandeira
 
+def limpar_pagina_criar_bandeiras():
+    chaves_para_limpar = [
+        "criar_bandeira_selected_columns",
+        "criar_nome_bandeira",
+        "rotulo_nome_bandeira",
+        "ultima_bandeira"
+    ]
+
+    for chave in chaves_para_limpar:
+        st.session_state.pop(chave, None)
+
+    # se quiser também zerar a lista de bandeiras criadas nesta sessão:
+    st.session_state.bandeiras_criadas = []
+
+
 st.set_page_config(layout='wide', page_title='Processamento de dados', 
                    page_icon='images/Logo_Expertise.png')
 
@@ -33,42 +48,53 @@ with st.spinner("Please wait..."):
 st.write('')
 
 colunas = st.session_state.data.columns.tolist()
-selected_columns = st.multiselect('Selecione as colunas que serão utilizadas para criar a nova bandeira:', 
-                                  colunas, 
-                                  key="criar_bandeira_selected_columns")
+col1, col2 = st.columns([1.5, 1], border=True, gap='small', vertical_alignment='top', width='stretch')
+with col1:
+    selected_columns = st.multiselect('Selecione as colunas que serão utilizadas para criar a nova bandeira:', 
+                                    colunas, 
+                                    key="criar_bandeira_selected_columns")
 
-if selected_columns:
-    qtd_colunas = len(selected_columns)
-    if qtd_colunas > 2:
-        st.warning("Você pode selecionar no máximo 2 colunas para criar a nova bandeira.", icon="⚠️")
-    elif qtd_colunas == 1:
-        # st.info("Por favor, selecione 2 colunas para criar uma bandeira combinada.", icon="ℹ️")
+
+qtd_colunas = len(selected_columns)
+if qtd_colunas > 2:
+    st.warning("Você pode selecionar no máximo 2 colunas para criar a nova bandeira.", icon="⚠️")
+elif qtd_colunas == 1:
+    # st.info("Por favor, selecione 2 colunas para criar uma bandeira combinada.", icon="ℹ️")
+    with col2:
+        st.caption("Informação da coluna selecionada:")
         rotulo = st.session_state.lista_variaveis.loc[st.session_state.lista_variaveis["Coluna"] == selected_columns[0], "Rotulo"].iloc[0]
         st.write(f'**{selected_columns[0]}**: {rotulo}')
-        st.success("Uma coluna selecionada com sucesso!", icon="✅")
-        st.write('')
-        
-    elif qtd_colunas == 2:
+    st.success("Uma coluna selecionada com sucesso!", icon="✅")
+    st.write('')
+    
+elif qtd_colunas == 2:
+    with col2:
+        st.caption("Informação das colunas selecionadas:")
         rotulo = st.session_state.lista_variaveis.loc[st.session_state.lista_variaveis["Coluna"] == selected_columns[0], "Rotulo"].iloc[0]
         st.write(f'**{selected_columns[0]}**: {rotulo}')
         rotulo = st.session_state.lista_variaveis.loc[st.session_state.lista_variaveis["Coluna"] == selected_columns[1], "Rotulo"].iloc[0]
         st.write(f'**{selected_columns[1]}**: {rotulo}')
-        st.success("Duas colunas selecionadas com sucesso!", icon="✅")
-        st.write("")
-        st.write("")
-        coluna1, coluna2 = st.columns(2)
-        for i, col in enumerate(selected_columns):
-            if i % 2 == 0:
-                with coluna1:
-                    st.write(f'Labels da coluna **{col}**:')
-                    labels_col = st.session_state.lista_labels[st.session_state.lista_labels['Coluna'] == col][['Codigo', 'Label']]
-                    st.dataframe(labels_col, hide_index=True, width='stretch')
-            else:
-                with coluna2:
-                    st.write(f'Labels da coluna **{col}**:')
-                    labels_col = st.session_state.lista_labels[st.session_state.lista_labels['Coluna'] == col][['Codigo', 'Label']]
-                    st.dataframe(labels_col, hide_index=True, width='stretch')
+    st.success("Duas colunas selecionadas com sucesso!", icon="✅")
+    st.write("")
+    st.write("")
+    coluna1, coluna2 = st.columns(2)
+    for i, col in enumerate(selected_columns):
+        if i % 2 == 0:
+            with coluna1:
+                st.write(f'Labels da coluna **{col}**:')
+                labels_col = st.session_state.lista_labels[st.session_state.lista_labels['Coluna'] == col][['Codigo', 'Label']]
+                st.dataframe(labels_col, hide_index=True, width='stretch')
+        else:
+            with coluna2:
+                st.write(f'Labels da coluna **{col}**:')
+                labels_col = st.session_state.lista_labels[st.session_state.lista_labels['Coluna'] == col][['Codigo', 'Label']]
+                st.dataframe(labels_col, hide_index=True, width='stretch')
 
+else:
+    with col2:
+        st.caption("Informação das colunas selecionadas:")
+
+if selected_columns:
     nome_bandeira = st.text_input(label="📝 Digite o nome da nova bandeira", 
                                   placeholder="nome da nova bandeira", 
                                   key="criar_nome_bandeira")
@@ -154,6 +180,7 @@ if selected_columns:
 st.write('')
 st.divider()
 if st.button("Recarregar página", icon="🔄"):
+    limpar_pagina_criar_bandeiras()
     st.rerun()
 st.write('')
 st.write('')

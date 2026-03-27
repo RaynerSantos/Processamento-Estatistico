@@ -5,6 +5,15 @@ import time
 from io import BytesIO
 from datetime import datetime, date
 
+def limpar_pagina_table_view_delete():
+    chaves_para_limpar = [
+        "deletar_coluna_selected_columns_trash"
+    ]
+
+    for chave in chaves_para_limpar:
+        st.session_state.pop(chave, None)
+
+
 st.set_page_config(layout='wide', page_title='Processamento de dados', 
                    page_icon='images/Logo_Expertise.png')
 
@@ -140,6 +149,7 @@ with tab2:
             st.write("")
             if st.button('Salvar alterações', key="btn_lista_variaveis_edited", icon=":material/done_outline:"):
                 st.session_state.lista_variaveis = lista_variaveis_edited
+                st.success("Edição dos rótulos feita com sucesso!", icon="✅")
 
     st.write('')
     st.write('')
@@ -165,6 +175,7 @@ st.write("")
 st.write("")
 st.divider()
 if st.button("Recarregar página", icon="🔄"):
+    limpar_pagina_table_view_delete()
     st.rerun()
 st.write('')
 st.write('')

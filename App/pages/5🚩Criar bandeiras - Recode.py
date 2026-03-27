@@ -61,6 +61,21 @@ def fmt_pct_ptbr(x, casas=2):
     s = s.replace(",", "X").replace(".", ",").replace("X", ".")
     return s + "%"
 
+def limpar_estado_pagina_recode():
+    chaves_para_limpar = [
+        "recode_selected_column",
+        "dataframe_recode_editor",
+        "recode_nome_bandeira",
+        "ultima_selecao_recode",
+        "ultima_bandeira",
+    ]
+
+    for chave in chaves_para_limpar:
+        st.session_state.pop(chave, None)
+
+    # se quiser também zerar a lista de bandeiras criadas nesta sessão:
+    st.session_state.bandeiras_criadas = []
+
 
 st.set_page_config(layout='wide', page_title='Processamento de dados',
                    page_icon='images/Logo_Expertise.png')
@@ -82,23 +97,29 @@ with st.spinner("Please wait..."):
 
 st.write('')
 
-colunas = st.session_state.data.columns.tolist()
-selected_column = st.multiselect('Selecione a(s) coluna(s) que será(ão) recodificada(s):', colunas, key="recode_selected_column")
-
-sufixo = "_xx"
-
 if "recode_nome_bandeira" not in st.session_state:
     st.session_state.recode_nome_bandeira = ""
 
 if "ultima_selecao_recode" not in st.session_state:
     st.session_state.ultima_selecao_recode = []
 
-if selected_column:
-    for col in selected_column:
-        rotulo = st.session_state.lista_variaveis.loc[st.session_state.lista_variaveis["Coluna"] == col, "Rotulo"].iloc[0]
-        st.write(f"**{col}**: {rotulo}")
+sufixo = "_xx"
 
-    nomes_sugeridos = ", ".join(f"{col}{sufixo}" for col in selected_column)
+col1, col2 = st.columns([1.5, 1], border=True, gap='small', vertical_alignment='top', width='stretch')
+colunas = st.session_state.data.columns.tolist()
+with col1:
+    selected_column = st.multiselect('Selecione a(s) coluna(s) que será(ão) recodificada(s):', colunas, key="recode_selected_column")
+
+with col2:
+    st.caption("Informação da(s) coluna(s) selecionada(s):")
+
+if selected_column:
+    with col2:
+        for col in selected_column:
+            rotulo = st.session_state.lista_variaveis.loc[st.session_state.lista_variaveis["Coluna"] == col, "Rotulo"].iloc[0]
+            st.write(f"**{col}**: {rotulo}")
+
+        nomes_sugeridos = ", ".join(f"{col}{sufixo}" for col in selected_column)
 
     # atualiza o text_input somente quando a seleção mudar
     if selected_column != st.session_state.ultima_selecao_recode:
@@ -209,6 +230,7 @@ if selected_column:
 st.write('')
 st.divider()
 if st.button("Recarregar página", icon="🔄"):
+    limpar_estado_pagina_recode()
     st.rerun()
 st.write('')
 st.write('')

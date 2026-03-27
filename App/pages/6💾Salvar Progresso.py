@@ -52,9 +52,6 @@ with st.spinner("Please wait..."):
 
 st.write('')
 st.divider()
-if st.button("Recarregar página", icon="🔄"):
-    st.rerun()
-st.write('')
 st.write('')
 st.write('')
 st.image(image="images/Expertise_Marca_VerdeEscuro_mini.jpg") # Expertise_Marca_VerdeEscuro_mini.jpg

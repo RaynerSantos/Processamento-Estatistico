@@ -1,5 +1,3 @@
-from cProfile import label
-
 import pandas as pd
 import numpy as np
 from io import BytesIO
@@ -643,7 +641,6 @@ def processar_tabela(bd_dados: pd.DataFrame, lista_labels: pd.DataFrame,
 
     elif TipoTabela == 'MULTIPLA':
         if NS_NR == 'NAO':
-            df_NS_NR = df.copy()
             
             Valores_Agrup = Valores_Agrup.split(sep=', ')
             # Converte as colunas de motivos para string, preservando NaN
@@ -675,7 +672,7 @@ def processar_tabela(bd_dados: pd.DataFrame, lista_labels: pd.DataFrame,
             df_unico = df_limpo.drop_duplicates(subset=Var_ID, keep='first')
                     
             # Bancos para realizar o cálculo do Índice de Multiplicidade (incluir NS/NR)
-            bd_motivo_NS_NR = pd.melt(df_NS_NR, 
+            bd_motivo_NS_NR = pd.melt(df, 
                         id_vars=Colunas + [Var_Pond] + [Var_ID],
                         value_vars=Valores_Agrup, 
                         var_name='Valores', 
@@ -1031,6 +1028,7 @@ def processar_tabela(bd_dados: pd.DataFrame, lista_labels: pd.DataFrame,
 ######################################################################
 
 def processamento(data, bd_processamento, lista_labels):
+    inicio = time.perf_counter()
 
     # Função para pegar as informações das labels que não deverão ser contabilizadas 
     def labels_nao_contabilizadas(TipoTabela, NS_NR, Var_linha, Valores_Agrup, lista_labels):
@@ -1040,19 +1038,15 @@ def processamento(data, bd_processamento, lista_labels):
         else:
             col_linha = Var_linha
 
-        print("\nNS_NR: ", NS_NR, "\n")
         NS_NR_codigo = []
         if isinstance(NS_NR, str):
             NS_NR = NS_NR.split(", ")
             for label in NS_NR:
-                print("label in NS_NR: ", label)
                 if label in lista_labels.loc[lista_labels["Coluna"] == col_linha, "Label"].tolist():
                     codigo_NS_NR = lista_labels.loc[(lista_labels["Coluna"] == col_linha) & (lista_labels["Label"] == label), "Codigo"].iloc[0]
-                    print("\ncodigo_NS_NR: ", codigo_NS_NR)
                     NS_NR_codigo.append(codigo_NS_NR)
 
         # Criando a lista de códigos da Var_Linha que realmente serão utilizados para processar a tabela
-        print("\nNS_NR_codigo: ", NS_NR_codigo)
         if len(NS_NR_codigo) != 0:
             cod_var_linha = (
                 lista_labels.loc[(lista_labels["Coluna"] == col_linha), "Codigo"]
@@ -1083,7 +1077,6 @@ def processamento(data, bd_processamento, lista_labels):
 
                 label_var_linha_set = list(dict.fromkeys(labels_var_linha_set_multipla))
 
-                print("\n\nlabels_var_linha_set_multipla:\n", label_var_linha_set, "\n\n")
             else:
                 label_var_linha_set = lista_labels.loc[(lista_labels["Coluna"] == Var_linha), "Label"].dropna().tolist()
 
@@ -1092,26 +1085,15 @@ def processamento(data, bd_processamento, lista_labels):
 
     # Função para aplicar a classificação do nps
     def classificar_nps(valor):
-        if np.isnan(valor):
+        if pd.isna(valor):
             return np.nan
-        elif valor >= 9:
+        elif int(valor) >= 9:
             return 'Promotor'
-        elif valor >= 7:
+        elif int(valor) >= 7:
             return 'Neutro'
         else:
             return 'Detrator'
-        
-    # Função para aplicar a classificação para a variável satisfação
-    def classificar_satis(valor):
-        if np.isnan(valor):
-            return np.nan
-        elif valor >= 8:
-            return 'Satisfeito'
-        elif valor >= 6:
-            return 'Neutro'
-        else:
-            return 'Insatisfeito'
-        
+             
 
     # Função para criar os índices corretos e ordenados das tabelas (esse novo índice entrará na função stat_test())
     def ordenar_valores(variavel, label_var_linha_set):
@@ -1133,67 +1115,45 @@ def processamento(data, bd_processamento, lista_labels):
         
     # Função para realizar o agrupamento
     def funcao_agrupamento(variavel, BTB, TTB):
-        nova_var = []
-        for v in variavel:
-            # pega NaN e também pd.NA
-            if pd.isna(v):
-                nova_var.append(np.nan)
-                continue
+        s = pd.to_numeric(variavel, errors='coerce')
 
-            # garante que dá pra comparar com listas de inteiros
-            try:
-                iv = int(v)
-            except (TypeError, ValueError):
-                nova_var.append(np.nan)
-                continue
-
-            if iv in BTB:
-                nova_var.append("BTB")
-            elif iv in TTB:
-                nova_var.append("TTB")
-            else:
-                nova_var.append("Neutro")
-
-        return nova_var
+        return pd.Series(
+            np.select(
+                [s.isin(BTB), s.isin(TTB), s.notna()],
+                ['BTB', 'TTB', 'Neutro'],
+                default=None
+            ),
+            index=variavel.index,
+            dtype='object'
+        )
 
     todas_tabelas_gerais = []
     todos_resultados_teste = []
-    for line in range(len(bd_processamento)):
-        i = 0
-        TipoTabela = bd_processamento.iloc[line, i]
-        i+=1
-        Colunas = bd_processamento.iloc[line, i]
-        i+=1
-        Cabecalho = bd_processamento.iloc[line, i]
-        i+=1
-        Var_linha = bd_processamento.iloc[line, i]
-        i+=1
-        NS_NR = bd_processamento.iloc[line, i]
-        i+=1
-        valores_BTB = bd_processamento.iloc[line, i]
-        i+=1
-        valores_TTB = bd_processamento.iloc[line, i]
-        i+=1
-        Valores_Agrup = bd_processamento.iloc[line, i]
-        i+=1
-        Fecha_100 = bd_processamento.iloc[line, i]
-        i+=1
-        Var_ID = bd_processamento.iloc[line, i]
-        i+=1
-        Var_Pond = bd_processamento.iloc[line, i]
-        i+=1
-        Titulo = bd_processamento.iloc[line, i]
+    for (TipoTabela, Colunas, Cabecalho, Var_linha, NS_NR, valores_BTB, valores_TTB, 
+         Valores_Agrup, Fecha_100, Var_ID, Var_Pond, Titulo) in bd_processamento.itertuples(index=False, name=None):
 
-        df = data.copy()
+        # Utilizar somente as colunas/variáveis necessárias para o processamento
+        colunas_proc = [x.strip() for x in Colunas.split(",") if x.strip()]
+
+        valores_agrup_lista = []
+        if TipoTabela == 'MULTIPLA':
+            valores_agrup_lista = [x.strip() for x in Valores_Agrup.split(",") if x.strip()]
+        else:
+            valores_agrup_lista = [Var_linha]
+
+        cols_necessarias = list(dict.fromkeys(
+            colunas_proc + [Var_ID, Var_Pond] + valores_agrup_lista
+        ))
+
+        df = data[cols_necessarias].copy()
 
         ########################################################################
         #===== Etapas de ETL para as colunas principais serem utilizadas =====#
         ########################################################################
 
-        print("\n#", "="*100, "#")
-        print(f'\n#===== VAR_LINHA =====#\n{Var_linha}\n')
+        print(f'\n#===== VARIÁVEL SENDO PROCESSADA:  {Var_linha} =====#')
         # Variáveis para as colunas da tabela (bandeiras)
-        Colunas = Colunas.split(sep=', ')
+        Colunas = [x.strip() for x in Colunas.split(",") if x.strip()]
         dict_ord_labels = {}
         for col in Colunas:
             if col not in df.columns:
@@ -1201,90 +1161,68 @@ def processamento(data, bd_processamento, lista_labels):
             else:
                 df[col], ord_labels = ordenar_labels(df=data, lista_labels=lista_labels, Variavel=col)
                 dict_ord_labels[col] = ord_labels
-                print(f"Coluna ordenada: {df[col].unique()}")
 
         label_var_linha_set, NS_NR_codigo = labels_nao_contabilizadas(TipoTabela, NS_NR, Var_linha, Valores_Agrup, lista_labels)
-        print("\nlabel_var_linha_set: ", label_var_linha_set, "\n")
 
         # Transformação na variável para a linha da tabela
         if TipoTabela == 'SIMPLES':
             if NS_NR_codigo:
-                for codigo in NS_NR_codigo:
-                    df[Var_linha] = df[Var_linha].replace(codigo, np.nan)
+                df[Var_linha] = df[Var_linha].mask(df[Var_linha].isin(NS_NR_codigo))
                 df[Var_linha], ord_labels = ordenar_labels(df=data, lista_labels=lista_labels, Variavel=Var_linha)
-                # df[Var_linha] = pd.Categorical(df[Var_linha], categories=df[Var_linha][pd.notna(df[Var_linha])].unique(), ordered=True)
+
             else:
                 df[Var_linha], ord_labels = ordenar_labels(df=data, lista_labels=lista_labels, Variavel=Var_linha)
-                # df[Var_linha] = pd.Categorical(df[Var_linha], categories=df[Var_linha][pd.notna(df[Var_linha])].unique(), ordered=True)
             
         elif (TipoTabela == 'NPS') | (TipoTabela == 'IPA_10'):
             if NS_NR_codigo:
-                for codigo in NS_NR_codigo:
-                    df[Var_linha] = df[Var_linha].replace(codigo, np.nan)
-                # df[Var_linha] = df[Var_linha].replace('NS/NR', np.nan)
-                # df[Var_linha] = df[Var_linha].replace('ns/nr', np.nan)
-                # df[Var_linha] = df[Var_linha].replace('90', np.nan)
-                # df[Var_linha] = df[Var_linha].replace('99', np.nan)
-                # df[Var_linha] = df[Var_linha].replace('999', np.nan)
-                # df[Var_linha] = df[Var_linha].replace('9999', np.nan)
-                # df[Var_linha] = df[Var_linha].replace(90, np.nan)
-                # df[Var_linha] = df[Var_linha].replace(99, np.nan)
-                # df[Var_linha] = df[Var_linha].replace(999, np.nan)
-                # df[Var_linha] = df[Var_linha].replace(9999, np.nan)
+                df[Var_linha] = df[Var_linha].mask(df[Var_linha].isin(NS_NR_codigo))
+
                 df[Var_linha] = pd.to_numeric(df[Var_linha], errors='coerce', downcast='integer')
                 df[Var_linha] = pd.Categorical(df[Var_linha], categories=ordenar_valores(df[Var_linha], label_var_linha_set), ordered=True)
-                print("\nVerificar o índice da Var_Linha para o NPS:\n", df[Var_linha].value_counts())
 
                 if TipoTabela == 'NPS':
                     df['var_agrupada'] = df[Var_linha].apply(classificar_nps)
 
                 elif TipoTabela == 'IPA_10':
-                    valores_BTB = [int(v) for v in valores_BTB.split(sep=', ')]
-                    valores_TTB = [int(v) for v in valores_TTB.split(sep=', ')]
+                    # valores_BTB = [int(v) for v in valores_BTB.split(sep=', ')]
+                    # valores_TTB = [int(v) for v in valores_TTB.split(sep=', ')]
+                    valores_BTB = set(map(int, valores_BTB.split(', ')))
+                    valores_TTB = set(map(int, valores_TTB.split(', ')))
                     df['var_agrupada'] = funcao_agrupamento(df[Var_linha], valores_BTB, valores_TTB)
 
             else:
                 df[Var_linha] = pd.to_numeric(df[Var_linha], errors='coerce', downcast='integer')
                 df[Var_linha] = pd.Categorical(df[Var_linha], categories=ordenar_valores(df[Var_linha], label_var_linha_set), ordered=True)
-
+                
                 if TipoTabela == 'NPS':
                     df['var_agrupada'] = df[Var_linha].apply(classificar_nps)
 
                 elif TipoTabela == 'IPA_10':
-                    valores_BTB = [int(v) for v in valores_BTB.split(sep=', ')]
-                    valores_TTB = [int(v) for v in valores_TTB.split(sep=', ')]
+                    # valores_BTB = [int(v) for v in valores_BTB.split(sep=', ')]
+                    # valores_TTB = [int(v) for v in valores_TTB.split(sep=', ')]
+                    valores_BTB = set(map(int, valores_BTB.split(', ')))
+                    valores_TTB = set(map(int, valores_TTB.split(', ')))
                     df['var_agrupada'] = funcao_agrupamento(df[Var_linha], valores_BTB, valores_TTB)
             
         elif TipoTabela == 'IPA_5':
+            # valores_BTB = [int(v) for v in valores_BTB.split(sep=', ')]
+            # valores_TTB = [int(v) for v in valores_TTB.split(sep=', ')]
+            valores_BTB = set(map(int, valores_BTB.split(', ')))
+            valores_TTB = set(map(int, valores_TTB.split(', ')))
+
             if NS_NR_codigo:
-                for codigo in NS_NR_codigo:
-                    df[Var_linha] = df[Var_linha].replace(codigo, np.nan)
-                # df[Var_linha] = df[Var_linha].replace('NS/NR', np.nan)
-                # df[Var_linha] = df[Var_linha].replace('ns/nr', np.nan)
-                # df[Var_linha] = df[Var_linha].replace('90', np.nan)
-                # df[Var_linha] = df[Var_linha].replace('99', np.nan)
-                # df[Var_linha] = df[Var_linha].replace('999', np.nan)
-                # df[Var_linha] = df[Var_linha].replace('9999', np.nan)
-                # df[Var_linha] = df[Var_linha].replace(90, np.nan)
-                # df[Var_linha] = df[Var_linha].replace(99, np.nan)
-                # df[Var_linha] = df[Var_linha].replace(999, np.nan)
-                # df[Var_linha] = df[Var_linha].replace(9999, np.nan)
-                valores_BTB = [int(v) for v in valores_BTB.split(sep=', ')]
-                valores_TTB = [int(v) for v in valores_TTB.split(sep=', ')]
+                df[Var_linha] = df[Var_linha].mask(df[Var_linha].isin(NS_NR_codigo))
                 df['var_agrupada'] = funcao_agrupamento(df[Var_linha], valores_BTB, valores_TTB)
                 df['var_agrupada'] = pd.Categorical(df['var_agrupada'], categories=['BTB', 'Neutro', 'TTB'], ordered=True)
                 df[Var_linha], ord_labels = ordenar_labels(df=data, lista_labels=lista_labels, Variavel=Var_linha)
-                # df[Var_linha] = pd.Categorical(df[Var_linha], categories=Valores_Agrup, ordered=True)
+
             else:
-                valores_BTB = [int(v) for v in valores_BTB.split(sep=', ')]
-                valores_TTB = [int(v) for v in valores_TTB.split(sep=', ')]
                 df['var_agrupada'] = funcao_agrupamento(df[Var_linha], valores_BTB, valores_TTB)
                 df['var_agrupada'] = pd.Categorical(df['var_agrupada'], categories=['BTB', 'Neutro', 'TTB'], ordered=True)
                 df[Var_linha], ord_labels = ordenar_labels(df=data, lista_labels=lista_labels, Variavel=Var_linha)
-                # df[Var_linha] = pd.Categorical(df[Var_linha], categories=Valores_Agrup, ordered=True)
 
         elif TipoTabela == 'MULTIPLA':
-            Valores_Agrup = Valores_Agrup.split(sep=', ')
+            Valores_Agrup = [x.strip() for x in Valores_Agrup.split(",") if x.strip()]
             bd_motivo = pd.melt(df, 
                         id_vars=Colunas + [Var_Pond] + [Var_ID],
                         value_vars=Valores_Agrup, 
@@ -1292,31 +1230,17 @@ def processamento(data, bd_processamento, lista_labels):
                         value_name=Var_linha)
             
             if NS_NR_codigo:
-                df_NS_NR = df.copy()
                 
-                for codigo in NS_NR_codigo:
-                    bd_motivo[Var_linha] = bd_motivo[Var_linha].replace(codigo, np.nan)
-                # bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('90', np.nan)
-                # bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('99', np.nan)
-                # bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('999', np.nan)
-                # bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('9999', np.nan)
-                # bd_motivo[Var_linha] = bd_motivo[Var_linha].replace(90, np.nan)
-                # bd_motivo[Var_linha] = bd_motivo[Var_linha].replace(99, np.nan)
-                # bd_motivo[Var_linha] = bd_motivo[Var_linha].replace(999, np.nan)
-                # bd_motivo[Var_linha] = bd_motivo[Var_linha].replace(9999, np.nan)
+                bd_motivo[Var_linha] = bd_motivo[Var_linha].mask(bd_motivo[Var_linha].isin(NS_NR_codigo))
                 bd_motivo = bd_motivo.dropna(subset=[Var_linha])
                 bd_motivo = ordenar_labels_multipla(df=bd_motivo, lista_labels=lista_labels, Variavel=Var_linha, 
                                                     Var_Valores_Agrup=Valores_Agrup[0])
-                # bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('NS/NR', np.nan)
-                # bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('ns/nr', np.nan)
-                # bd_motivo[Var_linha] = pd.Categorical(bd_motivo[Var_linha], 
-                #                                     categories=ordenar_valores(bd_motivo[Var_linha]), ordered=True)  
                 
                 df_limpo = bd_motivo.dropna(subset=[Var_linha])
                 df_unico = df_limpo.drop_duplicates(subset=Var_ID, keep='first')
                         
                 # Bancos para realizar o cálculo do Índice de Multiplicidade (incluir NS/NR)
-                bd_motivo_NS_NR = pd.melt(df_NS_NR, 
+                bd_motivo_NS_NR = pd.melt(df, 
                             id_vars=Colunas + [Var_Pond] + [Var_ID],
                             value_vars=Valores_Agrup, 
                             var_name='Valores', 
@@ -1324,8 +1248,6 @@ def processamento(data, bd_processamento, lista_labels):
                 bd_motivo_NS_NR = bd_motivo_NS_NR.dropna(subset=[Var_linha])
                 bd_motivo_NS_NR = ordenar_labels_multipla(df=bd_motivo_NS_NR, lista_labels=lista_labels, Variavel=Var_linha, 
                                                           Var_Valores_Agrup=Valores_Agrup[0])
-                # bd_motivo_NS_NR[Var_linha] = pd.Categorical(bd_motivo_NS_NR[Var_linha], 
-                #                                     categories=ordenar_valores(bd_motivo_NS_NR[Var_linha]), ordered=True)
                 
                 df_NS_NR_limpo = bd_motivo_NS_NR.dropna(subset=[Var_linha])
                 df_NS_NR_unico = df_NS_NR_limpo.drop_duplicates(subset=Var_ID, keep='first')    
@@ -1334,8 +1256,6 @@ def processamento(data, bd_processamento, lista_labels):
                 bd_motivo = bd_motivo.dropna(subset=[Var_linha])
                 bd_motivo = ordenar_labels_multipla(df=bd_motivo, lista_labels=lista_labels, Variavel=Var_linha, 
                                                     Var_Valores_Agrup=Valores_Agrup[0])
-                # bd_motivo[Var_linha] = pd.Categorical(bd_motivo[Var_linha], 
-                #                                     categories=ordenar_valores(bd_motivo[Var_linha]), ordered=True)
                 
                 df_limpo = bd_motivo.dropna(subset=[Var_linha])
                 df_unico = df_limpo.drop_duplicates(subset=Var_ID, keep='first')
@@ -1360,12 +1280,12 @@ def processamento(data, bd_processamento, lista_labels):
 
         if TipoTabela == 'MULTIPLA':
 
-            if isinstance(NS_NR_codigo, str):
+            if NS_NR_codigo:
                 banco = df_NS_NR_unico
             else:
                 banco = df_unico
 
-            if isinstance(NS_NR_codigo, str):
+            if NS_NR_codigo:
                 banco_pivotado = bd_motivo_NS_NR
             else:
                 banco_pivotado = bd_motivo
@@ -1373,20 +1293,20 @@ def processamento(data, bd_processamento, lista_labels):
             i = 0    
             for col in Colunas:
                 # Gerar Tabelas Ponderadas de Frequência Absoluta com o banco empilhado
-                tabela = pd.pivot_table(bd_motivo, values=Var_Pond, index=Var_linha, columns=col, aggfunc='sum')
+                tabela = pd.pivot_table(bd_motivo, values=Var_Pond, index=Var_linha, columns=col, aggfunc='sum', observed=False)
                 if Fecha_100 == 'SIM':
                     tabela = tabela.div(tabela.sum())
                     tabelas_pond.append(tabela)
                 else:
                     tabelas_pond.append(tabela)
 
-                tabela = pd.pivot_table(banco_pivotado, values=Var_Pond, index=Var_linha, columns=col, aggfunc='sum')
+                tabela = pd.pivot_table(banco_pivotado, values=Var_Pond, index=Var_linha, columns=col, aggfunc='sum', observed=False)
                 tbl_pond_freq_abs_respostas_NS_NR.append(tabela)
 
-                tabela = pd.pivot_table(df_unico, values=Var_Pond, index=Var_linha, columns=col, aggfunc='sum')
+                tabela = pd.pivot_table(df_unico, values=Var_Pond, index=Var_linha, columns=col, aggfunc='sum', observed=False)
                 tbl_pond_freq_abs_respondentes.append(tabela)
 
-                tabela = pd.pivot_table(banco, values=Var_Pond, index=Var_ID, columns=col, aggfunc='sum')
+                tabela = pd.pivot_table(banco, values=Var_Pond, index=Var_ID, columns=col, aggfunc='sum', observed=False)
                 tbl_pond_freq_abs_respondentes_NS_NR.append(tabela)
 
                 tabela = pd.crosstab(df_unico[Var_linha], df_unico[col], dropna=False)
@@ -1394,9 +1314,6 @@ def processamento(data, bd_processamento, lista_labels):
                 if len(tabela) == 0:
                     tabela = pd.DataFrame(0, index=df_unico[Var_linha][pd.notna(df_unico[Var_linha])].unique(), 
                                         columns=df_unico[Colunas[i-1]][pd.notna(df_unico[Colunas[i-1]])].unique())
-                    print(f'{df_unico[Var_linha][pd.notna(df_unico[Var_linha])].unique()}\n')
-                    print(f'{df_unico[Colunas[i-1]][pd.notna(df_unico[Colunas[i-1]])].unique()}\n')
-                print(f'tabela:\n{tabela}')
                 tbl_sem_pond_respondentes.append(tabela)
                 i += 1
 
@@ -1409,8 +1326,6 @@ def processamento(data, bd_processamento, lista_labels):
             if Fecha_100 != 'SIM':
                 soma_base_ponderada = tbl_pond_freq_abs_respondentes.sum()
                 tabela_geral = tabela_geral.div(soma_base_ponderada)
-            
-            print(f'{tabela_geral}\n')
 
 
             # Trazendo a coluna de valores gerais
@@ -1419,19 +1334,14 @@ def processamento(data, bd_processamento, lista_labels):
             base_ponderada = pd.pivot_table(df_unico, values=Var_Pond, index=Var_ID, aggfunc='sum')
             base_ponderada = pd.Series(base_ponderada.sum())
             base_ponderada = pd.concat([base_ponderada, soma_colunas])
-            valores_gerais = pd.pivot_table(bd_motivo, values=Var_Pond, index=Var_linha, aggfunc='sum')
+            valores_gerais = pd.pivot_table(bd_motivo, values=Var_Pond, index=Var_linha, aggfunc='sum', observed=False)
             if Fecha_100 == 'SIM':
                 percentual_geral = valores_gerais.div(valores_gerais.sum()).sort_index()
-                print(f'\npercentual_geral:\n{percentual_geral}')
-                print(f'\nsoma de percentual_geral:\t{percentual_geral.sum()}')
             else:
                 percentual_geral = valores_gerais.div(base_ponderada[0]).sort_index()
-                print(f'\npercentual_geral:\n{percentual_geral}')
-                print(f'\nsoma de percentual_geral:\t{percentual_geral.sum()}')
 
             # tabela_geral = tabela_geral.div(base_ponderada[1:])
             tabela_geral = pd.concat([percentual_geral, tabela_geral], axis=1)
-            print(f'{tabela_geral}\n')
 
             # Valores para Base Ponderada
             soma_colunas = tbl_pond_freq_abs_respondentes.sum()
@@ -1444,20 +1354,15 @@ def processamento(data, bd_processamento, lista_labels):
             # Valores para Base Sem Ponderar
             valores_gerais_respondentes = df_unico[Var_ID].value_counts()
             soma_colunas = pd.Series(tbl_sem_pond_respondentes.sum())
-            print(f'\n{soma_colunas}\n')
             base_sem_ponderar = pd.Series(valores_gerais_respondentes.sum())
             base_sem_ponderar = pd.concat([base_sem_ponderar, soma_colunas])
-            print(f'base sem ponderar:\n{base_sem_ponderar.index}\n')
-            print(f'{len(base_sem_ponderar.index)}\n')
-            print(f'tabela geral:\n{tabela_geral.columns}\n')
-            print(f'{len(tabela_geral.columns)}\n')
             base_sem_ponderar.index = tabela_geral.columns
             tabela_geral.loc['Base Sem Ponderar'] = base_sem_ponderar
 
             # Valores para Base Ponderada - Respostas
             soma_colunas_respostas = tbl_pond_freq_abs_respostas_NS_NR.sum()
             soma_colunas_respostas = pd.Series(soma_colunas_respostas)
-            base_ponderada_respostas = pd.pivot_table(banco_pivotado, values=Var_Pond, index=Var_linha, aggfunc='sum')
+            base_ponderada_respostas = pd.pivot_table(banco_pivotado, values=Var_Pond, index=Var_linha, aggfunc='sum', observed=False)
             base_ponderada_respostas = pd.Series(base_ponderada_respostas.sum())
             base_ponderada_respostas = pd.concat([base_ponderada_respostas, soma_colunas_respostas])
 
@@ -1473,20 +1378,18 @@ def processamento(data, bd_processamento, lista_labels):
             tabela_geral.loc['Índice de Multiplicidade'] = indice_multiplicidade
 
             tabela_geral.rename(columns={tabela_geral.columns[0]: 'Geral'}, inplace=True)
-            print(f'{tabela_geral}\n')
 
         else:
             if df[Var_linha].isna().all():
                 # df[Var_linha] = df[Var_linha].astype('float').fillna(0)
                 df[Var_linha] = df[Var_linha].cat.add_categories(['Não possui categoria']).fillna('Não possui categoria')
-                print(f'Variável em branco\n{df[Var_linha]}\n')
                 
             for col in Colunas:
                 # Gerar Tabelas Ponderadas de frequência absoluta
                 if col == Var_linha:
                     tabela = pd.crosstab(index=df[Var_linha], columns=df[col], values=df[Var_Pond], aggfunc='sum')
                 else:
-                    tabela = pd.pivot_table(df, values=Var_Pond, index=Var_linha, columns=col, aggfunc='sum')
+                    tabela = pd.pivot_table(df, values=Var_Pond, index=Var_linha, columns=col, aggfunc='sum', observed=False)
                 tabelas_pond_freq_abs.append(tabela)
 
                 # Gerar Tabelas Ponderadas de frequência relativa
@@ -1497,8 +1400,6 @@ def processamento(data, bd_processamento, lista_labels):
                 tabela = tabela.reindex(label_var_linha_set, fill_value=0)
 
                 tabelas_pond.append(tabela)
-                print(f'{tabela}\n')
-
                 
                 # Gerar Tabelas Sem Ponderação
                 tabela = pd.crosstab(df[Var_linha], df[col], dropna=False)
@@ -1508,11 +1409,8 @@ def processamento(data, bd_processamento, lista_labels):
                                           index=df[Var_linha][pd.notna(df[Var_linha])].unique(), 
                                           columns=df[col][pd.notna(df[col])].unique()
                                           )
-                print("\nÍndice da tabela:\n", tabela.index)
-                print("\nTabela Sem Pond ANTES de garantir todas as labels:\n", tabela)
                 # garante todas as labels no índice
                 tabela = tabela.reindex(label_var_linha_set, fill_value=0)
-                print("\nTabela Sem Pond APÓS garantir todas as labels:\n", tabela)
                 tabelas_sem_pond.append(tabela)
 
                 # Gerar Tabelas para valores agrupados
@@ -1520,7 +1418,7 @@ def processamento(data, bd_processamento, lista_labels):
                     if col == Var_linha:
                         tabela = pd.crosstab(index=df['var_agrupada'], columns=df[col], values=df[Var_Pond], aggfunc='sum')
                     else:
-                        tabela = pd.pivot_table(df, values=Var_Pond, index='var_agrupada', columns=col, aggfunc='sum')
+                        tabela = pd.pivot_table(df, values=Var_Pond, index='var_agrupada', columns=col, aggfunc='sum', observed=False)
                     tabela = tabela.div(tabela.sum())
                     aux_tabelas_pond.append(tabela)
 
@@ -1529,14 +1427,12 @@ def processamento(data, bd_processamento, lista_labels):
                     aux_tabelas_sem_pond.append(tabela)
                 
             tabela_geral = pd.concat(tabelas_pond, axis=1)
-            print(f'\ntabela_geral (Tabela Ponderada de frequência relativa):\n{tabela_geral}')
             tabelas_pond_freq_abs = pd.concat(tabelas_pond_freq_abs, axis=1)
             tabelas_sem_pond = pd.concat(tabelas_sem_pond, axis=1)
             tabelas_sem_pond = tabelas_sem_pond[tabelas_sem_pond.index.notna()]
-            print(f'\ntabelas_sem_pond (Tabela de frequência absoluta):\n{tabelas_sem_pond}')
 
             # Trazendo a coluna de valores gerais
-            valores_gerais_pond = pd.pivot_table(df, values=Var_Pond, index=Var_linha, aggfunc='sum')
+            valores_gerais_pond = pd.pivot_table(df, values=Var_Pond, index=Var_linha, aggfunc='sum', observed=False)
             percentual_geral = valores_gerais_pond.div(valores_gerais_pond.sum()).sort_index()
 
             if 'var_agrupada' in df.columns:
@@ -1596,7 +1492,7 @@ def processamento(data, bd_processamento, lista_labels):
             tabelas_pond_freq_abs = tabelas_pond_freq_abs.fillna(0)
             soma_colunas = tabelas_pond_freq_abs.sum()
             soma_colunas = pd.Series(soma_colunas)
-            base_ponderada = pd.pivot_table(df, values=Var_Pond, index=Var_linha, aggfunc='sum')
+            base_ponderada = pd.pivot_table(df, values=Var_Pond, index=Var_linha, aggfunc='sum', observed=False)
             base_ponderada = pd.Series(base_ponderada.sum())
             base_ponderada = pd.concat([base_ponderada, soma_colunas])
             # base_ponderada.index = tabela_geral.columns
@@ -1605,28 +1501,20 @@ def processamento(data, bd_processamento, lista_labels):
             # Valores para Base Sem Ponderar
             tabelas_sem_pond = tabelas_sem_pond.fillna(0)
             soma_colunas = pd.Series(tabelas_sem_pond.sum())
-            print(f'{soma_colunas}\n')
             valores_gerais = df[Var_linha].value_counts().sort_index()
             base_sem_ponderar = pd.Series(valores_gerais.sum())
             base_sem_ponderar = pd.concat([base_sem_ponderar, soma_colunas])
-            print(f'base_sem_ponderar.index:\n{base_sem_ponderar.index}\n')
-            print(f'tabela_geral.columns:\n{tabela_geral.columns}\n')
-            print(f'tabelas_sem_pond.columns:\n{tabelas_sem_pond.columns}\n')
             base_sem_ponderar.index = tabela_geral.columns
             tabela_geral.loc['Base Sem Ponderar'] = base_sem_ponderar
 
             tabela_geral.rename(columns={tabela_geral.columns[0]: 'Geral'}, inplace=True)
-            print(f'TABELA GERAL:\n{tabela_geral.iloc[:, 0:10]}\n')
 
         #===== Adicionar cabeçalho a tabela =====#
         Cabecalho = Cabecalho.split(sep=',')
-        print(f'Cabeçalho:\n{Cabecalho}')
         header_above = []
-        print(f'\ntabela_geral.columns:\n{tabela_geral.columns}')
         for col in tabela_geral.columns:
             valor = col.split(sep=' - ')[0]
             header_above.append(valor)
-        print(f'\nheader_above:\n{header_above}')
 
         col_series = []
         for i, valor in enumerate(Cabecalho):
@@ -1636,20 +1524,17 @@ def processamento(data, bd_processamento, lista_labels):
                 col_series.append((Titulo, valor, col))
 
         header = [(Titulo, '', 'GERAL')]
-        print(f'\ncol_series:\n{col_series}')
         header = header + col_series
-        print(f'\nheader:\n{header}')
-        print(f'\ntamanho header:\t{len(header)}')
             
         header = pd.MultiIndex.from_tuples(header)
-        print(f'\ntabela_geral.columns:\n{tabela_geral.columns}')
-        print(f'\ntamanho tabela_geral.columns:\t{len(tabela_geral.columns)}')
         tabela_geral.columns = header
-        print(f'\n\n #===== TABELA GERAL FINAL =====#\n{tabela_geral}\n')
-        print(f'#========================================================================#\n')
+        # print(f'\n #===== TABELA GERAL FINAL =====#\n{tabela_geral}')
+        # print("\n#", "="*100, "#\n")
 
         todas_tabelas_gerais.append(tabela_geral)
 
+    fim = time.perf_counter()
+    print(f"\nTempo de execução: {fim - inicio:.2f} segundos")
     return todas_tabelas_gerais
 
 
@@ -1679,26 +1564,37 @@ if __name__ == "__main__":
 
 
 def verif_TipoTabela(TipoTabela):
-        if TipoTabela not in ["SIMPLES", "IPA_5", "IPA_10", "NPS", "MULTIPLA"]:
-            return 1
-        return 0
+    if TipoTabela not in ["SIMPLES", "IPA_5", "IPA_10", "NPS", "MULTIPLA"]:
+        return 1
+    return 0
 
 def verif_bandeiras_cabecalho(Bandeiras, Cabecalho):
-     Bandeiras = Bandeiras.split(", ")
-     Cabecalho = Cabecalho.split(", ")
-     qtd_bandeiras = len(Bandeiras)
-     qtd_cabecalho = len(Cabecalho)
-     if qtd_bandeiras != qtd_cabecalho:
-          return 1
-     return 0
+    Bandeiras = [x.strip() for x in Bandeiras.split(",") if x.strip()]
+    Cabecalho = [x.strip() for x in Cabecalho.split(",") if x.strip()]
+    qtd_bandeiras = len(Bandeiras)
+    qtd_cabecalho = len(Cabecalho)
+    if qtd_bandeiras != qtd_cabecalho:
+        return 1
+    return 0
+
+
+def verif_BTB_e_TTB(TipoTabela, BTB, TTB):
+    if TipoTabela == 'IPA_5' or TipoTabela == 'IPA_10':
+        BTB = str(BTB)
+        TTB = str(TTB)
+        if ", " not in BTB or ", " not in TTB:
+            return 1
+        return 0
+    return 0
+        
 
 def verif_bandeiras(df, Bandeiras):
-     Bandeiras = Bandeiras.split(", ")
-     for col in Bandeiras:
-          if col not in df.columns:
+    Bandeiras = [x.strip() for x in Bandeiras.split(",") if x.strip()]
+    for col in Bandeiras:
+        if col not in df.columns:
             # raise ValueError(f"⚠️ Coluna '{col}' não encontrada no DataFrame.")
             return 1, col
-     return 0, col
+    return 0, col
       
 def verif_Var_linha(df, Var_linha, TipoTabela):
      if TipoTabela != "MULTIPLA":
@@ -1759,18 +1655,42 @@ class verificar_incosistencias_iniciais:
             i+=1
             Titulo = self.sintaxe.iloc[line, i]
 
+            # Verificar TipoTabela
             res_TipoTabela = verif_TipoTabela(TipoTabela)
             if res_TipoTabela == 1:
                  return f"❌ Verificar incosistência: o **Tipo de Tabela** informado na linha {line+2} não corresponde com as opções válidas: [SIMPLES, IPA_5, IPA_10, NPS, MULTIPLA]"
             
+            # # Verificar se há separação correta de ", " nos valores das Bandeiras
+            # res_sep_bandeiras = verif_separacao_cols_Bandeiras(Bandeiras)
+            # if res_sep_bandeiras == 1:
+            #     return f"❌ Não há separação correta com **vírgula e um espaço -> (, )** entre os valores da **coluna Bandeiras** na **linha {line+2}**."
+            
+            # # Verificar se há separação correta de ", " nos valores do Cabeçalho
+            # res_sep_cabecalho = verif_separacao_cols_Cabecalho(Cabecalho)
+            # if res_sep_cabecalho == 1:
+            #     return f"❌ Não há separação correta com **vírgula e um espaço -> (, )** entre os valores da **coluna Cabecalho** na **linha {line+2}**."
+            
+            # Verificar se há separação correta de ", " nos valores de BTB e TTB:
+            res_separacao_BTB_e_TTB = verif_BTB_e_TTB(TipoTabela, valores_BTB, valores_TTB)
+            if res_separacao_BTB_e_TTB == 1:
+                return f"❌ Não há separação correta com **vírgula e um espaço -> (, )** entre os valores de BTB e/ou TTB na **linha {line+2}**."
+            
+            # # Verificar se há separação correta de ", " nos valores das colunas de MULTIPLA
+            # res_sep_cols_multipla = verif_separacao_cols_multipla(TipoTabela, Valores_Agrup)
+            # if res_sep_cols_multipla == 1:
+            #     return f"❌ Não há separação correta com **vírgula e um espaço -> (, )** entre os valores da **coluna Valores_Agrup** na **linha {line+2}**."
+            
+            # Verificar o nº de bandeiras com o nº de inputs do cabeçalho
             res_bandeiras_cabecalho = verif_bandeiras_cabecalho(Bandeiras, Cabecalho)
             if res_bandeiras_cabecalho == 1:
                  return f"❌ Verificar incosistência: na linha {line+2}, **o nº de Bandeiras não é compatível com o nº de inputs do Cabeçalho**."
             
+            # Verificar as colunas da Bandeira
             res_bandeira, col = verif_bandeiras(df, Bandeiras)
             if res_bandeira == 1:
                  return f"❌ Coluna **{col}** que se encontra na coluna **Bandeiras** não foi encontrada no Banco de dados."
             
+            # Verificar as colunas do nível da linha da tabela
             res_Var_linha = verif_Var_linha(df, Var_linha, TipoTabela)
             if res_Var_linha == 1:
                  return f"❌ Verificar incosistência: na linha {line+2}, a variável/coluna informada que representa o **nível da linha** da tabela não consta no Banco de dados."
@@ -1779,14 +1699,17 @@ class verificar_incosistencias_iniciais:
             # if res_NS_NR != 0:
             #      return f"❌ Verificar incosistência: o valor informado na linha {line+2} da coluna **Contabiliza_NS/NR** não corresponde com as opções válidas: {res_NS_NR}"
             
+            # Opções válidas para Fecha_100 - casos de múltipla
             res_Fecha_100 = verif_Fecha_100(TipoTabela, Fecha_100)
             if res_Fecha_100 == 1:
                  return(f"❌ Verificar incosistência: o valor informado na linha {line+2} da coluna **Fecha_100** não corresponde com as opções válidas: [NAO, SIM]")
             
+            # Verificar a existência da coluna identificadora da entrevista (ID)
             res_Var_ID = verif_coluna_existe(df, Var_ID)
             if res_Var_ID == 1:
                  return f"❌ Verificar incosistência: na linha {line+2}, a variável/coluna informada que representa o **Código de identificação da entrevista** não consta no Banco de dados."
             
+            # Verificar a existência da coluna de Ponderação
             res_Var_Pond = verif_coluna_existe(df, Var_Pond)
             if res_Var_Pond == 1:
                  return f"❌ Verificar incosistência: na linha {line+2}, a variável/coluna informada que representa a **Ponderação** não consta no Banco de dados."

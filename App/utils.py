@@ -57,7 +57,7 @@ def ordenar_labels(df, lista_labels, Variavel):
     return Variavel_labels, ord_labels
 
 def ordenar_labels_multipla(df, lista_labels, Variavel, Var_Valores_Agrup):
-    print(f"\n#== VARIÁVEL SENDO PROCESSADA: {Variavel} ==#")
+    # print(f"\n#== VARIÁVEL SENDO PROCESSADA: {Variavel} ==#")
     lista_labels = lista_labels.iloc[1:, :].copy()
     lista_labels.columns = ['Coluna', 'Codigo', 'Label']
     lista_labels["Coluna"] = lista_labels["Coluna"].ffill().str.strip()
@@ -75,7 +75,6 @@ def ordenar_labels_multipla(df, lista_labels, Variavel, Var_Valores_Agrup):
     )
     labels_sub["Codigo"] = pd.to_numeric(labels_sub["Codigo"], errors="coerce")
     labels_sub["Codigo"] = labels_sub["Codigo"].round().astype("Int64")
-    print("Labels filtrados para a coluna alvo:\n", labels_sub)
 
     # df[Variavel] = df[Variavel].replace('NS/NR', np.nan)
     df[Variavel] = pd.to_numeric(df[Variavel], errors='coerce')  # converter para numérico, tratando erros como NaN
@@ -87,23 +86,19 @@ def ordenar_labels_multipla(df, lista_labels, Variavel, Var_Valores_Agrup):
         .sort_values()
         .to_frame(name="Codigo")
     )
-    print("Ordem numérica encontrada:", codigos_ordenados["Codigo"].tolist())
    
 
     # --- Mapear códigos -> labels via merge (evita problemas de tipo) ---
     ordem_mapeada = codigos_ordenados.merge(labels_sub, on="Codigo", how="left")
-    print("Ordem mapeada com labels:\n", ordem_mapeada)
 
     # Categorias finais na ordem desejada
     ord_labels = ordem_mapeada["Label"].tolist()
     ord_labels = [label for label in ord_labels if pd.notna(label)]
     ord_labels = list(dict.fromkeys(ord_labels))  # Remove duplicates while preserving order
-    print("Ordem final com labels:", ord_labels)
 
     # (2) Faça o merge na base para criar uma coluna label
     df = df.merge(ordem_mapeada.rename(columns={"Label": f"{Variavel}_LABEL"}),
                 left_on=Variavel, right_on="Codigo", how="left")
-    print(f"Coluna de labels adicionada ao DataFrame:\n{df}")
 
     # (3) Defina categórica ordenada com as categorias encontradas
     df[f"{Variavel}_LABEL"] = pd.Categorical(df[f"{Variavel}_LABEL"],

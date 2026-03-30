@@ -1040,7 +1040,7 @@ def processamento(data, bd_processamento, lista_labels):
         else:
             col_linha = Var_linha
 
-        print("\nNS_NR: ", NS_NR)
+        print("\nNS_NR: ", NS_NR, "\n")
         NS_NR_codigo = []
         if isinstance(NS_NR, str):
             NS_NR = NS_NR.split(", ")
@@ -1048,11 +1048,11 @@ def processamento(data, bd_processamento, lista_labels):
                 print("label in NS_NR: ", label)
                 if label in lista_labels.loc[lista_labels["Coluna"] == col_linha, "Label"].tolist():
                     codigo_NS_NR = lista_labels.loc[(lista_labels["Coluna"] == col_linha) & (lista_labels["Label"] == label), "Codigo"].iloc[0]
-                    print("codigo_NS_NR: ", codigo_NS_NR)
+                    print("\ncodigo_NS_NR: ", codigo_NS_NR)
                     NS_NR_codigo.append(codigo_NS_NR)
 
         # Criando a lista de códigos da Var_Linha que realmente serão utilizados para processar a tabela
-        print("NS_NR_codigo: ", NS_NR_codigo)
+        print("\nNS_NR_codigo: ", NS_NR_codigo)
         if len(NS_NR_codigo) != 0:
             cod_var_linha = (
                 lista_labels.loc[(lista_labels["Coluna"] == col_linha), "Codigo"]
@@ -1068,7 +1068,24 @@ def processamento(data, bd_processamento, lista_labels):
                     else:
                         label_var_linha_set.append(label)
         else:
-            label_var_linha_set = lista_labels.loc[(lista_labels["Coluna"] == Var_linha), "Label"].dropna().tolist()
+            if TipoTabela == 'MULTIPLA':
+                labels_var_linha_set_multipla = []
+
+                for col_multipla in Valores_Agrup:
+                    labels = (
+                        lista_labels.loc[
+                            lista_labels["Coluna"] == col_multipla, "Label"
+                        ]
+                        .dropna()
+                        .tolist()
+                    )
+                    labels_var_linha_set_multipla.extend(labels)
+
+                label_var_linha_set = list(dict.fromkeys(labels_var_linha_set_multipla))
+
+                print("\n\nlabels_var_linha_set_multipla:\n", label_var_linha_set, "\n\n")
+            else:
+                label_var_linha_set = lista_labels.loc[(lista_labels["Coluna"] == Var_linha), "Label"].dropna().tolist()
 
         return label_var_linha_set, NS_NR_codigo
         
@@ -1187,7 +1204,7 @@ def processamento(data, bd_processamento, lista_labels):
                 print(f"Coluna ordenada: {df[col].unique()}")
 
         label_var_linha_set, NS_NR_codigo = labels_nao_contabilizadas(TipoTabela, NS_NR, Var_linha, Valores_Agrup, lista_labels)
-        print("label_var_linha_set: ", label_var_linha_set)
+        print("\nlabel_var_linha_set: ", label_var_linha_set, "\n")
 
         # Transformação na variável para a linha da tabela
         if TipoTabela == 'SIMPLES':
@@ -1290,8 +1307,8 @@ def processamento(data, bd_processamento, lista_labels):
                 bd_motivo = bd_motivo.dropna(subset=[Var_linha])
                 bd_motivo = ordenar_labels_multipla(df=bd_motivo, lista_labels=lista_labels, Variavel=Var_linha, 
                                                     Var_Valores_Agrup=Valores_Agrup[0])
-                bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('NS/NR', np.nan)
-                bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('ns/nr', np.nan)
+                # bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('NS/NR', np.nan)
+                # bd_motivo[Var_linha] = bd_motivo[Var_linha].replace('ns/nr', np.nan)
                 # bd_motivo[Var_linha] = pd.Categorical(bd_motivo[Var_linha], 
                 #                                     categories=ordenar_valores(bd_motivo[Var_linha]), ordered=True)  
                 
@@ -1343,12 +1360,12 @@ def processamento(data, bd_processamento, lista_labels):
 
         if TipoTabela == 'MULTIPLA':
 
-            if isinstance(NS_NR, str):
+            if isinstance(NS_NR_codigo, str):
                 banco = df_NS_NR_unico
             else:
                 banco = df_unico
 
-            if isinstance(NS_NR, str):
+            if isinstance(NS_NR_codigo, str):
                 banco_pivotado = bd_motivo_NS_NR
             else:
                 banco_pivotado = bd_motivo

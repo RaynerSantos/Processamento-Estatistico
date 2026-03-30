@@ -453,7 +453,7 @@ with tab2:
         with st.form('sheet_name_sintaxe'):
             nome_sheet_sintaxe = st.text_input(
                 label="📝 Informe o nome da aba (sheet) que contém a **Sintaxe** com os parâmetros da criação das tabelas.", 
-                placeholder="Sintaxe"
+                value="Sintaxe"
                 )
             with st.status("🔍 A seguir, veja uma imagem de exemplo da **Sintaxe**:"):
                 st.image(image="images/Sintaxe.png")

@@ -5,7 +5,7 @@ from io import BytesIO
 from collections import Counter
 from utils import ordenar_labels, ordenar_labels_multipla, ordenar_valores, classificar_nps, funcao_agrupamento, classificar_satis
 from metodos import processar_tabela, mensagem_sucesso, processamento
-from metodos import verificar_incosistencias_iniciais, verif_TipoTabela, verif_bandeiras_cabecalho, verif_bandeiras
+from metodos import verificar_incosistencias_iniciais
 
 # Função para salvar as tabelas em um único Excel com única aba
 def salvar_excel_unica_tabela(tabelas, TipoTabela, Var_linha):
@@ -582,7 +582,7 @@ with tab3:
                         with st.container(border=True):
                             valores_BTB_IPA_5 = st.text_input(
                                 label="📝 Informe a **faixa de notas BTB** - notas baixas desejada. **Coloque os valores separados por vírgula e um espaço (, )**", 
-                                placeholder="1, 2", 
+                                value="1, 2", 
                                 key="processamento_valores_btb_IPA_5",
                                 help="ℹ️ Agrupamento de notas baixas."
                                 )
@@ -592,7 +592,7 @@ with tab3:
                         with st.container(border=True):
                             valores_TTB_IPA_5 = st.text_input(
                                 label="📝 Informe a **faixa de notas TTB** - notas altas desejada. **Coloque os valores separados por vírgula e um espaço (, )**", 
-                                placeholder="4, 5", 
+                                value="4, 5", 
                                 key="processamento_valores_ttb_IPA_5",
                                 help="ℹ️ Agrupamento de notas altas."
                             )
@@ -615,7 +615,7 @@ with tab3:
                         with st.container(border=True):
                             valores_BTB_IPA_10 = st.text_input(
                                 label="📝 Informe a **faixa de notas BTB** - notas baixas desejada. **Coloque os valores separados por vírgula e um espaço (, )**", 
-                                placeholder="1, 2, 3", 
+                                value="1, 2, 3", 
                                 key="processamento_valores_btb_IPA_10",
                                 help="ℹ️ Agrupamento de notas baixas."
                                 )
@@ -625,7 +625,7 @@ with tab3:
                         with st.container(border=True):
                             valores_TTB_IPA_10 = st.text_input(
                                 label="📝 Informe a **faixa de notas TTB** - notas altas desejada. **Coloque os valores separados por vírgula e um espaço (, )**", 
-                                placeholder="8, 9, 10", 
+                                value="8, 9, 10", 
                                 key="processamento_valores_ttb_IPA_10",
                                 help="ℹ️ Agrupamento de notas altas."
                             )
@@ -759,17 +759,17 @@ with tab3:
         st.write("")
 
         with st.form('parametros_processamento_formulario_gerar_sintaxe'):
-            coluna5, coluna6, coluna7 = st.columns(3)
-            with coluna5:
-                with st.container(border=True):
-                    NS_NR = st.selectbox(
-                        label="📝 Deseja que a tabela contabilize os casos de **NS/NR (Não sabe / Não respondeu)**?", 
-                        options=["NAO", "SIM"], 
-                        key="processamento_ns_nr",
-                        help="ℹ️ Escolha a opção desejada se a tabela retornará os percentuais de NS/NR ou não."
-                    )
+            coluna5, coluna6 = st.columns(2)
+            # with coluna5:
+            #     with st.container(border=True):
+            #         NS_NR = st.selectbox(
+            #             label="📝 Deseja que a tabela contabilize os casos de **NS/NR (Não sabe / Não respondeu)**?", 
+            #             options=["NAO", "SIM"], 
+            #             key="processamento_ns_nr",
+            #             help="ℹ️ Escolha a opção desejada se a tabela retornará os percentuais de NS/NR ou não."
+            #         )
 
-            with coluna6:
+            with coluna5:
                 with st.container(border=True):
                     Var_ID = st.selectbox(
                         label="📝 Informe qual a **variável/coluna identificadora**, utilizada para identificar a entrevista como única", 
@@ -778,7 +778,7 @@ with tab3:
                         help="ℹ️ Essa é a variável/coluna que identifica o respondente e não pode ter código repetido. Ex.: 'codigo_entrevistado'."
                     )
             
-            with coluna7:
+            with coluna6:
                 with st.container(border=True):
                     Var_Pond = st.selectbox(
                         label="📝 Informe qual a **variável/coluna de ponderação**", 
@@ -794,7 +794,7 @@ with tab3:
             st.session_state.renderizar_sintaxe = True
 
         if st.session_state.input_buttom_submit_gerar_sintaxe and st.session_state.renderizar_sintaxe:
-            st.session_state.NS_NR = [NS_NR] * len(st.session_state.selected_columns)
+            st.session_state.NS_NR = [None] * len(st.session_state.selected_columns)
             st.session_state.Var_ID = [Var_ID] * len(st.session_state.selected_columns)
             st.session_state.Var_Pond = [Var_Pond] * len(st.session_state.selected_columns)
 
@@ -807,7 +807,6 @@ with tab3:
                 "Contabiliza_NS/NR": st.session_state.NS_NR
             })
             st.session_state.sintaxe = sintaxe
-            print("\n", st.session_state.sintaxe)
 
             st.session_state.BTB = np.where(st.session_state.sintaxe["TipoTabela"] == "IPA_5", st.session_state.valores_BTB_IPA_5, 
                                             np.where(st.session_state.sintaxe["TipoTabela"] == "IPA_10", st.session_state.valores_BTB_IPA_10,

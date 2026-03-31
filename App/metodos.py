@@ -1079,6 +1079,10 @@ def processamento(data, bd_processamento, lista_labels):
 
             else:
                 label_var_linha_set = lista_labels.loc[(lista_labels["Coluna"] == Var_linha), "Label"].dropna().tolist()
+                if TipoTabela in {"NPS", "IPA_10"}:
+                    label_var_linha_set = pd.to_numeric(
+                        pd.Series(label_var_linha_set), errors="coerce"
+                    ).dropna().tolist()
 
         return label_var_linha_set, NS_NR_codigo
         
@@ -1440,7 +1444,7 @@ def processamento(data, bd_processamento, lista_labels):
                 aux_tabelas_sem_pond = pd.concat(aux_tabelas_sem_pond, axis=1)
 
                 # Percentual para os valores gerais da variável agrupada
-                valores_gerais_aux = pd.pivot_table(df, values=Var_Pond, index='var_agrupada', aggfunc='sum')
+                valores_gerais_aux = pd.pivot_table(df, values=Var_Pond, index='var_agrupada', aggfunc='sum', observed=False)
                 percentual_geral_aux = valores_gerais_aux.div(valores_gerais_aux.sum()).sort_index()
                 tabela_geral = pd.concat([tabela_geral, aux_tabelas_pond], axis=0)
                 percentual_geral = pd.concat([percentual_geral, percentual_geral_aux], axis=0)
@@ -1461,8 +1465,11 @@ def processamento(data, bd_processamento, lista_labels):
                 media_tabela = media_tabela.sum().div(tabelas_pond_freq_abs.sum())
 
                 # Cálculo da média geral
-                df_limpo = df.dropna(subset=[Var_linha])
-                media_geral = sum(np.array(df_limpo[Var_linha]) * np.array(df_limpo[Var_Pond])) / sum(np.array(df_limpo[Var_Pond]))
+                df_limpo = df.dropna(subset=[Var_linha, Var_Pond]).copy()
+                notas = pd.to_numeric(df_limpo[Var_linha].astype(str), errors='coerce')
+                pesos = pd.to_numeric(df_limpo[Var_Pond], errors='coerce')
+                mask = notas.notna() & pesos.notna()
+                media_geral = (notas[mask] * pesos[mask]).sum() / pesos[mask].sum()
                 media_geral = pd.Series(media_geral)
                 media_tabela = pd.concat([media_geral, media_tabela], axis=0)
                 media_tabela.index = tabela_geral.columns
@@ -1475,8 +1482,11 @@ def processamento(data, bd_processamento, lista_labels):
                 media_tabela = media_tabela.sum().div(tabelas_pond_freq_abs.sum())
 
                 # Cálculo da média geral
-                df_limpo = df.dropna(subset=[Var_linha])
-                media_geral = sum(np.array(df_limpo[Var_linha]) * np.array(df_limpo[Var_Pond])) / sum(np.array(df_limpo[Var_Pond]))
+                df_limpo = df.dropna(subset=[Var_linha, Var_Pond]).copy()
+                notas = pd.to_numeric(df_limpo[Var_linha].astype(str), errors='coerce')
+                pesos = pd.to_numeric(df_limpo[Var_Pond], errors='coerce')
+                mask = notas.notna() & pesos.notna()
+                media_geral = (notas[mask] * pesos[mask]).sum() / pesos[mask].sum()
                 media_geral = pd.Series(media_geral)
                 media_tabela = pd.concat([media_geral, media_tabela], axis=0)
 

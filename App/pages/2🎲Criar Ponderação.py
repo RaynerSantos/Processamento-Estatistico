@@ -26,9 +26,33 @@ st.divider()
 st.subheader('Aqui você pode criar a coluna de Ponderação')
 st.write('')
 
-tab1, tab2 = st.tabs(["Ponderação", "RAKE (IPF)"])
+tab1, tab2, tab3 = st.tabs(["Projeto SEM Ponderação", "Ponderação", "RAKE (IPF)"])
+
+colunas = st.session_state.data.columns.tolist()
 
 with tab1:
+    st.write('')
+    st.write('')
+    st.write('')
+    st.write("A coluna de ponderação a ser criada abaixo terá peso 1 para todas as entrevistas")
+    st.write('')
+
+    nome_pond = st.text_input(
+                    label="📝 Digite o nome da coluna de **Ponderação** desejado.",
+                    value="POND",
+                    key="pond_nome_pond_sem_ponderacao",
+                    help="Nome da coluna de Ponderação que receberá peso 1 para todas as entrevistas"
+                )
+
+    if st.button(label="Gerar coluna com pesos '1'", icon=":material/done_outline:"):
+        if nome_pond in colunas:
+            st.error(f"A coluna **{nome_pond}** já existe no banco de dados. Favor digitar outro nome.", icon="❌")
+        else:
+            st.session_state.data[nome_pond] = 1
+            st.success(f"Coluna **{nome_pond}** foi criada com sucesso!", icon="✅")
+    
+
+with tab2:
     c1, c2 = st.columns(2, vertical_alignment="bottom")
 
     with st.form('sheet_name_DFuniverso_DFcoletado'):
@@ -384,7 +408,7 @@ def rake_by_quota_spss_style(
     )
 
 
-with tab2:
+with tab3:
     st.write('')
     st.write('')
     st.write('')

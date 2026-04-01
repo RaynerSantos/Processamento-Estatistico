@@ -39,15 +39,35 @@ with tab1:
     st.write('')
     st.write('')
 
+    colunas = st.session_state.data.columns.tolist()
+
+    # coluna1, coluna2= st.columns(2)
+    # with coluna1:
     with st.container(border=True):
         tipo_freq = st.selectbox(
-            '👇 Escolha o tipo de visualização da tabela de frequência', 
-            ["Simples", "Ponderada"], 
+            '👇 Escolha o **tipo de visualização** da tabela de frequência', 
+            ["Sem ponderar", "Ponderada"], 
             key="table_view_tipo_freq"
         )
-    st.write("")
+    # with coluna2:
+        if tipo_freq == "Ponderada":
+            # with st.container(border=True):
+            POND = st.selectbox(
+                '👇 Selecione a coluna que será utilizada para **ponderar**', 
+                colunas, 
+                key="table_view_col_pond"
+            )
+    with st.container(border=True):
+        base_contabilizada = st.selectbox(
+            """📝 Deseja contabilizar os casos de **missings values**?    
+                **Base total** - contabiliza valores missings values   
+                **Base de válidos** - **NÃO** contabiliza missings values
+            """, 
+            ["Base total", "Base de válidos"], 
+            key="table_view_base_contabilizada"
+        )
 
-    colunas = st.session_state.data.columns.tolist()
+    st.write("")
     coluna1, coluna2= st.columns(2)
     with coluna1:
         with st.container(border=True):
@@ -66,11 +86,6 @@ with tab1:
         st.write(f'**{selected_column}**: {rotulo}')
         st.write("")
 
-    # if selected_column:
-    #     rotulo = st.session_state.lista_variaveis.loc[st.session_state.lista_variaveis["Coluna"] == selected_column, "Rotulo"].iloc[0]
-    #     st.write(f'**{selected_column}**: {rotulo}')
-    #     st.write("")
-
     def fmt_int_ptbr(x):
         if pd.isna(x):
             return ""
@@ -87,24 +102,40 @@ with tab1:
 
 
     if st.button('Visualizar frequência', key="btn_table_view") and selected_column and tipo_freq:
-        if tipo_freq == "Simples":
-            freq = (
-                st.session_state.data[selected_column]
-                .value_counts(dropna=False)
-                .rename("Frequência")
-                .to_frame()
-            )
+        if tipo_freq == "Sem ponderar":
+            if base_contabilizada == "Base total":
+                freq = (
+                    st.session_state.data[selected_column]
+                    .value_counts(dropna=False)
+                    .rename("Frequência")
+                    .to_frame()
+                )
+            else:
+                freq = (
+                    st.session_state.data[selected_column]
+                    .value_counts(dropna=True)
+                    .rename("Frequência")
+                    .to_frame()
+                )
+
+
         else:
-            if "POND" in st.session_state.data.columns:
+            if base_contabilizada == "Base total":
                 # >>> soma da ponderação por código (inclui NaN do código se houver)
                 freq = (
-                    st.session_state.data.groupby(selected_column, dropna=False)["POND"]
+                    st.session_state.data.groupby(selected_column, dropna=False)[POND]
                     .sum()
                     .rename("Frequência")
                     .to_frame()
                 )
             else:
-                st.warning("Necessário criar a coluna de **Ponderação (POND)** para trazer a frequência ponderada", icon="⚠️")
+                freq = (
+                    st.session_state.data.groupby(selected_column, dropna=True)[POND]
+                    .sum()
+                    .rename("Frequência")
+                    .to_frame()
+                )
+
         freq["%"] = ( freq["Frequência"] / freq["Frequência"].sum() * 100)
         total_line = round(pd.DataFrame(freq.sum()).T)
         total_line.index = ['Total']

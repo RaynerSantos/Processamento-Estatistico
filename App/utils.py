@@ -137,8 +137,9 @@ def classificar_satis(valor):
         return 'Insatisfeito'
         
 # Função para criar os índices corretos e ordenados das tabelas (esse novo índice entrará na função stat_test())
-def ordenar_valores(variavel):
-    valores_unicos = variavel.unique()
+def ordenar_valores(variavel, label_var_linha_set):
+    # valores_unicos = variavel.unique()
+    valores_unicos = label_var_linha_set
     valores_ordenados = pd.Series(valores_unicos).sort_values()
 
     if valores_ordenados.isna().iloc[-1]:

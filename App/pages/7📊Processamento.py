@@ -154,7 +154,7 @@ with tab1:
             with st.container(border=True):
                 if TipoTabela == "MULTIPLA":
                     Var_linha = st.text_input(
-                        label="📝 Informe o nome da variável que deverá constar no **nível das linhas** da tabela processada. Se as colunas de múltipla resposta são: 'Q8_1, Q8_2, Q8_3' então, informe um nome diferente para a variável linha, ex.: 'Q8'.",
+                        label="📝 Informe o nome da variável que deverá constar no **nível das linhas** da tabela processada. Se as colunas de múltipla resposta são: 'Q8_1, Q8_2, Q8_3' então, informe um nome diferente para a variável linha, ex.: **'Q8'**.",
                         placeholder="Nome_variavel_linha",
                         key="processamento_unico_var_linha",
                         help="ℹ️ Importante! Quando o Tipo de Tabela processada for MULTIPLA, o nome da variável deverá ser diferente das colunas de múltipla resposta. Ex.: Se as colunas múltiplas são 'Q8_1, Q8_2, Q8_3' então, o nome da coluna da variável que deverá constar na linha será 'Q8'."
@@ -186,17 +186,23 @@ with tab1:
                 placeholder="Mercado PME, Mercado 500+, TIM, TIM PME, TIM 500+, TIM Prime, VIVO, VIVO PME, VIVO 500+, CLARO, CLARO PME, CLARO 500+", 
                 key="processamento_unico_cabecalho",
                 help="ℹ️ O cabeçalho é o nome ideal das colunas que você deseja que apareça na tabela processada. Ex.: nome da coluna: **Q3** → nome do cabeçalho para esta coluna: **Setor de atividade**."
-                )
+            )
         st.write("")  
         st.write("")  
-        
+
         with st.container(border=True):
-            NS_NR = st.selectbox(
-                label="📝 Deseja que a tabela contabilize os casos de **NS/NR (Não sabe / Não respondeu)**?", 
-                options=["NAO", "SIM"], 
+            # NS_NR = st.selectbox(
+            #     label="📝 Deseja que a tabela contabilize os casos de **NS/NR (Não sabe / Não respondeu)**?", 
+            #     options=["NAO", "SIM"], 
+            #     key="processamento_unico_ns_nr",
+            #     help="ℹ️ Escolha a opção desejada se a tabela retornará os percentuais de NS/NR ou não."
+            # )
+            NS_NR = st.text_input(
+                label="📝 Informe as labels que não deverão ser contabilizadas no processamento da tabela **separadas por vírgula e um espaço (, )**. Ex.:  **NS/NR, Outros**",
+                placeholder="NS/NR",
                 key="processamento_unico_ns_nr",
-                help="ℹ️ Escolha a opção desejada se a tabela retornará os percentuais de NS/NR ou não."
-                )
+                # help="ℹ️ Importante! Quando o Tipo de Tabela processada for MULTIPLA, o nome da variável deverá ser diferente das colunas de múltipla resposta. Ex.: Se as colunas múltiplas são **'Q8_1, Q8_2, Q8_3'** então, o nome da coluna da variável que deverá constar na linha será **'Q8'**."
+            )
         st.write("")
         st.write("")
         
@@ -224,11 +230,17 @@ with tab1:
             
         if TipoTabela == "MULTIPLA":
             with st.container(border=True):
-                Valores_Agrup = st.text_input(
-                    label="📝 Informe quais as **variáveis/colunas representam a variável MÚLTIPLA** escolhida (respostas ficam registradas em **várias colunas** no banco de dados). Ex.: Q8_1, Q8_2, Q8_3",
-                    placeholder="Q8_1, Q8_2, Q8_3",
+                # Valores_Agrup = st.text_input(
+                #     label="📝 Informe quais as **variáveis/colunas representam a variável MÚLTIPLA** escolhida (respostas ficam registradas em **várias colunas** no banco de dados). Ex.: Q8_1, Q8_2, Q8_3",
+                #     placeholder="Q8_1, Q8_2, Q8_3",
+                #     key="processamento_unico_valores_agrup",
+                #     help="ℹ️ Importante! Quando o Tipo de Tabela processada for MULTIPLA, o nome da variável deverá ser diferente das colunas de múltipla resposta. Ex.: Se as colunas múltiplas são **'Q8_1, Q8_2, Q8_3'** então, o nome da coluna da variável que deverá constar na linha será **'Q8'**."
+                # )
+                Valores_Agrup = st.multiselect(
+                    label="📝 Informe quais as **variáveis/colunas representam a variável MÚLTIPLA** escolhida (respostas ficam registradas em **várias colunas** no banco de dados). Ex.: **Q8_1, Q8_2, Q8_3**", 
+                    options=colunas, 
                     key="processamento_unico_valores_agrup",
-                    help="ℹ️ Importante! Quando o Tipo de Tabela processada for MULTIPLA, o nome da variável deverá ser diferente das colunas de múltipla resposta. Ex.: Se as colunas múltiplas são 'Q8_1, Q8_2, Q8_3' então, o nome da coluna da variável que deverá constar na linha será 'Q8'."
+                    help="ℹ️ Importante! Quando o Tipo de Tabela processada for MULTIPLA, o nome da variável deverá ser diferente das colunas de múltipla resposta. Ex.: Se as colunas múltiplas são **'Q8_1, Q8_2, Q8_3'** então, o nome da coluna da variável que deverá constar na linha será **'Q8'**."
                 )
             st.write("")
             st.write("")
